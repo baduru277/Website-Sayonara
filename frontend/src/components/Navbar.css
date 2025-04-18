@@ -1,0 +1,170 @@
+/* General Styles */
+body {
+  background-color: #fffbea; /* Light yellow background */
+  color: #333; /* Dark text for contrast */
+  font-family: Arial, sans-serif;
+  margin: 0;
+  padding: 0;
+}
+
+/* Navbar Styles */
+.navbar {
+  display: flex;
+  justify-content: space-between; /* Space out items */
+  align-items: center;
+  padding: 150px 150px; /* Increased padding for a larger navbar */
+  background-color: #9b59b6; /* Yellow background */
+  color: #222222; /* Dark gray text */
+  position: relative;
+}
+
+/* Logo */
+.navbar .logo {
+  position: absolute;
+  left: 50%;
+  transform: translateX(-50%);
+  font-size: 32px; /* Increased font size for the logo */
+  font-weight: bold;
+  color: #222222;
+  text-align: center;
+}
+
+/* Navbar Links */
+.navbar .nav-links {
+  list-style: none;
+  display: flex;
+  gap: 30px; /* Increased gap between items */
+  margin-left: auto; /* Push nav links to the left */
+}
+
+.nav-links li {
+  color: #222222; /* Dark gray text */
+  text-decoration: none;
+  position: relative;
+  font-size: 18px; /* Increased font size */
+  padding: 10px 20px; /* Increased padding */
+}
+
+/* Location and Language Container */
+.navbar .location-language {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; /* Align items to the right */
+  gap: 20px; /* Increased gap between items */
+}
+
+/* Language Select */
+.nav-links select {
+  padding: 8px 12px; /* Increased padding */
+  border: 1px solid #ccc;
+  border-radius: 5px;
+  background-color: #ffffff;
+  color: #222222;
+  font-size: 18px; /* Larger font size */
+}
+
+.nav-links select:focus {
+  outline: none;
+  border-color: #9b59b6; /* Yellow border on focus */
+}
+
+/* Location Text */
+.location {
+  font-size: 18px; /* Increased font size */
+  color: #222222;
+}
+
+/* Dropdown Menu Styles for Market Options */
+.dropdown {
+  position: relative;
+  cursor: pointer;
+}
+
+.dropdown > span {
+  padding: 14px 30px; /* Increased padding for dropdown button */
+  background-color: #9b59b6; /* Bright yellow color */
+  color: white;
+  border-radius: 8px;
+  cursor: pointer;
+  font-size: 18px; /* Larger font size */
+  transition: background-color 0.3s ease; /* Smooth color transition */
+}
+
+.dropdown > span:hover {
+  background-color: #9b59b6; /* Darker yellow on hover */
+}
+
+/* Dropdown List */
+.dropdown-menu {
+  display: none; /* Initially hidden */
+  position: absolute;
+  top: 100%; /* Positioned below the parent */
+  left: 0;
+  background-color: #ffffff; /* White background for dropdown */
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  border-radius: 8px;
+  width: 220px; /* Slightly increased width */
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2); /* Soft shadow effect */
+  z-index: 10; /* Ensure dropdown is above other content */
+}
+
+.dropdown:hover .dropdown-menu {
+  display: block; /* Show the menu on hover */
+}
+
+/* Dropdown Item Styles */
+.dropdown-menu li {
+  padding: 14px 25px; /* Increased padding for dropdown items */
+  font-size: 16px; /* Larger font size for dropdown items */
+  transition: background-color 0.3s ease;
+}
+
+.dropdown-menu li a {
+  color: #222222; /* Dark gray text */
+  text-decoration: none;
+  display: block;
+}
+
+.dropdown-menu li:hover {
+  background-color: #9b59b6; /* Light yellow background on hover */
+  border-radius: 8px;
+}
+
+.dropdown-menu li a:hover {
+  color: #222222; /* Keep text color on hover */
+}
+
+/* Auth Buttons */
+.auth-buttons {
+  display: flex;
+  gap: 20px; /* Increased gap between buttons */
+}
+
+.auth-buttons .login-button,
+.auth-buttons .signup-button {
+  padding: 12px 24px; /* Increased padding */
+  color: #ffffff; /* White text */
+  border: none;
+  border-radius: 5px;
+  cursor: pointer;
+  transition: all 0.3s ease;
+  font-size: 18px; /* Larger font size */
+}
+
+.auth-buttons .login-button {
+  background-color: #9b59b6; /* Blue background for Login */
+}
+
+.auth-buttons .login-button:hover {
+  background-color: #9b59b6; /* Darker blue on hover */
+}
+
+.auth-buttons .signup-button {
+  background-color: #9b59b6; /* Green background for Signup */
+}
+
+.auth-buttons .signup-button:hover {
+  background-color: #9b59b6; /* Darker green on hover */
+}

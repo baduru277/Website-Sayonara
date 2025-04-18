@@ -1,0 +1,39 @@
+/* KeyFeatures.css */
+
+/* General styles for the section */
+.about-section {
+    padding: 2rem;
+    background-color: #f9f9f9; /* Light background for contrast */
+    border-radius: 8px;
+    margin: 2rem 0;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1); /* Soft shadow for a modern look */
+}
+
+/* Heading styles */
+.about-section h2 {
+    font-size: 2rem;
+    color: #333;
+    margin-bottom: 1rem;
+    text-align: center;
+    font-weight: bold;
+}
+
+/* Paragraph styles */
+.about-section p {
+    font-size: 1rem;
+    color: #555;
+    line-height: 1.6;
+    margin-bottom: 1rem;
+    text-align: justify;
+}
+
+/* Highlight important text */
+.about-section strong {
+    color: #e67e22; /* Highlight color for emphasis */
+}
+
+/* Add spacing between sections */
+.key-features + .about-section,
+.about-section + .key-features {
+    margin-top: 2rem;
+}

@@ -1,0 +1,150 @@
+/* Header.css */
+
+/* General Styling */
+.header {
+  background-color: #ffffff;
+  padding: 20px 20px;
+  box-shadow: 0 4px 8px rgba(0, 0, 0, 0.1);
+}
+
+.container {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  max-width: 1200px;
+  margin: 0 auto;
+  padding: 0;
+}
+
+.website-name {
+  font-family: 'Poppins', 'Montserrat', 'Helvetica', 'Arial', 'Open Sans', 'Raleway', sans-serif; /* Added 'Poppins' for a modern look */
+  font-size: 2.5rem; /* Increased font size */
+  font-weight: 2000; /* Bolder text */
+  color: #9b59b6;
+  text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3); /* Enhanced text shadow for better readability */
+  text-transform: capitalize; /* Ensures proper capitalization */
+  letter-spacing: 1.5px; /* Increased letter spacing */
+  cursor: pointer;
+}
+
+/* Navigation Menu */
+.nav-menu {
+  display: flex;
+  align-items: center;
+}
+
+.nav-menu .post-btn {
+  margin-right: 20px;
+}
+.home-link {
+  text-decoration: none; /* Removes underline */
+  color: inherit; /* Keeps the text color same as surrounding text */
+  font-size: 1.5rem;
+  font-weight: bold;
+}
+
+.home-link:hover {
+  color: #9b59b6; /* Changes color on hover */
+  text-decoration: none; /* Ensures no underline appears on hover */
+}
+
+.nav-menu .btn-post {
+  margin: 8px;
+  padding: 12px 24px;
+  border-radius: 30px;
+  background-color: white;
+  color: #9b59b6;
+  font-size: 1.2rem;
+  border: 2px solid #9b59b6;
+  cursor: pointer;
+  transition: background-color 0.3s ease, color 0.3s ease, border 0.3s ease;
+}
+
+.nav-menu .btn-post:hover {
+  background-color: #9b59b6;
+  color: white;}
+
+/* Location and Language Selectors */
+.location-selector,
+.language-selector {
+  margin-right: 20px;
+  display: flex;
+  align-items: center;
+}
+
+.location-selector select,
+.language-selector select {
+  padding: 8px;
+  font-size: 1rem;
+  background-color: white;
+  color: #9b59b6;
+  border: 1px solid #9b59b6;
+  border-radius: 10px; /* Increased value for a more rounded border */
+  outline: none;
+  margin-left: 10px;
+  transition: background-color 0.3s ease, color 0.3s ease, border 0.3s ease;
+}
+
+.location-selector .location-icon {
+  color: #9b59b6;
+  font-size: 1.2rem;
+}
+
+/* Login Button */
+.user-auth {
+  margin-left: 20px;
+}
+
+.user-auth .btn-login {
+
+  padding: 8px 20px;
+  background-color: white;
+  color: #9b59b6;
+  text-decoration: none;
+  border-radius: 5px;
+  font-weight: bold;
+  border: 1px solid #9b59b6;
+
+}
+
+.user-auth .btn-login:hover {
+  background-color: #9b59b6; /* Slightly darker purple for hover effect */
+  color:white;
+}
+
+/* Mobile Responsiveness */
+@media (max-width: 768px) {
+  .container {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+
+  .website-name {
+    margin-bottom: 10px;
+    font-size: 1.3rem;
+  }
+
+  .nav-menu {
+    width: 100%;
+    justify-content: space-between;
+  }
+
+  .location-selector,
+  .language-selector,
+  .user-auth {
+    margin-right: 0;
+    margin-bottom: 10px;
+    width: 100%;
+  }
+
+  .location-selector select,
+  .language-selector select {
+    width: 100%;
+  }
+
+  .nav-menu .btn-post,
+  .user-auth .btn-login {
+    width: 100%;
+    text-align: center;
+  }
+}

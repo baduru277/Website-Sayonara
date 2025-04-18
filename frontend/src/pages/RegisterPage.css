@@ -1,0 +1,90 @@
+/* General page styles */
+.register-page {
+  font-family: 'Roboto', sans-serif;
+  margin: 0 auto;
+  max-width: 500px;
+  padding: 20px;
+  background-color: white;
+  border-radius: 10px;
+  box-shadow: 0 4px 8px rgba(155, 89, 182, 0.4);
+  text-align: center; /* Ensures everything inside is centered */
+}
+
+h1 {
+  margin-bottom: 20px;
+  color: #333;
+  font-size: 2.5em;
+  padding-top: 10px; /* Ensures it stays within padding */
+}
+
+p {
+  color: #333;
+  font-size: 1.1em;
+  text-align: center;
+  margin-bottom: 20px;
+}
+
+/* Form styles */
+.register-form {
+  display: flex;
+  flex-direction: column;
+  padding: 20px;
+  align-items: center; /* Centers form items */
+}
+
+label {
+  text-align: left;
+  font-weight: bold;
+  margin: 10px 0 5px;
+  width: 100%;
+}
+
+input, select {
+  padding: 12px 15px;
+  width: 100%;
+  font-size: 1em;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  outline: none;
+  transition: all 0.3s ease;
+}
+
+input:focus, select:focus {
+  border-color: #9b59b6;
+}
+
+/* Register button */
+.btn {
+  background: #9b59b6;
+  color: white;
+  padding: 12px 18px;
+  font-size: 1.1em;
+  border: none;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: background-color 0.3s ease;
+  margin-top: 20px;
+  width: 100%;
+}
+
+.btn:hover {
+  background: #9b59b6;
+}
+
+/* Responsive design for smaller screens */
+@media (max-width: 768px) {
+  .register-page {
+    max-width: 100%;
+    padding: 15px;
+  }
+}
+
+@media (max-width: 500px) {
+  h1 {
+    font-size: 2em;
+  }
+
+  .btn {
+    font-size: 1em;
+  }
+}
