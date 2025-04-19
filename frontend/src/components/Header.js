@@ -24,7 +24,7 @@ const Header = () => {
       <div className="container">
         <div className="website-name">
           <Link to="/" className="home-link" aria-label="Go to Home">
-            Sayonara
+            Sayonara   We are underdevelopment
           </Link>
         </div>
         <nav className="nav-menu">
