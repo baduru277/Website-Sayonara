@@ -6,7 +6,8 @@
   flex-direction: column;
   justify-content: center;
   align-items: center;
-  height: 40vh;
+  height: auto;
+  min-height: 40vh;
 }
 
 .hero h1,
@@ -18,49 +19,77 @@
   align-items: center;
   max-width: 1000px;
   border-radius: 30px;
-  overflow: hidden;
-    display: flex;
+  overflow: visible;
+  display: flex;
   justify-content: center;
   width: 100%;
   margin-top: 20px;
+  position: relative;
 }
 
+.right-search {
+  position: relative;
+  width: 100%;
+  max-width: 60vw;
+}
+
+/* Input styling */
 .search-bar {
-  width: 60vw;
+  width: 100%;
   height: 60px;
-    border-radius: 30px;
+  border-radius: 30px;
   background-color: white;
   color: #9b59b6;
   font-size: 1.2rem;
   border: 2px solid #9b59b6;
-  cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease, border 0.3s ease;
+  padding: 0 20px;
+  transition: 0.3s ease;
+  position: relative;
+  z-index: 2;
 }
 
 .search-bar:focus {
   border-color: #9b59b6;
   outline: none;
+  box-shadow: 0 0 10px rgba(155, 89, 182, 0.3);
+}
+
+/* Mirror inside input */
+.search-bar-mirror {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #bbb;
+  font-size: 1rem;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
 }
 
 /* Suggestions dropdown */
 .suggestions-dropdown {
   position: absolute;
-  top: 100%;
-  left: 0;
-  right: 0;
+  top: 65px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
   background-color: white;
   border: 1px solid #ccc;
-  border-radius: 25px; /* Apply rounded corners here as well */
+  border-radius: 25px;
   list-style: none;
-  margin: 0;
   padding: 0;
+  margin: 0;
   max-height: 200px;
   overflow-y: auto;
   z-index: 10;
-  box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
   opacity: 0;
   visibility: hidden;
-  transition: opacity 0.2s ease, visibility 0.2s ease;
+  transition: all 0.25s ease;
 }
 
 .suggestions-dropdown.show {
@@ -69,12 +98,12 @@
 }
 
 .suggestion-item {
-  padding: 8px 16px;
+  padding: 12px 20px;
   cursor: pointer;
   font-size: 1.1rem;
-  transition: background-color 0.2s ease;
   color: #9b59b6;
   background-color: white;
+  transition: 0.2s ease;
 }
 
 .suggestion-item:hover {
@@ -82,12 +111,20 @@
   color: white;
 }
 
-/* Action Buttons */
+.category-label {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-left: 10px;
+}
+
+/* Buttons */
 .hero-buttons {
   display: flex;
   justify-content: center;
+  flex-wrap: wrap;
+  gap: 15px;
   width: 100%;
-  margin-top: 20px;
+  margin-top: 30px;
 }
 
 .hero-buttons button {
@@ -99,10 +136,116 @@
   font-size: 1.2rem;
   border: 2px solid #9b59b6;
   cursor: pointer;
-  transition: background-color 0.3s ease, color 0.3s ease, border 0.3s ease;
+  transition: all 0.3s ease;
+  min-width: 150px;
 }
 
 .hero-buttons button:hover {
   background-color: #9b59b6;
   color: white;
+}
+
+/* Responsive */
+@media (max-width: 768px) {
+  .search-bar,
+  .suggestions-dropdown {
+    width: 90vw;
+  }
+
+  .hero h1 {
+    font-size: 1.8rem;
+  }
+
+  .hero-buttons {
+    flex-direction: column;
+    align-items: center;
+  }
+}
+.right-search {
+  position: relative;
+  width: 100%;
+  max-width: 60vw;
+}
+
+/* Wrapper to hold both input and mirror */
+.search-bar-wrapper {
+  position: relative;
+}
+
+/* Actual input */
+.search-bar {
+  width: 100%;
+  height: 60px;
+  border-radius: 30px;
+  background-color: white;
+  color: #9b59b6;
+  font-size: 1.2rem;
+  border: 2px solid #9b59b6;
+  padding: 0 20px;
+  position: relative;
+  z-index: 2;
+}
+
+/* Mirror inside input */
+.search-bar-mirror {
+  position: absolute;
+  left: 20px;
+  top: 50%;
+  transform: translateY(-50%);
+  color: #e0cce8;
+  font-size: 1.1rem;
+  font-weight: 500;
+  pointer-events: none;
+  user-select: none;
+  z-index: 1;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+/* Suggestions dropdown */
+.suggestions-dropdown {
+  position: absolute;
+  top: 70px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 100%;
+  background-color: white;
+  border: 1px solid #ccc;
+  border-radius: 25px;
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  max-height: 200px;
+  overflow-y: auto;
+  z-index: 10;
+  box-shadow: 0 4px 10px rgba(0, 0, 0, 0.15);
+  opacity: 0;
+  visibility: hidden;
+  transition: all 0.25s ease;
+}
+
+.suggestions-dropdown.show {
+  opacity: 1;
+  visibility: visible;
+}
+
+.suggestion-item {
+  padding: 12px 20px;
+  cursor: pointer;
+  font-size: 1.1rem;
+  color: #9b59b6;
+  background-color: white;
+  transition: 0.2s ease;
+}
+
+.suggestion-item:hover {
+  background-color: #9b59b6;
+  color: white;
+}
+
+.category-label {
+  font-size: 0.9rem;
+  color: #aaa;
+  margin-left: 10px;
 }

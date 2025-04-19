@@ -1,6 +1,5 @@
 import React, { useState } from "react";
-import { FaMapMarkerAlt } from "react-icons/fa"; // You can remove this import as well
-import { Link } from "react-router-dom"; // Import Link for navigation
+import { Link } from "react-router-dom";
 import "./Hero.css";
 
 const categories = {
@@ -14,32 +13,28 @@ const Hero = () => {
   const [filteredItems, setFilteredItems] = useState([]);
   const [showSuggestions, setShowSuggestions] = useState(false);
 
-  // Handle search input change (for item/category search)
   const handleInputChange = (event) => {
     const value = event.target.value;
     setSearchTerm(value);
 
     if (value.trim()) {
-      // Flatten the categories into a list of items with their category names
-      const filtered = Object.entries(categories)
+      const matchedItems = Object.entries(categories)
         .flatMap(([category, items]) =>
-          items.map(item => ({
+          items.map((item) => ({
             category,
             item
           }))
         )
-        .filter(({ item }) => item.toLowerCase().includes(value.toLowerCase()))
-        .map(({ item }) => item);  // We only need the item name
+        .filter(({ item }) => item.toLowerCase().includes(value.toLowerCase()));
 
-      setFilteredItems(filtered);
-      setShowSuggestions(filtered.length > 0);
+      setFilteredItems(matchedItems);
+      setShowSuggestions(matchedItems.length > 0);
     } else {
       setFilteredItems([]);
       setShowSuggestions(false);
     }
   };
 
-  // Handle suggestion click (when a user selects an item from the suggestions)
   const handleSuggestionClick = (item) => {
     setSearchTerm(item);
     setShowSuggestions(false);
@@ -51,28 +46,34 @@ const Hero = () => {
         <h1>Welcome to Exchange & Bidding Platform</h1>
         <p>Your ultimate destination for trading and auctions.</p>
 
-        {/* Search Bar */}
         <div className="search-container">
-          {/* Removed Location Selector */}
-          {/* Right: Item Search */}
           <div className="right-search">
-            <input
-              type="text"
-              className="search-bar"
-              placeholder="Search items, categories, or features"
-              value={searchTerm}
-              onChange={handleInputChange}
-              onFocus={() => setShowSuggestions(true)}
-            />
-            {showSuggestions && filteredItems.length > 0 && (
-              <ul className="suggestions-dropdown">
-                {filteredItems.map((item, index) => (
+            {/* Mirror text underneath input */}
+            <div className="search-bar-wrapper">
+              {searchTerm && (
+                <div className="search-bar-mirror">
+                  🔍 {searchTerm}
+                </div>
+              )}
+              <input
+                type="text"
+                className="search-bar"
+                placeholder="Search items like 'phone', 'chair', or 'pen'"
+                value={searchTerm}
+                onChange={handleInputChange}
+                onFocus={() => setShowSuggestions(true)}
+              />
+            </div>
+
+            {showSuggestions && (
+              <ul className={`suggestions-dropdown ${filteredItems.length ? "show" : ""}`}>
+                {filteredItems.map(({ item, category }, index) => (
                   <li
                     key={index}
                     className="suggestion-item"
                     onClick={() => handleSuggestionClick(item)}
                   >
-                    {item}
+                    {item} <span className="category-label">({category})</span>
                   </li>
                 ))}
               </ul>
@@ -80,15 +81,11 @@ const Hero = () => {
           </div>
         </div>
 
-        {/* Action Buttons */}
         <div className="hero-buttons">
           <button className="btn-primary">Start Bidding</button>
-
-          {/* Link to Exchange Page while keeping the button nature */}
           <Link to="/exchange">
             <button className="btn-secondary">Exchange</button>
           </Link>
-
           <button className="btn-tertiary">Buy/Sell</button>
         </div>
       </div>
