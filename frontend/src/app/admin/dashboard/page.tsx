@@ -80,9 +80,12 @@ const userReports = [
   }
 ];
 
+// Define the report type based on the userReports array structure
+type Report = typeof userReports[number];
+
 export default function AdminDashboard() {
   const [activeTab, setActiveTab] = useState('overview');
-  const [selectedReport, setSelectedReport] = useState(null);
+  const [selectedReport, setSelectedReport] = useState<Report | null>(null);
 
   return (
     <div className="min-h-screen flex flex-col">

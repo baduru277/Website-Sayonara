@@ -4,20 +4,7 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c36eb7b2-3465-439f-8471-a4d8df58846e" name="Changes" comment="">
-      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/add-item/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/add-item/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/categories/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/categories/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/exchange/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/exchange/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/how-it-works/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/how-it-works/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/item/[id]/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/item/[id]/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/profile/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/profile/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/resell/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/resell/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/app/trades/page.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/app/trades/page.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/FeaturedItems.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/FeaturedItems.tsx" afterDir="false" />
-      <change beforePath="$PROJECT_DIR$/frontend/src/components/Header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Header.tsx" afterDir="false" />
-    </list>
+    <list default="true" id="c36eb7b2-3465-439f-8471-a4d8df58846e" name="Changes" comment="" />
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
