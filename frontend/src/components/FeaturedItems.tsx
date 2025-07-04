@@ -73,7 +73,7 @@ export default function FeaturedItems() {
           </h2>
           <p className="text-gray-600 max-w-2xl mx-auto">
             Discover amazing items available for trade. From electronics to fashion, 
-            find what you're looking for or list your own items.
+            find what you&#39;re looking for or list your own items.
           </p>
         </div>
 

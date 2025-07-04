@@ -32,7 +32,6 @@ const itemData = {
 };
 
 export default function ItemDetailPage() {
-  const params = useParams();
   const [selectedImage, setSelectedImage] = useState(0);
   const [showTradeModal, setShowTradeModal] = useState(false);
 

@@ -135,7 +135,7 @@ export default function HowItWorksPage() {
             </h1>
             <p className="text-xl text-gray-600 max-w-3xl mx-auto mb-8">
               Join thousands of people who are trading items sustainably. 
-              It's simple, safe, and completely free.
+              It&#39;s simple, safe, and completely free.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <button className="btn btn-primary text-lg px-8 py-4">

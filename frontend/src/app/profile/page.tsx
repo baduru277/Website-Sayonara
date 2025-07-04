@@ -316,7 +316,7 @@ export default function ProfilePage() {
                           <span className="font-semibold text-gray-900">Great trade!</span>
                         </div>
                         <p className="text-gray-600 mb-2">
-                          "Excellent communication and the item was exactly as described. Would trade again!"
+                          &quot;Excellent communication and the item was exactly as described. Would trade again!&quot;
                         </p>
                         <div className="flex items-center justify-between text-sm text-gray-500">
                           <span>by User{review}</span>

@@ -85,7 +85,7 @@ export default function ResellPage() {
   const [sortBy, setSortBy] = useState('ending-soon');
   const [searchQuery, setSearchQuery] = useState('');
   const [showBidModal, setShowBidModal] = useState(false);
-  const [selectedAuction, setSelectedAuction] = useState(null);
+  const [selectedAuction, setSelectedAuction] = useState<Auction | null>(null);
   const [bidAmount, setBidAmount] = useState('');
 
   const handleBid = (e: React.FormEvent) => {
@@ -98,7 +98,8 @@ export default function ResellPage() {
     }
   };
 
-  const openBidModal = (auction: any) => {
+  type Auction = typeof auctions[number];
+  const openBidModal = (auction: Auction) => {
     setSelectedAuction(auction);
     setBidAmount((auction.currentBid + 10).toString());
     setShowBidModal(true);

@@ -93,7 +93,6 @@ const bids = [
 
 export default function TradesPage() {
   const [activeTab, setActiveTab] = useState('trades');
-  const [selectedTrade, setSelectedTrade] = useState(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {

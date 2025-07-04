@@ -100,7 +100,7 @@ export default function CategoriesPage() {
               Browse by Category
             </h1>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              Find exactly what you're looking for by exploring our organized categories
+              Find exactly what you&#39;re looking for by exploring our organized categories
             </p>
           </div>
 
@@ -218,7 +218,7 @@ export default function CategoriesPage() {
           {/* CTA Section */}
           <div className="mt-16 text-center">
             <h2 className="text-2xl font-bold text-gray-900 mb-4">
-              Can't find what you're looking for?
+              Can&#39;t find what you&#39;re looking for?
             </h2>
             <p className="text-gray-600 mb-6">
               Try browsing all items or add your own item to trade

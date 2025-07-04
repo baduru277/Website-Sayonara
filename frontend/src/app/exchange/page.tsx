@@ -105,10 +105,13 @@ const suggestedExchanges = [
   }
 ];
 
+// Define a type for suggestion based on usage
+type SuggestedExchange = typeof suggestedExchanges[number];
+
 export default function ExchangePage() {
   const [activeTab, setActiveTab] = useState('exchanges');
   const [showExchangeModal, setShowExchangeModal] = useState(false);
-  const [selectedExchange, setSelectedExchange] = useState(null);
+  const [selectedExchange, setSelectedExchange] = useState<SuggestedExchange | null>(null);
 
   const getStatusColor = (status: string) => {
     switch (status) {
@@ -120,7 +123,7 @@ export default function ExchangePage() {
     }
   };
 
-  const proposeExchange = (suggestion: any) => {
+  const proposeExchange = (suggestion: SuggestedExchange) => {
     setSelectedExchange(suggestion);
     setShowExchangeModal(true);
   };

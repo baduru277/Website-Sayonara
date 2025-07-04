@@ -3,6 +3,7 @@
 import { useState } from 'react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
+import Image from 'next/image';
 
 export default function AddItemPage() {
   const [formData, setFormData] = useState({
@@ -99,7 +100,7 @@ export default function AddItemPage() {
                 Add New Item
               </h1>
               <p className="text-gray-600">
-                List an item you'd like to trade on Sayonara
+                List an item you&#39;d like to trade on Sayonara
               </p>
             </div>
 
@@ -276,9 +277,11 @@ export default function AddItemPage() {
                     <div className="grid grid-cols-3 gap-4">
                       {formData.images.map((file, index) => (
                         <div key={index} className="relative">
-                          <img
+                          <Image
                             src={URL.createObjectURL(file)}
                             alt={`Preview ${index + 1}`}
+                            width={300}
+                            height={96}
                             className="w-full h-24 object-cover rounded-lg"
                           />
                           <button

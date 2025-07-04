@@ -32,7 +32,7 @@ export default function Home() {
                   List Your Item
                 </h3>
                 <p className="text-gray-600">
-                  Upload photos and describe what you're offering. Specify what you'd like to trade for.
+                  Upload photos and describe what you&#39;re offering. Specify what you&#39;d like to trade for.
                 </p>
               </div>
 
@@ -71,7 +71,7 @@ export default function Home() {
                 Popular Categories
               </h2>
               <p className="text-gray-600 max-w-2xl mx-auto">
-                Explore items by category and find exactly what you're looking for
+                Explore items by category and find exactly what you&#39;re looking for
               </p>
             </div>
 
