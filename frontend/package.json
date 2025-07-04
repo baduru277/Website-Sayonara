@@ -1,11 +1,11 @@
 {
-  "name": "frontend",
-  "version": "0.1.0",
+  "name": "sayonara-frontend",
+  "version": "1.0.0",
   "private": true,
   "scripts": {
     "dev": "next dev --turbopack",
     "build": "next build",
-    "start": "next start",
+    "start": "next start -p $PORT",
     "lint": "next lint"
   },
   "dependencies": {
@@ -21,5 +21,8 @@
     "eslint": "^9",
     "eslint-config-next": "15.3.4",
     "@eslint/eslintrc": "^3"
+  },
+  "engines": {
+    "node": ">=18.0.0"
   }
 }

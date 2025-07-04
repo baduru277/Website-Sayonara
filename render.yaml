@@ -1,0 +1,56 @@
+databases:
+  - name: sayonara-db
+    databaseName: sayonara_db
+    user: sayonara_user
+    plan: free
+
+services:
+  - type: web
+    name: sayonara-backend
+    env: node
+    plan: free
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: DB_HOST
+        fromDatabase:
+          name: sayonara-db
+          property: host
+      - key: DB_PORT
+        fromDatabase:
+          name: sayonara-db
+          property: port
+      - key: DB_NAME
+        fromDatabase:
+          name: sayonara-db
+          property: database
+      - key: DB_USER
+        fromDatabase:
+          name: sayonara-db
+          property: user
+      - key: DB_PASSWORD
+        fromDatabase:
+          name: sayonara-db
+          property: password
+      - key: JWT_SECRET
+        generateValue: true
+      - key: JWT_EXPIRES_IN
+        value: 7d
+      - key: CORS_ORIGIN
+        value: https://sayonara-frontend.onrender.com
+
+  - type: web
+    name: sayonara-frontend
+    env: node
+    plan: free
+    buildCommand: cd frontend && npm install && npm run build
+    startCommand: cd frontend && npm start
+    envVars:
+      - key: NEXT_PUBLIC_API_URL
+        value: https://sayonara-backend.onrender.com
+      - key: NEXT_PUBLIC_APP_NAME
+        value: Sayonara
+      - key: NEXT_PUBLIC_APP_DESCRIPTION
+        value: Barter & Resell Platform 
