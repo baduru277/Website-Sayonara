@@ -4,7 +4,12 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c36eb7b2-3465-439f-8471-a4d8df58846e" name="Changes" comment="" />
+    <list default="true" id="c36eb7b2-3465-439f-8471-a4d8df58846e" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/FeaturedItems.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/FeaturedItems.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Header.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Header.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/Hero.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/Hero.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/LikedItems.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/LikedItems.tsx" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />

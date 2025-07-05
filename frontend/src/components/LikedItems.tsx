@@ -107,18 +107,18 @@ export default function LikedItems() {
           </p>
         </div>
 
-        <div className="flex flex-wrap justify-center gap-8">
+        <div className="flex gap-8 overflow-x-auto flex-nowrap pb-2 hide-scrollbar">
           {itemsToShow.map((item) => (
             <div
               key={item.id}
-              className="bg-white rounded-2xl shadow-lg flex flex-col items-center p-6 w-72 transition-transform hover:-translate-y-2 hover:shadow-2xl"
+              className="bg-white rounded-2xl shadow-lg flex flex-col items-center p-6 w-72 h-[420px] transition-transform hover:-translate-y-2 hover:shadow-2xl"
             >
               <img
                 src={item.image}
                 alt={item.title}
-                className="w-full h-44 object-cover rounded-xl mb-4 border border-gray-100 shadow-sm"
+                className="w-full h-40 object-cover rounded-xl mb-4 border border-gray-100 shadow-sm"
               />
-              <div className="w-full flex flex-col items-center flex-1">
+              <div className="w-full flex flex-col items-center flex-1 justify-between">
                 <span className="text-xs text-gray-400 mb-1">{item.category}</span>
                 <h3 className="text-xl font-bold text-gray-900 mb-1 text-center">{item.title}</h3>
                 <p className="text-gray-600 text-sm mb-3 text-center">{item.description}</p>
@@ -152,4 +152,9 @@ export default function LikedItems() {
       </div>
     </section>
   );
-} 
+}
+
+/* Add this to your global CSS or Tailwind config for hide-scrollbar:
+.hide-scrollbar::-webkit-scrollbar { display: none; }
+.hide-scrollbar { -ms-overflow-style: none; scrollbar-width: none; }
+*/ 
