@@ -133,14 +133,15 @@ export default function FeaturedItems() {
               key={item.id}
               className="bg-white rounded-2xl shadow-md flex flex-col w-72 h-[400px] mx-auto transition-transform hover:-translate-y-2 hover:shadow-lg"
             >
-              <div className="h-40 flex items-center justify-center overflow-hidden rounded-t-2xl bg-gray-50">
+              <div className="h-40 flex items-center justify-center overflow-hidden rounded-t-2xl bg-gray-50 p-4 border border-gray-200">
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="object-contain w-full h-full"
+                  className="object-contain w-full h-full drop-shadow-md bg-white rounded-xl"
+                  style={{ maxHeight: '100%', maxWidth: '100%' }}
                 />
               </div>
-              <div className="flex-1 flex flex-col items-center justify-between px-4 py-3">
+              <div className="flex-1 flex flex-col items-center justify-between px-4 py-3 min-h-[180px]">
                 <span className="uppercase text-xs text-gray-400 tracking-wider mb-1">{item.category}</span>
                 <h3 className="text-lg font-bold text-purple-700 mb-1 text-center">{item.title}</h3>
                 <p className="text-gray-500 text-sm mb-2 text-center">{item.description}</p>

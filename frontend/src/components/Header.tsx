@@ -23,15 +23,16 @@ export default function Header() {
               Post
             </Link>
             <select
-              className="px-7 py-2 border-2 border-purple-500 text-purple-700 font-semibold rounded-full bg-white hover:bg-purple-100 hover:text-purple-900 transition-all duration-200 text-xl shadow-none focus:outline-none"
+              className="px-7 py-2 border-2 border-purple-500 text-purple-700 font-semibold rounded-full bg-white hover:bg-purple-100 hover:text-purple-900 transition-all duration-200 text-xl shadow-none focus:outline-none appearance-none"
               defaultValue="Choose Location"
+              style={{ color: '#7e22ce' }}
             >
-              <option disabled>Choose Location</option>
-              <option>Delhi</option>
-              <option>Mumbai</option>
-              <option>Bangalore</option>
-              <option>Chennai</option>
-              <option>Kolkata</option>
+              <option disabled className="text-purple-400">Choose Location</option>
+              <option className="text-purple-700">Delhi</option>
+              <option className="text-purple-700">Mumbai</option>
+              <option className="text-purple-700">Bangalore</option>
+              <option className="text-purple-700">Chennai</option>
+              <option className="text-purple-700">Kolkata</option>
             </select>
             <Link
               href="/login"
