@@ -8,7 +8,7 @@ export default function Header() {
   const router = useRouter();
   const [loading, setLoading] = useState(false);
 
-  const handleLogoClick = (e: React.MouseEvent<HTMLAnchorElement>) => {
+  const handleLogoClick = (e: React.MouseEvent<HTMLSpanElement>) => {
     e.preventDefault();
     setLoading(true);
     router.push('/');
@@ -23,14 +23,19 @@ export default function Header() {
       <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
         <div className="flex items-center justify-between h-20">
           {/* Logo as website name, perfectly aligned */}
-          <a href="/" onClick={handleLogoClick} className="flex items-center h-full cursor-pointer">
-            <span className="text-4xl font-extrabold text-purple-700 underline decoration-purple-300 decoration-4 underline-offset-8 drop-shadow-lg hover:text-purple-900 transition-colors duration-300">
+          <Link href="/" className="flex items-center h-full" passHref legacyBehavior>
+            <span
+              onClick={handleLogoClick}
+              className="text-4xl font-extrabold text-purple-700 underline decoration-purple-300 decoration-4 underline-offset-8 drop-shadow-lg hover:text-purple-900 transition-colors duration-300 cursor-pointer flex items-center"
+              tabIndex={0}
+              role="link"
+            >
               Sayonara
+              {loading && (
+                <span className="ml-3 animate-spin inline-block w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full"></span>
+              )}
             </span>
-            {loading && (
-              <span className="ml-3 animate-spin inline-block w-5 h-5 border-2 border-purple-400 border-t-transparent rounded-full"></span>
-            )}
-          </a>
+          </Link>
 
           {/* Right-side buttons */}
           <div className="flex items-center gap-6">
