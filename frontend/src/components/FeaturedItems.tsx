@@ -126,7 +126,7 @@ export default function FeaturedItems() {
   return (
     <section className="py-12 bg-gray-50">
       <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-4xl font-extrabold text-center text-gray-900 mb-10">Featured Items</h2>
+        <h2 className="text-4xl font-extrabold text-center text-purple-700 mb-10">Featured Items</h2>
         <div className="flex flex-wrap justify-center gap-8">
           {itemsToShow.map((item) => (
             <div
@@ -140,12 +140,12 @@ export default function FeaturedItems() {
               />
               <div className="w-full flex flex-col items-center flex-1">
                 <span className="text-xs text-gray-400 mb-1">{item.category}</span>
-                <h3 className="text-xl font-bold text-gray-900 mb-1 text-center">{item.title}</h3>
+                <h3 className="text-xl font-bold text-purple-700 mb-1 text-center">{item.title}</h3>
                 <p className="text-gray-600 text-sm mb-3 text-center">{item.description}</p>
                 <span className="text-purple-600 font-semibold text-base mb-2">{item.action}</span>
                 <Link
                   href={`/item/${item.id}`}
-                  className="mt-auto w-full border-2 border-purple-500 text-purple-700 font-semibold rounded-full py-2 text-center hover:bg-purple-50 hover:text-purple-900 transition-all duration-200 text-base shadow-sm"
+                  className="mt-auto w-full border-2 border-purple-500 text-purple-700 font-semibold rounded-full py-3 text-center hover:bg-purple-600 hover:text-white transition-all duration-200 text-lg shadow-md focus:outline-none"
                 >
                   View Item
                 </Link>

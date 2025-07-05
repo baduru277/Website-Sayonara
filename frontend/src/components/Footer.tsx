@@ -2,16 +2,13 @@ import Link from 'next/link';
 
 export default function Footer() {
   return (
-    <footer className="bg-purple-600 text-white">
-      <div className="container py-12">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-8">
+    <footer className="bg-purple-700 text-white pt-12 pb-6">
+      <div className="max-w-7xl mx-auto px-4">
+        <div className="flex flex-col md:flex-row md:justify-between md:items-start gap-10 mb-10">
           {/* Brand */}
-          <div className="col-span-1 md:col-span-2">
+          <div className="mb-8 md:mb-0 flex-1 min-w-[220px]">
             <div className="flex items-center gap-2 mb-4">
-              <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="text-purple-600 font-bold text-lg">S</span>
-              </div>
-              <span className="text-xl font-bold">Sayonara</span>
+              <span className="text-2xl font-extrabold text-white drop-shadow-lg">Sayonara</span>
             </div>
             <p className="text-purple-100 mb-6 max-w-md">
               The sustainable marketplace where you can trade, barter, and resell items. 
@@ -37,8 +34,8 @@ export default function Footer() {
           </div>
 
           {/* Quick Links */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Quick Links</h3>
+          <div className="flex-1 min-w-[180px]">
+            <h3 className="text-lg font-bold mb-4">Quick Links</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/browse" className="text-purple-200 hover:text-white transition-colors">
@@ -64,8 +61,8 @@ export default function Footer() {
           </div>
 
           {/* Support */}
-          <div>
-            <h3 className="text-lg font-semibold mb-4">Support</h3>
+          <div className="flex-1 min-w-[180px]">
+            <h3 className="text-lg font-bold mb-4">Support</h3>
             <ul className="space-y-2">
               <li>
                 <Link href="/help" className="text-purple-200 hover:text-white transition-colors">
@@ -95,10 +92,9 @@ export default function Footer() {
             </ul>
           </div>
         </div>
-
-        <div className="border-t border-purple-500 mt-8 pt-8 text-center">
+        <div className="border-t border-purple-400 pt-8 text-center mt-8">
           <p className="text-purple-100">
-            © 2024 Sayonara. All rights reserved. Made with ❤️ for sustainable trading.
+            © 2025 Sayanaro Bazaar. All Rights Reserved.
           </p>
         </div>
       </div>
