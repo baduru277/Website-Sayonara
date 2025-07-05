@@ -190,7 +190,7 @@ class ApiService {
     try {
       const response = await fetch(`${this.baseURL.replace('/api', '')}/health`);
       return response.ok;
-    } catch (error) {
+    } catch {
       return false;
     }
   }

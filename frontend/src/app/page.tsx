@@ -109,9 +109,9 @@ export default function Home() {
               <h2 className="text-3xl font-bold text-gray-900 mb-4">
                 Popular Categories
               </h2>
-              <p className="text-gray-600 max-w-2xl mx-auto">
-                Explore items by category and find exactly what you're looking for
-              </p>
+                              <p className="text-gray-600 max-w-2xl mx-auto">
+                  Explore items by category and find exactly what you&apos;re looking for
+                </p>
             </div>
 
             <div className="grid grid-cols-2 md:grid-cols-4 gap-6">

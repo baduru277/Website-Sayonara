@@ -227,7 +227,7 @@ export default function BiddingSection() {
               Live Auctions
             </h2>
             <p className="text-gray-600">
-              Bid on exclusive items and win amazing deals. Don't miss out on these limited-time auctions.
+              Bid on exclusive items and win amazing deals. Don&apos;t miss out on these limited-time auctions.
             </p>
           </div>
           <Link 
