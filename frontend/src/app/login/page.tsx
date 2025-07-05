@@ -6,53 +6,56 @@ import Header from '../../components/Header';
 import Footer from '../../components/Footer';
 
 export default function LoginPage() {
+  const [tab, setTab] = useState<'login' | 'signup'>('login');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
-    rememberMe: false
+    confirmPassword: '',
   });
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Handle login logic here
-    console.log('Login attempt:', formData);
+    // Handle login/signup logic here
+    if (tab === 'login') {
+      // Login logic
+      console.log('Login:', formData);
+    } else {
+      // Signup logic
+      console.log('Signup:', formData);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const { name, value, type, checked } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: type === 'checkbox' ? checked : value
-    }));
+    const { name, value } = e.target;
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
-        <div className="max-w-md w-full space-y-8">
-          <div>
-            <div className="flex justify-center">
-              <div className="w-12 h-12 bg-gradient-to-r from-blue-600 to-green-500 rounded-lg flex items-center justify-center">
-                <span className="text-white font-bold text-xl">S</span>
-              </div>
+      <main className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4">
+        <div className="w-full max-w-sm mx-auto">
+          <div className="bg-white rounded-2xl shadow-xl px-8 py-8 flex flex-col items-center">
+            {/* Tabs */}
+            <div className="flex w-full mb-6 border-b border-gray-200">
+              <button
+                className={`flex-1 py-2 text-center font-semibold text-lg transition-colors ${tab === 'login' ? 'text-purple-700 border-b-2 border-purple-700' : 'text-gray-400'}`}
+                onClick={() => setTab('login')}
+              >
+                Log In
+              </button>
+              <button
+                className={`flex-1 py-2 text-center font-semibold text-lg transition-colors ${tab === 'signup' ? 'text-purple-700 border-b-2 border-purple-700' : 'text-gray-400'}`}
+                onClick={() => setTab('signup')}
+              >
+                Sign Up
+              </button>
             </div>
-            <h2 className="mt-6 text-center text-3xl font-bold text-gray-900">
-              Sign in to Sayonara
-            </h2>
-            <p className="mt-2 text-center text-sm text-gray-600">
-              Or{' '}
-              <Link href="/register" className="font-medium text-blue-600 hover:text-blue-500">
-                create a new account
-              </Link>
-            </p>
-          </div>
 
-          <form className="mt-8 space-y-6" onSubmit={handleSubmit}>
-            <div className="space-y-4">
-              <div>
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                  Email address
+            <form className="w-full" onSubmit={handleSubmit}>
+              <div className="mb-4">
+                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">
+                  Email Address
                 </label>
                 <input
                   id="email"
@@ -62,74 +65,66 @@ export default function LoginPage() {
                   required
                   value={formData.email}
                   onChange={handleChange}
-                  className="input mt-1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder="Enter your email"
                 />
               </div>
-
-              <div>
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+              <div className="mb-4">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">
                   Password
                 </label>
                 <input
                   id="password"
                   name="password"
                   type="password"
-                  autoComplete="current-password"
+                  autoComplete={tab === 'login' ? 'current-password' : 'new-password'}
                   required
                   value={formData.password}
                   onChange={handleChange}
-                  className="input mt-1"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
                   placeholder="Enter your password"
                 />
               </div>
-            </div>
-
-            <div className="flex items-center justify-between">
-              <div className="flex items-center">
-                <input
-                  id="remember-me"
-                  name="rememberMe"
-                  type="checkbox"
-                  checked={formData.rememberMe}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-900">
-                  Remember me
-                </label>
+              {tab === 'signup' && (
+                <div className="mb-4">
+                  <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">
+                    Confirm Password
+                  </label>
+                  <input
+                    id="confirmPassword"
+                    name="confirmPassword"
+                    type="password"
+                    autoComplete="new-password"
+                    required
+                    value={formData.confirmPassword}
+                    onChange={handleChange}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500"
+                    placeholder="Confirm your password"
+                  />
+                </div>
+              )}
+              <div className="flex items-center justify-between mb-4">
+                {tab === 'login' ? (
+                  <Link href="/forgot-password" className="text-sm text-purple-600 hover:underline">
+                    Forgot Password?
+                  </Link>
+                ) : <span />}
               </div>
-
-              <div className="text-sm">
-                <Link href="/forgot-password" className="font-medium text-blue-600 hover:text-blue-500">
-                  Forgot your password?
-                </Link>
-              </div>
-            </div>
-
-            <div>
               <button
                 type="submit"
-                className="btn btn-primary w-full text-lg py-3"
+                className="w-full py-3 rounded-lg font-bold text-white text-lg bg-purple-700 hover:bg-purple-800 transition-colors shadow-md mb-4"
               >
-                Sign in
+                {tab === 'login' ? 'SIGN IN' : 'SIGN UP'}
               </button>
-            </div>
-
-            <div className="mt-6">
-              <div className="relative">
-                <div className="absolute inset-0 flex items-center">
-                  <div className="w-full border-t border-gray-300" />
-                </div>
-                <div className="relative flex justify-center text-sm">
-                  <span className="px-2 bg-gray-50 text-gray-500">Or continue with</span>
-                </div>
+              <div className="flex items-center my-4">
+                <div className="flex-1 h-px bg-gray-200" />
+                <span className="mx-3 text-gray-400 text-sm">or</span>
+                <div className="flex-1 h-px bg-gray-200" />
               </div>
-
-              <div className="mt-6 grid grid-cols-2 gap-3">
+              <div className="flex flex-col gap-3">
                 <button
                   type="button"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors"
                 >
                   <svg className="w-5 h-5" viewBox="0 0 24 24">
                     <path fill="currentColor" d="M22.56 12.25c0-.78-.07-1.53-.2-2.25H12v4.26h5.92c-.26 1.37-1.04 2.53-2.21 3.31v2.77h3.57c2.08-1.92 3.28-4.74 3.28-8.09z"/>
@@ -137,21 +132,35 @@ export default function LoginPage() {
                     <path fill="currentColor" d="M5.84 14.09c-.22-.66-.35-1.36-.35-2.09s.13-1.43.35-2.09V7.07H2.18C1.43 8.55 1 10.22 1 12s.43 3.45 1.18 4.93l2.85-2.22.81-.62z"/>
                     <path fill="currentColor" d="M12 5.38c1.62 0 3.06.56 4.21 1.64l3.15-3.15C17.45 2.09 14.97 1 12 1 7.7 1 3.99 3.47 2.18 7.07l3.66 2.84c.87-2.6 3.3-4.53 6.16-4.53z"/>
                   </svg>
-                  <span className="ml-2">Google</span>
+                  Continue with Google
                 </button>
-
                 <button
                   type="button"
-                  className="w-full inline-flex justify-center py-2 px-4 border border-gray-300 rounded-md shadow-sm bg-white text-sm font-medium text-gray-500 hover:bg-gray-50"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-lg bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors"
                 >
                   <svg className="w-5 h-5" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M24 12.073c0-6.627-5.373-12-12-12s-12 5.373-12 12c0 5.99 4.388 10.954 10.125 11.854v-8.385H7.078v-3.47h3.047V9.43c0-3.007 1.792-4.669 4.533-4.669 1.312 0 2.686.235 2.686.235v2.953H15.83c-1.491 0-1.956.925-1.956 1.874v2.25h3.328l-.532 3.47h-2.796v8.385C19.612 23.027 24 18.062 24 12.073z"/>
+                    <path d="M16.365 1.43c0 1.14-.93 2.07-2.07 2.07s-2.07-.93-2.07-2.07.93-2.07 2.07-2.07 2.07.93 2.07 2.07zm-2.07 3.6c-1.99 0-3.6 1.61-3.6 3.6 0 1.99 1.61 3.6 3.6 3.6s3.6-1.61 3.6-3.6c0-1.99-1.61-3.6-3.6-3.6zm0 6.6c-1.66 0-3 1.34-3 3v7.2c0 1.66 1.34 3 3 3s3-1.34 3-3v-7.2c0-1.66-1.34-3-3-3z" />
                   </svg>
-                  <span className="ml-2">Facebook</span>
+                  Continue with Apple
                 </button>
               </div>
-            </div>
-          </form>
+            </form>
+            {tab === 'login' ? (
+              <p className="mt-6 text-sm text-gray-600">
+                Don&apos;t have an account?{' '}
+                <button className="text-purple-700 font-semibold hover:underline" onClick={() => setTab('signup')}>
+                  Sign Up
+                </button>
+              </p>
+            ) : (
+              <p className="mt-6 text-sm text-gray-600">
+                Already have an account?{' '}
+                <button className="text-purple-700 font-semibold hover:underline" onClick={() => setTab('login')}>
+                  Log In
+                </button>
+              </p>
+            )}
+          </div>
         </div>
       </main>
       <Footer />

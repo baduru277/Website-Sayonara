@@ -1,4 +1,5 @@
 import Link from 'next/link';
+import { useState } from 'react';
 
 const featuredItems = [
   {
@@ -10,6 +11,7 @@ const featuredItems = [
     owner: "TechTrader",
     location: "New York, NY",
     tradeFor: "MacBook Air or iPad Pro",
+    price: 85000,
     views: 127,
     likes: 23
   },
@@ -22,6 +24,7 @@ const featuredItems = [
     owner: "SneakerHead",
     location: "Los Angeles, CA",
     tradeFor: "Yeezy 350 or cash",
+    price: 15000,
     views: 89,
     likes: 45
   },
@@ -34,6 +37,7 @@ const featuredItems = [
     owner: "MusicLover",
     location: "Austin, TX",
     tradeFor: "Drum set or keyboard",
+    price: 50000,
     views: 156,
     likes: 67
   },
@@ -46,6 +50,7 @@ const featuredItems = [
     owner: "GamerPro",
     location: "Seattle, WA",
     tradeFor: "PS5 + games or cash",
+    price: 120000,
     views: 234,
     likes: 89
   },
@@ -58,6 +63,7 @@ const featuredItems = [
     owner: "PhotoBuff",
     location: "San Francisco, CA",
     tradeFor: "Vintage watches or art",
+    price: 25000,
     views: 78,
     likes: 34
   },
@@ -70,35 +76,67 @@ const featuredItems = [
     owner: "BikeRider",
     location: "Denver, CO",
     tradeFor: "Road bike or camping gear",
+    price: 80000,
     views: 145,
     likes: 56
+  },
+  {
+    id: 7,
+    title: "Dell Optiplex 7040 All-in-One Computer",
+    description: "With 24in Monitor, Windows 10 Pro",
+    image: "/api/placeholder/300/200",
+    category: "Computers",
+    owner: "OfficeDeals",
+    location: "Chicago, IL",
+    tradeFor: "Laptop or cash",
+    price: 40000,
+    views: 120,
+    likes: 22
+  },
+  {
+    id: 8,
+    title: "4K UHD LED Smart TV with Chromecast",
+    description: "Brand new, 55in, warranty included",
+    image: "/api/placeholder/300/200",
+    category: "Electronics",
+    owner: "HomeTech",
+    location: "Houston, TX",
+    tradeFor: "Soundbar or cash",
+    price: 60000,
+    views: 99,
+    likes: 18
   }
 ];
 
+const ITEMS_PER_PAGE = 5;
+
 export default function FeaturedItems() {
+  const [page, setPage] = useState(0);
+  const totalPages = Math.ceil(featuredItems.length / ITEMS_PER_PAGE);
+  const startIdx = page * ITEMS_PER_PAGE;
+  const itemsToShow = featuredItems.slice(startIdx, startIdx + ITEMS_PER_PAGE);
+
   return (
-    <section className="py-16 bg-gradient-to-b from-white to-gray-50">
+    <section className="py-10 bg-white">
       <div className="container">
-        <div className="text-center mb-12">
+        <div className="flex flex-col items-center mb-8">
           <div className="inline-flex items-center px-4 py-2 bg-purple-100 text-purple-700 rounded-full text-sm font-medium mb-4">
             <span className="w-2 h-2 bg-purple-500 rounded-full mr-2"></span>
             Trending Items
           </div>
-          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+          <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-2">
             Featured Items
           </h2>
-          <p className="text-gray-600 max-w-2xl mx-auto text-lg">
-            Discover amazing items available for trade. From electronics to fashion, 
-            find what you&#39;re looking for or list your own items.
+          <p className="text-gray-600 max-w-2xl mx-auto text-lg text-center">
+            Discover amazing items available for trade. From electronics to fashion, find what you&apos;re looking for or list your own items.
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-          {featuredItems.map((item, index) => (
-            <div 
-              key={item.id} 
-              className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 overflow-hidden"
-              style={{ animationDelay: `${index * 100}ms` }}
+        <div className="flex gap-6 justify-center items-stretch">
+          {itemsToShow.map((item) => (
+            <div
+              key={item.id}
+              className="group bg-white rounded-2xl shadow-sm hover:shadow-xl transition-all duration-500 transform hover:-translate-y-2 border border-gray-100 overflow-hidden w-56 flex-shrink-0 flex flex-col"
             >
               <div className="relative">
                 <div className="w-full h-32 bg-gradient-to-br from-gray-200 to-gray-300 flex items-center justify-center relative overflow-hidden">
@@ -116,15 +154,14 @@ export default function FeaturedItems() {
                 </div>
               </div>
 
-              <div className="p-4">
+              <div className="p-4 flex-1 flex flex-col">
                 <h3 className="text-lg font-semibold text-gray-900 mb-1 group-hover:text-purple-600 transition-colors duration-300 line-clamp-1">
                   {item.title}
                 </h3>
-                <p className="text-gray-600 mb-3 text-sm line-clamp-2">
+                <p className="text-gray-600 mb-2 text-sm line-clamp-2">
                   {item.description}
                 </p>
-
-                <div className="flex items-center justify-between mb-3">
+                <div className="flex items-center justify-between mb-2">
                   <div className="flex items-center gap-2">
                     <div className="w-6 h-6 bg-purple-100 rounded-full flex items-center justify-center">
                       <span className="text-purple-600 text-xs font-bold">{item.owner[0]}</span>
@@ -137,14 +174,15 @@ export default function FeaturedItems() {
                     📍 {item.location}
                   </span>
                 </div>
-
-                <div className="mb-4 p-3 bg-purple-50 rounded-lg border border-purple-100">
+                <div className="mb-2 p-2 bg-purple-50 rounded-lg border border-purple-100">
                   <span className="text-xs font-semibold text-purple-700 uppercase tracking-wide">Trade for:</span>
                   <p className="text-xs text-purple-600 mt-1 line-clamp-2">{item.tradeFor}</p>
                 </div>
-
-                <div className="flex gap-2">
-                  <Link 
+                <div className="mb-2">
+                  <span className="text-lg font-bold text-gray-900">₹{item.price.toLocaleString()}</span>
+                </div>
+                <div className="flex gap-2 mt-auto">
+                  <Link
                     href={`/item/${item.id}`}
                     className="group/btn flex-1 bg-gradient-to-r from-purple-600 to-blue-600 text-white text-center py-2 px-3 rounded-lg font-medium text-sm hover:from-purple-700 hover:to-blue-700 transform hover:scale-105 transition-all duration-300 shadow-md hover:shadow-lg"
                   >
@@ -159,9 +197,21 @@ export default function FeaturedItems() {
           ))}
         </div>
 
-        <div className="text-center mt-12">
-          <Link 
-            href="/browse" 
+        {/* Pagination Dots */}
+        <div className="flex justify-center mt-6 gap-2">
+          {Array.from({ length: totalPages }).map((_, idx) => (
+            <button
+              key={idx}
+              className={`w-3 h-3 rounded-full border-2 ${page === idx ? 'bg-purple-600 border-purple-600' : 'bg-white border-purple-300'} transition-all`}
+              onClick={() => setPage(idx)}
+              aria-label={`Go to page ${idx + 1}`}
+            />
+          ))}
+        </div>
+
+        <div className="text-center mt-10">
+          <Link
+            href="/browse"
             className="group inline-flex items-center px-8 py-4 text-lg font-semibold text-purple-600 border-2 border-purple-600 rounded-xl hover:bg-purple-600 hover:text-white transition-all duration-300 transform hover:scale-105"
           >
             Browse All Items
