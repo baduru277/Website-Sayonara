@@ -18,20 +18,20 @@ const featuredItems = [
     likes: 23,
     action: "Bid"
   },
-  {
-    id: 2,
-    title: "Nike Air Jordan 1",
-    description: "Retro High OG, Size 10, Like new",
-    image: "https://images.unsplash.com/photo-1517263904808-5dc0d6e1ad21?auto=format&fit=crop&w=400&q=80",
-    category: "Fashion",
-    owner: "SneakerHead",
-    location: "Los Angeles, CA",
-    tradeFor: "Yeezy 350 or cash",
-    price: 15000,
-    views: 89,
-    likes: 45,
-    action: "Exchange"
-  },
+//   {
+//     id: 2,
+//     title: "Nike Air Jordan 1",
+//     description: "Retro High OG, Size 10, Like new",
+//     image: "https://images.unsplash.com/photo-1517263904808-5dc0d6e1ad21?auto=format&fit=crop&w=400&q=80",
+//     category: "Fashion",
+//     owner: "SneakerHead",
+//     location: "Los Angeles, CA",
+//     tradeFor: "Yeezy 350 or cash",
+//     price: 15000,
+//     views: 89,
+//     likes: 45,
+//     action: "Exchange"
+//   },
   {
     id: 3,
     title: "Guitar - Fender Stratocaster",
