@@ -24,7 +24,7 @@ export default function Hero() {
           value={search}
           onChange={e => setSearch(e.target.value)}
           placeholder="Search items like 'phone', 'chair', or 'pen'"
-          className="w-full max-w-2xl px-8 py-4 mb-6 border-2 border-purple-400 rounded-full text-lg focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white placeholder-purple-300 shadow-lg font-medium text-purple-700"
+          className="w-full max-w-2xl px-8 py-4 mb-6 border-2 border-purple-400 rounded-full text-lg focus:outline-none focus:ring-2 focus:ring-purple-300 bg-white placeholder-purple-400 shadow-lg font-medium text-purple-700"
         />
         <div className="flex flex-row gap-4 w-full justify-center mb-2">
           {heroButtons.map(btn => (

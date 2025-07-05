@@ -133,16 +133,28 @@ export default function FeaturedItems() {
               key={item.id}
               className="bg-white rounded-2xl shadow-lg flex flex-col items-center p-6 w-72 h-[420px] transition-transform hover:-translate-y-2 hover:shadow-2xl"
             >
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-40 object-cover rounded-xl mb-4 border border-gray-100 shadow-sm"
-              />
+              <div className="relative w-full h-40 mb-4">
+                <img
+                  src={item.image}
+                  alt={item.title}
+                  className="absolute inset-0 w-full h-full object-cover rounded-xl border border-gray-100 shadow-sm"
+                />
+              </div>
               <div className="w-full flex flex-col items-center flex-1 justify-between">
                 <span className="text-xs text-gray-400 mb-1">{item.category}</span>
                 <h3 className="text-xl font-bold text-purple-700 mb-1 text-center">{item.title}</h3>
                 <p className="text-gray-600 text-sm mb-3 text-center">{item.description}</p>
-                <span className="text-purple-600 font-semibold text-base mb-2">{item.action}</span>
+                <span>
+                  {item.action === 'Exchange' && (
+                    <Link href="/exchange" className="text-purple-600 font-semibold text-base mb-2 hover:underline cursor-pointer">Exchange</Link>
+                  )}
+                  {item.action === 'Bid' && (
+                    <Link href="/bidding" className="text-purple-600 font-semibold text-base mb-2 hover:underline cursor-pointer">Bid</Link>
+                  )}
+                  {item.action === 'Buy/Sell' && (
+                    <Link href="/resell" className="text-purple-600 font-semibold text-base mb-2 hover:underline cursor-pointer">Buy/Sell</Link>
+                  )}
+                </span>
                 <Link
                   href={`/item/${item.id}`}
                   className="mt-auto w-full border-2 border-purple-500 text-purple-700 font-semibold rounded-full py-3 text-center hover:bg-purple-600 hover:text-white transition-all duration-200 text-lg shadow-md focus:outline-none"
