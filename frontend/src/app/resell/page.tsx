@@ -52,7 +52,7 @@ const resellItems: ResellItem[] = [
   },
   {
     id: '2',
-    title: 'Nike Air Force 1 '07 Low-Top Sneakers',
+    title: 'Nike Air Force 1 \'07 Low-Top Sneakers',
     description: 'Classic white Air Force 1s in excellent condition. Size 10, barely worn.',
     image: '/api/placeholder/300/300',
     category: 'Fashion',

@@ -5,57 +5,34 @@ databases:
     plan: free
 
 services:
+  # Backend API Service
   - type: web
     name: sayonara-backend
     env: node
     plan: free
-    rootDir: backend
-    buildCommand: |
-      npm ci
-    startCommand: npm start
+    buildCommand: cd backend && npm install
+    startCommand: cd backend && npm start
     envVars:
       - key: NODE_ENV
         value: production
-      - key: DB_HOST
-        fromDatabase:
-          name: sayonara-db
-          property: host
-      - key: DB_PORT
-        fromDatabase:
-          name: sayonara-db
-          property: port
-      - key: DB_NAME
-        fromDatabase:
-          name: sayonara-db
-          property: database
-      - key: DB_USER
-        fromDatabase:
-          name: sayonara-db
-          property: user
-      - key: DB_PASSWORD
-        fromDatabase:
-          name: sayonara-db
-          property: password
+      - key: PORT
+        value: 10000
       - key: JWT_SECRET
         generateValue: true
-      - key: JWT_EXPIRES_IN
-        value: 7d
-      - key: CORS_ORIGIN
+      - key: FRONTEND_URL
         value: https://sayonara-frontend.onrender.com
+      - key: DATABASE_URL
+        fromDatabase:
+          name: sayonara-db
+          property: connectionString
 
+  # Frontend Service
   - type: web
     name: sayonara-frontend
-    env: node
+    env: static
     plan: free
-    rootDir: frontend
-    buildCommand: |
-      npm ci
-      npm run build
-    startCommand: npm start
+    buildCommand: cd frontend && npm install && npm run build
+    staticPublishPath: frontend/.next
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://sayonara-backend.onrender.com
-      - key: NEXT_PUBLIC_APP_NAME
-        value: Sayonara
-      - key: NEXT_PUBLIC_APP_DESCRIPTION
-        value: Barter & Resell Platform 
+        value: https://sayonara-backend.onrender.com 
