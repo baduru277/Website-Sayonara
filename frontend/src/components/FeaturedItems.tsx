@@ -155,7 +155,7 @@ export default function FeaturedItems() {
                 ) : null}
                 <Link
                   href={`/item/${item.id}`}
-                  className="mt-auto w-full border-2 border-purple-500 text-purple-700 font-semibold rounded-full py-2 text-center hover:bg-purple-100 hover:text-purple-900 transition-all duration-200 text-base shadow-none focus:outline-none"
+                  className="mt-auto w-full border-2 border-purple-500 text-purple-700 font-bold rounded-full py-2 text-center hover:bg-purple-100 hover:text-purple-900 transition-all duration-200 text-base shadow-none focus:outline-none"
                 >
                   View Item
                 </Link>

@@ -92,204 +92,178 @@ export default function AddItemPage() {
   return (
     <div className="min-h-screen flex flex-col">
       <Header />
-      <main className="flex-1 bg-gray-50 py-8">
-        <div className="container max-w-2xl">
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-8">
-            <div className="mb-8">
-              <h1 className="text-3xl font-bold text-gray-900 mb-2">
+      <main className="flex-1 bg-gradient-to-br from-purple-100 via-white to-purple-50 py-12 px-2 flex items-center justify-center">
+        <div className="w-full max-w-2xl mx-auto">
+          <div className="backdrop-blur-lg bg-white/80 border-2 border-purple-200 rounded-3xl shadow-2xl p-10 md:p-12 transition-all duration-300">
+            <div className="mb-8 text-center">
+              <h1 className="text-4xl font-extrabold text-purple-700 mb-2 flex items-center justify-center gap-2">
+                <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                 Add New Item
               </h1>
-              <p className="text-gray-600">
-                List an item you&#39;d like to trade on Sayonara
-              </p>
+              <p className="text-purple-500 font-medium">List an item you'd like to trade on Sayonara</p>
             </div>
-
-            <form onSubmit={handleSubmit} className="space-y-6">
+            <form onSubmit={handleSubmit} className="space-y-8">
               {/* Basic Information */}
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                <h2 className="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6" /></svg>
                   Basic Information
                 </h2>
-                
-                <div className="space-y-4">
-                  <div>
-                    <label htmlFor="title" className="block text-sm font-medium text-gray-700 mb-2">
-                      Item Title *
-                    </label>
+                <div className="space-y-6">
+                  {/* Title */}
+                  <div className="relative">
                     <input
                       type="text"
                       id="title"
                       name="title"
                       value={formData.title}
                       onChange={handleChange}
-                      className={`input ${errors.title ? 'border-red-500' : ''}`}
-                      placeholder="e.g., iPhone 13 Pro, Nike Air Jordan 1"
+                      className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm ${errors.title ? 'border-red-400' : 'border-gray-200'} ${formData.title && !errors.title ? 'border-green-400' : ''}`}
+                      placeholder=" "
+                      autoComplete="off"
                     />
-                    {errors.title && (
-                      <p className="mt-1 text-sm text-red-600">{errors.title}</p>
-                    )}
+                    <label htmlFor="title" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">Item Title *</label>
+                    {errors.title && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
+                    {formData.title && !errors.title && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
                   </div>
-
-                  <div>
-                    <label htmlFor="description" className="block text-sm font-medium text-gray-700 mb-2">
-                      Description *
-                    </label>
+                  {/* Description */}
+                  <div className="relative">
                     <textarea
                       id="description"
                       name="description"
-                      rows={4}
+                      rows={3}
                       value={formData.description}
                       onChange={handleChange}
-                      className={`input ${errors.description ? 'border-red-500' : ''}`}
-                      placeholder="Describe your item in detail..."
+                      className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm resize-none ${errors.description ? 'border-red-400' : 'border-gray-200'} ${formData.description && !errors.description ? 'border-green-400' : ''}`}
+                      placeholder=" "
+                      autoComplete="off"
                     />
-                    {errors.description && (
-                      <p className="mt-1 text-sm text-red-600">{errors.description}</p>
-                    )}
+                    <label htmlFor="description" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">Description *</label>
+                    {errors.description && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
+                    {formData.description && !errors.description && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
                   </div>
-
-                  <div className="grid grid-cols-2 gap-4">
-                    <div>
-                      <label htmlFor="category" className="block text-sm font-medium text-gray-700 mb-2">
-                        Category *
-                      </label>
+                  {/* Category & Condition */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <div className="relative">
                       <select
                         id="category"
                         name="category"
                         value={formData.category}
                         onChange={handleChange}
-                        className={`input ${errors.category ? 'border-red-500' : ''}`}
+                        className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm ${errors.category ? 'border-red-400' : 'border-gray-200'} ${formData.category && !errors.category ? 'border-green-400' : ''}`}
                       >
-                        <option value="">Select category</option>
+                        <option value="" disabled>Select category</option>
                         {categories.map(category => (
                           <option key={category} value={category}>{category}</option>
                         ))}
                       </select>
-                      {errors.category && (
-                        <p className="mt-1 text-sm text-red-600">{errors.category}</p>
-                      )}
+                      <label htmlFor="category" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">Category *</label>
+                      {errors.category && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
+                      {formData.category && !errors.category && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
                     </div>
-
-                    <div>
-                      <label htmlFor="condition" className="block text-sm font-medium text-gray-700 mb-2">
-                        Condition *
-                      </label>
+                    <div className="relative">
                       <select
                         id="condition"
                         name="condition"
                         value={formData.condition}
                         onChange={handleChange}
-                        className={`input ${errors.condition ? 'border-red-500' : ''}`}
+                        className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm ${errors.condition ? 'border-red-400' : 'border-gray-200'} ${formData.condition && !errors.condition ? 'border-green-400' : ''}`}
                       >
-                        <option value="">Select condition</option>
+                        <option value="" disabled>Select condition</option>
                         {conditions.map(condition => (
                           <option key={condition} value={condition}>{condition}</option>
                         ))}
                       </select>
-                      {errors.condition && (
-                        <p className="mt-1 text-sm text-red-600">{errors.condition}</p>
-                      )}
+                      <label htmlFor="condition" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">Condition *</label>
+                      {errors.condition && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
+                      {formData.condition && !errors.condition && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
                     </div>
                   </div>
                 </div>
               </div>
-
               {/* Trade Preferences */}
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                <h2 className="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
                   Trade Preferences
                 </h2>
-                
-                <div>
-                  <label htmlFor="tradeFor" className="block text-sm font-medium text-gray-700 mb-2">
-                    What would you like to trade for? *
-                  </label>
-                  <textarea
+                <div className="relative">
+                  <input
+                    type="text"
                     id="tradeFor"
                     name="tradeFor"
-                    rows={3}
                     value={formData.tradeFor}
                     onChange={handleChange}
-                    className={`input ${errors.tradeFor ? 'border-red-500' : ''}`}
-                    placeholder="e.g., MacBook Air, Yeezy 350, or cash offers"
+                    className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm ${errors.tradeFor ? 'border-red-400' : 'border-gray-200'} ${formData.tradeFor && !errors.tradeFor ? 'border-green-400' : ''}`}
+                    placeholder=" "
+                    autoComplete="off"
                   />
-                  {errors.tradeFor && (
-                    <p className="mt-1 text-sm text-red-600">{errors.tradeFor}</p>
-                  )}
+                  <label htmlFor="tradeFor" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">What would you like to trade for? *</label>
+                  {errors.tradeFor && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
+                  {formData.tradeFor && !errors.tradeFor && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
                 </div>
               </div>
-
               {/* Location */}
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
+                <h2 className="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" /><circle cx="12" cy="11" r="3" /></svg>
                   Location
                 </h2>
-                
-                <div>
-                  <label htmlFor="location" className="block text-sm font-medium text-gray-700 mb-2">
-                    Your Location *
-                  </label>
+                <div className="relative">
                   <input
                     type="text"
                     id="location"
                     name="location"
                     value={formData.location}
                     onChange={handleChange}
-                    className={`input ${errors.location ? 'border-red-500' : ''}`}
-                    placeholder="City, State or ZIP code"
+                    className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm ${errors.location ? 'border-red-400' : 'border-gray-200'} ${formData.location && !errors.location ? 'border-green-400' : ''}`}
+                    placeholder=" "
+                    autoComplete="off"
                   />
-                  {errors.location && (
-                    <p className="mt-1 text-sm text-red-600">{errors.location}</p>
-                  )}
+                  <label htmlFor="location" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">Location *</label>
+                  {errors.location && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
+                  {formData.location && !errors.location && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
                 </div>
               </div>
-
-              {/* Images */}
+              {/* Image Upload */}
               <div>
-                <h2 className="text-xl font-semibold text-gray-900 mb-4">
-                  Photos
+                <h2 className="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
+                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path strokeLinecap="round" strokeLinejoin="round" d="M16 3v4H8V3" /></svg>
+                  Images
                 </h2>
-                
-                <div className="space-y-4">
-                  <div className="border-2 border-dashed border-gray-300 rounded-lg p-6 text-center">
+                <div className="mb-4">
+                  <label htmlFor="images" className="block text-sm font-medium text-gray-700 mb-2">Upload Images</label>
+                  <div className="relative flex flex-col items-center justify-center border-2 border-dashed border-purple-400 rounded-2xl bg-purple-50/40 py-8 px-4 transition-all duration-200 hover:bg-purple-100/60 cursor-pointer">
                     <input
+                      id="images"
+                      name="images"
                       type="file"
-                      multiple
                       accept="image/*"
+                      multiple
                       onChange={handleImageUpload}
-                      className="hidden"
-                      id="image-upload"
+                      className="absolute inset-0 opacity-0 cursor-pointer"
                     />
-                    <label htmlFor="image-upload" className="cursor-pointer">
-                      <svg className="mx-auto h-12 w-12 text-gray-400" stroke="currentColor" fill="none" viewBox="0 0 48 48">
-                        <path d="M28 8H12a4 4 0 00-4 4v20m32-12v8m0 0v8a4 4 0 01-4 4H12a4 4 0 01-4-4v-4m32-4l-3.172-3.172a4 4 0 00-5.656 0L28 28M8 32l9.172-9.172a4 4 0 015.656 0L28 28m0 0l4 4m4-24h8m-4-4v8m-12 4h.02" strokeWidth={2} strokeLinecap="round" strokeLinejoin="round" />
-                      </svg>
-                      <p className="mt-2 text-sm text-gray-600">
-                        Click to upload photos
-                      </p>
-                      <p className="text-xs text-gray-500">
-                        PNG, JPG, GIF up to 10MB each
-                      </p>
-                    </label>
+                    <svg className="w-10 h-10 text-purple-400 mb-2" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
+                    <span className="text-purple-700 font-semibold">Drag & drop or click to upload</span>
+                    <span className="text-xs text-purple-400">(Up to 5 images, JPG/PNG/GIF)</span>
                   </div>
-
+                  {/* Image Previews */}
                   {formData.images.length > 0 && (
-                    <div className="grid grid-cols-3 gap-4">
-                      {formData.images.map((file, index) => (
-                        <div key={index} className="relative">
-                          <Image
+                    <div className="flex flex-wrap gap-4 mt-4">
+                      {formData.images.map((file, idx) => (
+                        <div key={idx} className="relative group">
+                          <img
                             src={URL.createObjectURL(file)}
-                            alt={`Preview ${index + 1}`}
-                            width={300}
-                            height={96}
-                            className="w-full h-24 object-cover rounded-lg"
+                            alt={`Preview ${idx + 1}`}
+                            className="w-24 h-24 object-cover rounded-xl border-2 border-purple-200 shadow-md"
                           />
                           <button
                             type="button"
-                            onClick={() => removeImage(index)}
-                            className="absolute -top-2 -right-2 bg-red-500 text-white rounded-full w-6 h-6 flex items-center justify-center text-sm hover:bg-red-600"
+                            onClick={() => removeImage(idx)}
+                            className="absolute -top-2 -right-2 bg-white border border-purple-400 text-purple-700 rounded-full w-7 h-7 flex items-center justify-center shadow hover:bg-purple-100 transition-all"
+                            aria-label="Remove image"
                           >
-                            ×
+                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
                           </button>
                         </div>
                       ))}
@@ -297,20 +271,14 @@ export default function AddItemPage() {
                   )}
                 </div>
               </div>
-
-              {/* Submit */}
-              <div className="flex gap-4 pt-6">
+              {/* Submit Button */}
+              <div className="pt-4">
                 <button
                   type="submit"
-                  className="btn btn-primary flex-1 text-lg py-3"
+                  className="w-full py-4 rounded-full font-extrabold text-lg bg-gradient-to-r from-purple-600 to-purple-400 text-white shadow-xl hover:scale-105 hover:from-purple-700 hover:to-purple-500 transition-all duration-200 flex items-center justify-center gap-2"
                 >
-                  List Item
-                </button>
-                <button
-                  type="button"
-                  className="btn btn-outline text-lg py-3"
-                >
-                  Save Draft
+                  Add Item
+                  <svg className="w-6 h-6 ml-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
                 </button>
               </div>
             </form>

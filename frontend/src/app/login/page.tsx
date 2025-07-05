@@ -41,20 +41,20 @@ export default function LoginPage() {
           <span className="mx-1">&gt;</span>
           <span>User Account</span>
           <span className="mx-1">&gt;</span>
-          <span className="text-blue-600 font-semibold">Sign In</span>
+          <span className="text-purple-700 font-semibold">Sign In</span>
         </nav>
         <div className="w-full max-w-md mx-auto">
           <div className="bg-white rounded-2xl shadow-xl px-8 py-8 flex flex-col items-center">
             {/* Tabs */}
             <div className="flex w-full mb-6 border-b border-gray-200">
               <button
-                className={`flex-1 py-2 text-center font-bold text-lg transition-colors ${tab === 'login' ? 'text-black border-b-2 border-orange-500' : 'text-gray-400'}`}
+                className={`flex-1 py-2 text-center font-bold text-lg transition-colors ${tab === 'login' ? 'text-purple-700 border-b-2 border-purple-700' : 'text-gray-400'}`}
                 onClick={() => setTab('login')}
               >
                 Log In
               </button>
               <button
-                className={`flex-1 py-2 text-center font-bold text-lg transition-colors ${tab === 'signup' ? 'text-black border-b-2 border-orange-500' : 'text-gray-400'}`}
+                className={`flex-1 py-2 text-center font-bold text-lg transition-colors ${tab === 'signup' ? 'text-purple-700 border-b-2 border-purple-700' : 'text-gray-400'}`}
                 onClick={() => setTab('signup')}
               >
                 Sign Up
@@ -126,14 +126,14 @@ export default function LoginPage() {
               )}
               <div className="flex items-center justify-end mb-4">
                 {tab === 'login' ? (
-                  <Link href="/forgot-password" className="text-sm text-blue-600 hover:underline">
+                  <Link href="/forgot-password" className="text-sm text-purple-700 hover:underline">
                     Forgot Password?
                   </Link>
                 ) : <span />}
               </div>
               <button
                 type="submit"
-                className="w-full py-3 rounded-md font-bold text-white text-lg bg-[#8B2C32] hover:bg-[#6e2024] transition-colors shadow-md mb-4 flex items-center justify-center gap-2"
+                className="w-full py-3 rounded-full font-bold text-white text-lg bg-purple-700 hover:bg-purple-800 transition-colors shadow-md mb-4 flex items-center justify-center gap-2"
               >
                 {tab === 'login' ? 'SIGN IN' : 'SIGN UP'}
                 <svg className="w-5 h-5 ml-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
@@ -146,16 +146,17 @@ export default function LoginPage() {
               <div className="flex flex-col gap-3">
                 <button
                   type="button"
-                  className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-4 border-2 border-purple-500 text-purple-700 font-bold rounded-full bg-white hover:bg-purple-50 transition-colors"
+                  onClick={() => alert('Google sign-in placeholder')}
                 >
-                  <img src="/google.svg" alt="Google" className="w-5 h-5" />
+                  <svg className="w-5 h-5" viewBox="0 0 48 48"><g><path fill="#4285F4" d="M44.5 20H24v8.5h11.7C34.9 33.1 30.2 36 24 36c-6.6 0-12-5.4-12-12s5.4-12 12-12c2.7 0 5.2.9 7.2 2.4l6.4-6.4C33.5 5.1 28.1 3 24 3c-7.2 0-13.4 3.1-17.7 8.1z"/><path fill="#34A853" d="M6.3 14.7l7 5.1C15.1 17.1 19.2 14 24 14c2.7 0 5.2.9 7.2 2.4l6.4-6.4C33.5 5.1 28.1 3 24 3c-7.2 0-13.4 3.1-17.7 8.1z"/><path fill="#FBBC05" d="M24 44c5.8 0 10.7-1.9 14.3-5.1l-6.6-5.4C29.7 35.1 27 36 24 36c-6.2 0-10.9-2.9-13.7-7.1l-7 5.4C7.1 40.9 14.1 44 24 44z"/><path fill="#EA4335" d="M44.5 20H24v8.5h11.7c-1.1 3.1-4.2 5.5-7.7 5.5-4.6 0-8.4-3.8-8.4-8.5s3.8-8.5 8.4-8.5c2.1 0 4 .7 5.5 2.1l6.4-6.4C33.5 5.1 28.1 3 24 3c-7.2 0-13.4 3.1-17.7 8.1z"/></g></svg>
                   Login with Google
                 </button>
                 <button
                   type="button"
-                  className="w-full flex items-center justify-center gap-2 py-2 px-4 border border-gray-300 rounded-md bg-white text-gray-700 font-medium hover:bg-gray-50 transition-colors"
+                  className="w-full flex items-center justify-center gap-2 py-2 px-4 border-2 border-purple-500 text-purple-700 font-bold rounded-full bg-white hover:bg-purple-50 transition-colors"
                 >
-                  <img src="/apple.svg" alt="Apple" className="w-5 h-5" />
+                  <svg className="w-5 h-5" viewBox="0 0 24 24"><path fill="black" d="M16.365 1.43c0 1.14-.93 2.07-2.07 2.07s-2.07-.93-2.07-2.07.93-2.07 2.07-2.07 2.07.93 2.07 2.07zm-2.07 3.6c-1.99 0-3.6 1.61-3.6 3.6 0 1.99 1.61 3.6 3.6 3.6s3.6-1.61 3.6-3.6c0-1.99-1.61-3.6-3.6-3.6zm0 6.6c-1.66 0-3 1.34-3 3v7.2c0 1.66 1.34 3 3 3s3-1.34 3-3v-7.2c0-1.66-1.34-3-3-3z"/></svg>
                   Login with Apple
                 </button>
               </div>
@@ -163,14 +164,14 @@ export default function LoginPage() {
             {tab === 'login' ? (
               <p className="mt-6 text-sm text-gray-600">
                 Don&apos;t have an account?{' '}
-                <button className="text-blue-600 font-semibold hover:underline" onClick={() => setTab('signup')}>
+                <button className="text-purple-700 font-semibold hover:underline" onClick={() => setTab('signup')}>
                   Sign Up
                 </button>
               </p>
             ) : (
               <p className="mt-6 text-sm text-gray-600">
                 Already have an account?{' '}
-                <button className="text-blue-600 font-semibold hover:underline" onClick={() => setTab('login')}>
+                <button className="text-purple-700 font-semibold hover:underline" onClick={() => setTab('login')}>
                   Log In
                 </button>
               </p>
