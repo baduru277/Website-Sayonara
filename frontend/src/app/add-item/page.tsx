@@ -3,7 +3,6 @@
 import { useState } from 'react';
 import Header from '../../components/Header';
 import Footer from '../../components/Footer';
-import Image from 'next/image';
 
 export default function AddItemPage() {
   const [formData, setFormData] = useState({
@@ -100,7 +99,7 @@ export default function AddItemPage() {
                 <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
                 Add New Item
               </h1>
-              <p className="text-purple-500 font-medium">List an item you'd like to trade on Sayonara</p>
+              <p className="text-purple-500 font-medium">List an item you&apos;d like to trade on Sayonara</p>
             </div>
             <form onSubmit={handleSubmit} className="space-y-8">
               {/* Basic Information */}
