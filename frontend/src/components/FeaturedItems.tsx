@@ -124,39 +124,41 @@ export default function FeaturedItems() {
   const itemsToShow = featuredItems.slice(startIdx, startIdx + ITEMS_PER_PAGE);
 
   return (
-    <section className="py-12 bg-gray-50">
+    <section className="py-16 bg-gray-100">
       <div className="max-w-7xl mx-auto px-4">
         <h2 className="text-4xl font-extrabold text-center text-purple-700 mb-10">Featured Items</h2>
-        <div className="flex gap-8 overflow-x-auto flex-nowrap pb-2 hide-scrollbar">
+        <div className="flex gap-8 overflow-x-auto flex-nowrap pb-2 hide-scrollbar justify-center">
           {itemsToShow.map((item) => (
             <div
               key={item.id}
-              className="p-4 bg-white rounded-2xl shadow-lg flex flex-col w-72 h-[430px] mx-auto transition-transform hover:-translate-y-2 hover:shadow-2xl"
+              className="bg-white rounded-2xl shadow-md flex flex-col w-72 h-[400px] mx-auto transition-transform hover:-translate-y-2 hover:shadow-lg"
             >
-              <div className="relative w-full aspect-[4/3] bg-gray-100 rounded-xl overflow-hidden mb-3">
+              <div className="h-40 flex items-center justify-center overflow-hidden rounded-t-2xl bg-gray-50">
                 <img
                   src={item.image}
                   alt={item.title}
-                  className="absolute inset-0 w-full h-full object-cover rounded-xl"
+                  className="object-contain w-full h-full"
                 />
               </div>
-              <span className="uppercase text-xs text-gray-400 tracking-wider mb-1">{item.category}</span>
-              <h3 className="text-lg font-bold text-purple-700 mb-1 text-center">{item.title}</h3>
-              <p className="text-gray-500 text-sm mb-2 text-center flex-1">{item.description}</p>
-              {/* Action label as pill button */}
-              {item.action === 'Exchange' ? (
-                <Link href="/exchange" className="block w-full mb-2 py-2 rounded-full bg-purple-600 text-white text-center font-semibold hover:bg-purple-700 transition-colors">Exchange</Link>
-              ) : item.action === 'Bid' ? (
-                <Link href="/bidding" className="block w-full mb-2 py-2 rounded-full bg-purple-600 text-white text-center font-semibold hover:bg-purple-700 transition-colors">Bid</Link>
-              ) : item.action === 'Buy/Sell' ? (
-                <Link href="/resell" className="block w-full mb-2 py-2 rounded-full bg-purple-600 text-white text-center font-semibold hover:bg-purple-700 transition-colors">Buy/Sell</Link>
-              ) : null}
-              <Link
-                href={`/item/${item.id}`}
-                className="mt-auto w-full border-2 border-purple-500 text-purple-700 font-semibold rounded-full py-2 text-center hover:bg-purple-600 hover:text-white transition-all duration-200 text-base shadow-sm focus:outline-none"
-              >
-                View Item
-              </Link>
+              <div className="flex-1 flex flex-col items-center justify-between px-4 py-3">
+                <span className="uppercase text-xs text-gray-400 tracking-wider mb-1">{item.category}</span>
+                <h3 className="text-lg font-bold text-purple-700 mb-1 text-center">{item.title}</h3>
+                <p className="text-gray-500 text-sm mb-2 text-center">{item.description}</p>
+                {/* Action label as pill button */}
+                {item.action === 'Exchange' ? (
+                  <Link href="/exchange" className="block w-full mb-2 py-2 border-2 border-purple-500 text-purple-700 font-semibold rounded-full text-center hover:bg-purple-100 hover:text-purple-900 transition-colors">Exchange</Link>
+                ) : item.action === 'Bid' ? (
+                  <Link href="/bidding" className="block w-full mb-2 py-2 border-2 border-purple-500 text-purple-700 font-semibold rounded-full text-center hover:bg-purple-100 hover:text-purple-900 transition-colors">Bid</Link>
+                ) : item.action === 'Buy/Sell' ? (
+                  <Link href="/resell" className="block w-full mb-2 py-2 border-2 border-purple-500 text-purple-700 font-semibold rounded-full text-center hover:bg-purple-100 hover:text-purple-900 transition-colors">Buy/Sell</Link>
+                ) : null}
+                <Link
+                  href={`/item/${item.id}`}
+                  className="mt-auto w-full border-2 border-purple-500 text-purple-700 font-semibold rounded-full py-2 text-center hover:bg-purple-100 hover:text-purple-900 transition-all duration-200 text-base shadow-none focus:outline-none"
+                >
+                  View Item
+                </Link>
+              </div>
             </div>
           ))}
         </div>
@@ -176,7 +178,7 @@ export default function FeaturedItems() {
         <div className="text-center mt-10">
           <Link
             href="/browse"
-            className="group inline-flex items-center px-8 py-4 text-lg font-semibold text-purple-600 border-2 border-purple-600 rounded-xl hover:bg-purple-600 hover:text-white transition-all duration-300 transform hover:scale-105"
+            className="group inline-flex items-center px-8 py-4 text-lg font-semibold text-purple-600 border-2 border-purple-600 rounded-xl hover:bg-purple-100 hover:text-purple-900 transition-all duration-300 transform hover:scale-105"
           >
             Browse All Items
             <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
