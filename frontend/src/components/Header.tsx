@@ -56,7 +56,7 @@ export default function Header() {
         <div className="flex items-center justify-between h-20">
           {/* Logo as website name, perfectly aligned */}
           <Link href="/" className="flex items-center h-full">
-            <span className="text-5xl font-extrabold text-purple-700 drop-shadow-lg rounded-full px-4 py-1 hover:text-purple-800 transition-colors duration-300">Sayonara</span>
+            <span className="text-5xl font-extrabold text-purple-700 drop-shadow-lg rounded-full px-4 py-1 hover:text-purple-800 transition-colors duration-300">Sayonara Test</span>
           </Link>
 
           {/* Right-side buttons */}
