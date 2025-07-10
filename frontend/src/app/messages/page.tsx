@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
 
 // Mock data
 const conversations = [
@@ -94,7 +92,6 @@ export default function MessagesPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <main className="flex-1 bg-gray-50 py-8">
         <div className="container max-w-6xl">
           <div className="bg-white rounded-lg shadow-sm border border-gray-200">
@@ -271,7 +268,6 @@ export default function MessagesPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 } 

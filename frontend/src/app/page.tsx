@@ -1,23 +1,19 @@
-import Header from '../components/Header';
-import Hero from '../components/Hero';
-import FeaturedItems from '../components/FeaturedItems';
-import LikedItems from '../components/LikedItems';
-import Footer from '../components/Footer';
+import FeaturedItems from "../components/FeaturedItems";
+import Hero from "../components/Hero";
+import "../components/Header.css";
+import HowItWorksSection from '@/components/HowItWorksSection';
 
 export default function Home() {
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 min-h-[calc(100vh-5rem)]">
-        <Hero />
-        <div className="bg-white">
+    <main>
+      <Hero />
+      <HowItWorksSection />
+      <div style={{ background: '#f5f6fa', padding: '32px 16px' }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <h2 style={{ fontSize: 28, fontWeight: 700, marginBottom: 24, color: '#222', textAlign: 'center' }}>Featured Items</h2>
           <FeaturedItems />
-          <LikedItems />
         </div>
-        {/* Remove ad/promo sections. Keep only clean, aligned sections. */}
-        {/* Other sections (How it Works, Categories, etc.) can be added below if needed */}
-      </main>
-      <Footer />
-    </div>
+      </div>
+    </main>
   );
 }

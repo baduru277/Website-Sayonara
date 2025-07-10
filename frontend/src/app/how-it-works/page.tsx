@@ -1,6 +1,3 @@
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-
 const steps = [
   {
     number: 1,
@@ -125,7 +122,6 @@ const safetyTips = [
 export default function HowItWorksPage() {
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <main className="flex-1">
         {/* Hero Section */}
         <section className="bg-gradient-to-br from-blue-50 to-green-50 py-20">
@@ -138,10 +134,10 @@ export default function HowItWorksPage() {
               It&#39;s simple, safe, and completely free.
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="btn btn-primary text-lg px-8 py-4">
+              <button className="sayonara-btn text-lg px-8 py-4">
                 Start Trading Now
               </button>
-              <button className="btn btn-outline text-lg px-8 py-4">
+              <button className="sayonara-btn text-lg px-8 py-4">
                 Browse Items
               </button>
             </div>
@@ -344,17 +340,16 @@ export default function HowItWorksPage() {
               Join thousands of people who are already trading sustainably on Sayonara
             </p>
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <button className="btn btn-primary text-lg px-8 py-4">
+              <button className="sayonara-btn text-lg px-8 py-4">
                 Create Account
               </button>
-              <button className="btn btn-outline text-lg px-8 py-4">
+              <button className="sayonara-btn text-lg px-8 py-4">
                 Browse Items
               </button>
             </div>
           </div>
         </section>
       </main>
-      <Footer />
     </div>
   );
 } 

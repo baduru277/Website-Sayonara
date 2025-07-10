@@ -2,17 +2,26 @@
 
 import Link from 'next/link';
 import { useEffect, useState } from 'react';
-import axios from 'axios';
+import './Header.css';
+import SayonaraLogo from './SayonaraLogo';
+import AuthModal from './AuthModal';
 
 export default function Header() {
-  const [userCity, setUserCity] = useState('');
-  const [selectedLocation, setSelectedLocation] = useState('');
   const [isLoggedIn, setIsLoggedIn] = useState(false);
+  const [location, setLocation] = useState('Oguru');
+  const [showAuth, setShowAuth] = useState(false);
 
-  // Simulate login state with localStorage (for demo)
   useEffect(() => {
-    const authStatus = localStorage.getItem('isLoggedIn') === 'true';
-    setIsLoggedIn(authStatus);
+    setIsLoggedIn(localStorage.getItem('isLoggedIn') === 'true');
+    // Fetch city from ip-api.com
+    fetch('https://ip-api.com/json')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.city) {
+          setLocation(data.city);
+        }
+      })
+      .catch(() => setLocation('Oguru'));
   }, []);
 
   const handleLogin = () => {
@@ -25,97 +34,40 @@ export default function Header() {
     setIsLoggedIn(false);
   };
 
-  // Get user location
-  useEffect(() => {
-    if ('geolocation' in navigator) {
-      navigator.geolocation.getCurrentPosition(
-        async (position) => {
-          const { latitude, longitude } = position.coords;
-          try {
-            const res = await axios.get(
-              `https://nominatim.openstreetmap.org/reverse?lat=${latitude}&lon=${longitude}&format=json`
-            );
-            const location = res.data.address;
-            const city = location.city || location.town || location.village || '';
-            setUserCity(city);
-            setSelectedLocation(city);
-          } catch (err) {
-            console.error('Error fetching location:', err);
-          }
-        },
-        (err) => {
-          console.error('Geolocation error:', err);
-        }
-      );
-    }
-  }, []);
-
   return (
-    <header className="bg-white border-b border-purple-200 sticky top-0 z-50">
-      <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-        <div className="flex items-center justify-between h-20">
-          {/* Logo as website name, perfectly aligned */}
-          <Link href="/" className="flex items-center h-full">
-            <span className="text-5xl font-extrabold text-purple-700 drop-shadow-lg rounded-full px-4 py-1 hover:text-purple-800 transition-colors duration-300">Sayonara Test</span>
-          </Link>
-
-          {/* Right-side buttons */}
-          <div className="flex items-center gap-6">
-            <Link
-              href="/add-item"
-              className="px-7 py-2 border-2 border-purple-500 text-purple-700 font-bold rounded-full bg-white hover:bg-purple-100 hover:text-purple-900 transition-all duration-200 text-xl shadow-none focus:outline-none"
-            >
-              Post
+    <>
+      <header className="bg-white border-bottom sticky top-0 z-50 shadow" style={{ borderBottom: '2px solid #eee', minHeight: 80 }}>
+        <div className="header-container" style={{ maxWidth: 1400, margin: '0 auto', padding: '0 32px', display: 'flex', alignItems: 'center', justifyContent: 'space-between', height: 80 }}>
+          <div style={{ display: 'flex', alignItems: 'center', height: '100%' }}>
+            <Link href="/" className="flex items-center h-full" style={{ textDecoration: 'none' }}>
+              <SayonaraLogo size={56} />
             </Link>
-            
-            {/* Location selector with icon */}
-            <div className="flex items-center gap-2">
-              <span className="text-purple-600 text-xl">📍</span>
-              <select
-                value={selectedLocation}
-                onChange={(e) => setSelectedLocation(e.target.value)}
-                className="px-7 py-2 border-2 border-purple-500 text-purple-700 font-bold rounded-full bg-white hover:bg-purple-100 hover:text-purple-900 transition-all duration-200 text-xl shadow-none focus:outline-none appearance-none"
-              >
-                <option value="">Choose Location</option>
-                <option value="Mumbai">Mumbai</option>
-                <option value="Delhi">Delhi</option>
-                <option value="Bangalore">Bangalore</option>
-                <option value="Chennai">Chennai</option>
-                <option value="Kolkata">Kolkata</option>
-                {userCity && <option value={userCity}>{userCity}</option>}
-              </select>
-            </div>
-
-            {/* Authentication buttons */}
-            <div className="flex items-center gap-3">
+          </div>
+          <div style={{ display: 'flex', alignItems: 'center', flex: 1, justifyContent: 'flex-end' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 16 }}>
+              <button className="sayonara-btn" style={{ marginRight: 8 }} onClick={() => setShowAuth(true)}>Post</button>
               {!isLoggedIn ? (
-                <Link
-                  href="/login"
-                  onClick={handleLogin}
-                  className="px-7 py-2 border-2 border-purple-500 text-purple-700 font-bold rounded-full bg-white hover:bg-purple-100 hover:text-purple-900 transition-all duration-200 text-xl shadow-none focus:outline-none"
-                >
-                  Login
-                </Link>
+                <button className="sayonara-btn" onClick={() => setShowAuth(true)}>Login</button>
               ) : (
-                <>
-                  <Link
-                    href="/dashboard"
-                    className="px-7 py-2 border-2 border-purple-500 text-purple-700 font-bold rounded-full bg-white hover:bg-purple-100 hover:text-purple-900 transition-all duration-200 text-xl shadow-none focus:outline-none"
-                  >
-                    Dashboard
-                  </Link>
-                  <button
-                    onClick={handleLogout}
-                    className="px-7 py-2 border-2 border-red-500 text-red-700 font-bold rounded-full bg-white hover:bg-red-100 hover:text-red-900 transition-all duration-200 text-xl shadow-none focus:outline-none"
-                  >
-                    Logout
-                  </button>
-                </>
+                <button onClick={handleLogout} className="sayonara-btn">Logout</button>
               )}
+            </div>
+            <div style={{ marginLeft: 24 }}>
+              <select
+                style={{ fontSize: 16, padding: '4px 12px', borderRadius: 4, border: '1px solid #ccc' }}
+                value={location}
+                onChange={e => setLocation(e.target.value)}
+              >
+                <option value={location}>{location}</option>
+                <option value="Oguru">Oguru</option>
+                <option value="Lagos">Lagos</option>
+                <option value="Abuja">Abuja</option>
+              </select>
             </div>
           </div>
         </div>
-      </div>
-    </header>
+      </header>
+      <AuthModal open={showAuth} onClose={() => setShowAuth(false)} />
+    </>
   );
 }

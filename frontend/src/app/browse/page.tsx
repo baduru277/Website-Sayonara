@@ -1,6 +1,3 @@
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-
 const items = [
   {
     id: 1,
@@ -124,7 +121,6 @@ const conditions = [
 export default function BrowsePage() {
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <main className="flex-1 bg-gray-50">
         <div className="container py-8">
           {/* Page Header */}
@@ -291,7 +287,6 @@ export default function BrowsePage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 } 

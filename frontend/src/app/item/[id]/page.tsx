@@ -1,212 +1,150 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '../../../components/Header';
-import Footer from '../../../components/Footer';
+import '../../../components/Header.css';
 
-// Mock data - in real app this would come from API
-const itemData = {
-  id: 1,
-  title: "iPhone 13 Pro",
-  description: "Excellent condition iPhone 13 Pro, 256GB, Space Gray. Purchased in January 2023, comes with original box and charger. No scratches or dents, battery health at 95%. Looking to trade for something of similar value.",
+const mockProduct = {
+  title: '2020 Apple MacBook Pro with Apple M1 Chip (13-inch, 8GB RAM, 256GB SSD Storage) - Space Gray',
+  rating: 4.7,
+  reviews: 21671,
+  sku: 'A246471',
+  brand: 'Apple',
+  availability: 'In Stock',
+  category: 'Electronics Devices',
+  price: 145999,
+  oldPrice: 189999,
+  discount: 21,
   images: [
-    "/api/placeholder/600/400",
-    "/api/placeholder/600/400",
-    "/api/placeholder/600/400"
+    '/macbook1.jpg', '/macbook2.jpg', '/macbook3.jpg', '/macbook4.jpg', '/macbook5.jpg'
   ],
-  category: "Electronics",
-  condition: "Excellent",
-  owner: {
-    name: "TechTrader",
-    avatar: "/api/placeholder/50/50",
-    rating: 4.8,
-    trades: 45,
-    memberSince: "2022"
-  },
-  location: "New York, NY",
-  tradeFor: "MacBook Air (M1 or newer), iPad Pro, or cash offers around $800",
-  postedDate: "2 days ago",
-  views: 127,
-  likes: 23
+  colorOptions: ['#fff', '#888'],
+  sizeOptions: ['14-inch Liquid Retina XDR display'],
+  memoryOptions: ['16GB unified memory'],
+  storageOptions: ['1TV SSD Storage'],
+  condition: 'New',
+  description: 'The most powerful MacBook Pro ever is here. With the blazing fast M1 Pro or M1 Max chip — the first Apple silicon designed for pros — you get groundbreaking performance and amazing battery life. ...',
+  specification: 'Feature\n- Fast Visual Warranty\n- Free shipping\n- ...',
+  review: 'Great product! Highly recommended.'
 };
 
 export default function ItemDetailPage() {
-  const [selectedImage, setSelectedImage] = useState(0);
-  const [showTradeModal, setShowTradeModal] = useState(false);
+  const [mainImg, setMainImg] = useState(0);
+  const [tab, setTab] = useState('description');
+  const [color, setColor] = useState(mockProduct.colorOptions[0]);
+  const [size, setSize] = useState(mockProduct.sizeOptions[0]);
+  const [memory, setMemory] = useState(mockProduct.memoryOptions[0]);
+  const [storage, setStorage] = useState(mockProduct.storageOptions[0]);
+  const [condition, setCondition] = useState('New');
+  const [qty, setQty] = useState(1);
+
+  const platformNote = 'Note: This platform allows you to bid, exchange, or resell used products. Connect with other users to find great deals, swap items, or get the best price for your pre-owned goods. No traditional e-commerce checkout—just community-driven trading and reselling.';
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 bg-gray-50 py-8">
-        <div className="container max-w-6xl">
-          <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-            {/* Image Gallery */}
-            <div className="space-y-4">
-              <div className="aspect-square bg-gray-200 rounded-lg flex items-center justify-center">
-                <span className="text-gray-500">Main Image Placeholder</span>
-              </div>
-              
-              <div className="grid grid-cols-4 gap-2">
-                {itemData.images.map((image, index) => (
-                  <button
-                    key={index}
-                    onClick={() => setSelectedImage(index)}
-                    className={`aspect-square bg-gray-200 rounded-lg flex items-center justify-center ${
-                      selectedImage === index ? 'ring-2 ring-blue-500' : ''
-                    }`}
-                  >
-                    <span className="text-gray-500 text-xs">Img {index + 1}</span>
-                  </button>
-                ))}
-              </div>
-            </div>
-
-            {/* Item Details */}
-            <div className="space-y-6">
-              <div>
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="bg-blue-600 text-white px-2 py-1 rounded text-sm font-medium">
-                    {itemData.category}
-                  </span>
-                  <span className="bg-green-600 text-white px-2 py-1 rounded text-sm font-medium">
-                    {itemData.condition}
-                  </span>
-                </div>
-                
-                <h1 className="text-3xl font-bold text-gray-900 mb-2">
-                  {itemData.title}
-                </h1>
-                
-                <div className="flex items-center gap-4 text-sm text-gray-500 mb-4">
-                  <span>📍 {itemData.location}</span>
-                  <span>👁️ {itemData.views} views</span>
-                  <span>❤️ {itemData.likes} likes</span>
-                  <span>Posted {itemData.postedDate}</span>
-                </div>
-              </div>
-
-              {/* Owner Info */}
-              <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <div className="flex items-center gap-3">
-                  <div className="w-12 h-12 bg-gray-300 rounded-full flex items-center justify-center">
-                    <span className="text-gray-600 font-medium">{itemData.owner.name[0]}</span>
-                  </div>
-                  <div className="flex-1">
-                    <h3 className="font-semibold text-gray-900">{itemData.owner.name}</h3>
-                    <div className="flex items-center gap-2 text-sm text-gray-600">
-                      <span>⭐ {itemData.owner.rating}</span>
-                      <span>•</span>
-                      <span>{itemData.owner.trades} trades</span>
-                      <span>•</span>
-                      <span>Member since {itemData.owner.memberSince}</span>
-                    </div>
-                  </div>
-                  <button className="btn btn-outline text-sm">
-                    View Profile
-                  </button>
-                </div>
-              </div>
-
-              {/* Trade Preferences */}
-              <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-2">Trade for:</h3>
-                <p className="text-gray-700">{itemData.tradeFor}</p>
-              </div>
-
-              {/* Description */}
-              <div className="bg-white p-4 rounded-lg border border-gray-200">
-                <h3 className="font-semibold text-gray-900 mb-2">Description</h3>
-                <p className="text-gray-700 whitespace-pre-line">{itemData.description}</p>
-              </div>
-
-              {/* Action Buttons */}
-              <div className="flex gap-4">
-                <button
-                  onClick={() => setShowTradeModal(true)}
-                  className="btn btn-primary flex-1 text-lg py-3"
-                >
-                  💬 Propose Trade
-                </button>
-                <button className="btn btn-outline text-lg py-3">
-                  ❤️ Save
-                </button>
-                <button className="btn btn-outline text-lg py-3">
-                  📤 Share
-                </button>
-              </div>
-            </div>
+    <div style={{ background: '#fafafd', minHeight: 'calc(100vh - 120px)', padding: '32px 0' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
+        {/* Image Gallery */}
+        <div style={{ flex: 1, minWidth: 320 }}>
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: 18, marginBottom: 18 }}>
+            <img src={mockProduct.images[mainImg]} alt="main" style={{ width: '100%', borderRadius: 8, objectFit: 'contain', maxHeight: 320 }} />
           </div>
-
-          {/* Similar Items */}
-          <div className="mt-12">
-            <h2 className="text-2xl font-bold text-gray-900 mb-6">Similar Items</h2>
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-              {[1, 2, 3, 4].map((item) => (
-                <div key={item} className="card p-4 hover:shadow-lg transition-all duration-300">
-                  <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center mb-4">
-                    <span className="text-gray-500">Similar Item {item}</span>
-                  </div>
-                  <h3 className="font-semibold text-gray-900 mb-2">Similar Item Title</h3>
-                  <p className="text-sm text-gray-600 mb-2">Brief description...</p>
-                  <div className="flex items-center justify-between">
-                    <span className="text-sm text-gray-500">📍 Location</span>
-                    <button className="btn btn-primary text-sm px-3 py-1">
-                      View
-                    </button>
-                  </div>
-                </div>
-              ))}
-            </div>
+          <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
+            {mockProduct.images.map((img, idx) => (
+              <img key={img} src={img} alt={"thumb"+idx} style={{ width: 56, height: 56, borderRadius: 6, border: mainImg === idx ? '2px solid #924DAC' : '1.5px solid #eee', cursor: 'pointer', objectFit: 'cover' }} onClick={() => setMainImg(idx)} />
+            ))}
           </div>
         </div>
-
-        {/* Trade Modal */}
-        {showTradeModal && (
-          <div className="fixed inset-0 bg-black bg-opacity-50 flex items-center justify-center z-50 p-4">
-            <div className="bg-white rounded-lg max-w-md w-full p-6">
-              <h3 className="text-xl font-bold text-gray-900 mb-4">Propose a Trade</h3>
-              <form className="space-y-4">
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    What are you offering?
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="input"
-                    placeholder="Describe what you want to trade..."
-                  />
-                </div>
-                <div>
-                  <label className="block text-sm font-medium text-gray-700 mb-2">
-                    Message (optional)
-                  </label>
-                  <textarea
-                    rows={3}
-                    className="input"
-                    placeholder="Add a message to the owner..."
-                  />
-                </div>
-                <div className="flex gap-3">
-                  <button
-                    type="submit"
-                    className="btn btn-primary flex-1"
-                  >
-                    Send Trade Offer
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() => setShowTradeModal(false)}
-                    className="btn btn-outline"
-                  >
-                    Cancel
-                  </button>
-                </div>
-              </form>
+        {/* Product Info & Actions */}
+        <div style={{ flex: 2, minWidth: 320 }}>
+          {/* Platform Note */}
+          <div style={{ background: '#f7f7fa', borderLeft: '4px solid #924DAC', borderRadius: 8, padding: '10px 18px', color: '#555', marginBottom: 18, fontSize: 15 }}>
+            {platformNote}
+          </div>
+          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8 }}>{mockProduct.title}</div>
+          <div style={{ marginBottom: 8 }}>
+            <span style={{ color: '#f59e42', fontWeight: 700, fontSize: 18 }}>★ {mockProduct.rating}</span>
+            <span style={{ color: '#888', marginLeft: 8 }}>({mockProduct.reviews} User feedback)</span>
+          </div>
+          <div style={{ color: '#666', fontSize: 15, marginBottom: 4 }}>Sku: <b>{mockProduct.sku}</b> &nbsp; Brand: <b>{mockProduct.brand}</b></div>
+          <div style={{ color: '#388e3c', fontWeight: 600, marginBottom: 4 }}>Availability: {mockProduct.availability}</div>
+          <div style={{ color: '#888', fontSize: 15, marginBottom: 4 }}>Category: <b>{mockProduct.category}</b></div>
+          <div style={{ fontSize: 24, fontWeight: 700, color: '#924DAC', margin: '12px 0' }}>
+            ₹{mockProduct.price.toLocaleString()} <span style={{ color: '#888', fontSize: 18, textDecoration: 'line-through', marginLeft: 8 }}>₹{mockProduct.oldPrice.toLocaleString()}</span> <span style={{ color: '#2ecc40', fontWeight: 600, fontSize: 16, marginLeft: 8 }}>{mockProduct.discount}% OFF</span>
+          </div>
+          {/* Options */}
+          <div style={{ display: 'flex', gap: 18, marginBottom: 12, flexWrap: 'wrap' }}>
+            <div>
+              <div style={{ fontWeight: 500, fontSize: 15 }}>Color</div>
+              {mockProduct.colorOptions.map(opt => (
+                <span key={opt} style={{ display: 'inline-block', width: 22, height: 22, borderRadius: '50%', background: opt, border: color === opt ? '2px solid #924DAC' : '1.5px solid #ccc', marginRight: 8, cursor: 'pointer' }} onClick={() => setColor(opt)} />
+              ))}
+            </div>
+            <div>
+              <div style={{ fontWeight: 500, fontSize: 15 }}>Size</div>
+              <select value={size} onChange={e => setSize(e.target.value)} style={{ padding: '4px 10px', borderRadius: 6, border: '1.5px solid #ccc', fontSize: 15 }}>
+                {mockProduct.sizeOptions.map(opt => <option key={opt}>{opt}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontWeight: 500, fontSize: 15 }}>Memory</div>
+              <select value={memory} onChange={e => setMemory(e.target.value)} style={{ padding: '4px 10px', borderRadius: 6, border: '1.5px solid #ccc', fontSize: 15 }}>
+                {mockProduct.memoryOptions.map(opt => <option key={opt}>{opt}</option>)}
+              </select>
+            </div>
+            <div>
+              <div style={{ fontWeight: 500, fontSize: 15 }}>Storage</div>
+              <select value={storage} onChange={e => setStorage(e.target.value)} style={{ padding: '4px 10px', borderRadius: 6, border: '1.5px solid #ccc', fontSize: 15 }}>
+                {mockProduct.storageOptions.map(opt => <option key={opt}>{opt}</option>)}
+              </select>
             </div>
           </div>
-        )}
-      </main>
-      <Footer />
+          {/* Condition */}
+          <div style={{ marginBottom: 12 }}>
+            <span style={{ fontWeight: 500, marginRight: 12 }}>Condition:</span>
+            {['New', 'Used', 'Refurbished'].map(opt => (
+              <label key={opt} style={{ marginRight: 18, fontWeight: 500, color: condition === opt ? '#924DAC' : '#444', cursor: 'pointer' }}>
+                <input type="radio" name="condition" value={opt} checked={condition === opt} onChange={e => setCondition(e.target.value)} style={{ marginRight: 6 }} />
+                {opt}
+              </label>
+            ))}
+          </div>
+          {/* Quantity */}
+          <div style={{ marginBottom: 18, display: 'flex', alignItems: 'center', gap: 8 }}>
+            <span style={{ fontWeight: 500 }}>Qty</span>
+            <button type="button" className="sayonara-btn" style={{ minWidth: 32, padding: '2px 10px' }} onClick={() => setQty(q => Math.max(1, q - 1))}>-</button>
+            <span style={{ fontWeight: 600, fontSize: 16 }}>{qty}</span>
+            <button type="button" className="sayonara-btn" style={{ minWidth: 32, padding: '2px 10px' }} onClick={() => setQty(q => q + 1)}>+</button>
+          </div>
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+            <button className="sayonara-btn" style={{ minWidth: 140, background: '#924DAC', color: '#fff' }}>Chat with Seller</button>
+            <button className="sayonara-btn" style={{ minWidth: 140 }}>Bid Now</button>
+            <button className="sayonara-btn" style={{ minWidth: 140 }}>Barter</button>
+          </div>
+          {/* Wishlist/Compare/Share */}
+          <div style={{ color: '#888', fontSize: 15, marginBottom: 18 }}>
+            <span style={{ marginRight: 18, cursor: 'pointer' }}>♡ Add to Wishlist</span>
+            <span style={{ marginRight: 18, cursor: 'pointer' }}>⇄ Add to Compare</span>
+            <span style={{ cursor: 'pointer' }}>Share product: <span style={{ fontSize: 18 }}>🔗</span></span>
+          </div>
+          {/* Guarantee Bar */}
+          <div style={{ background: '#f7f7fa', borderRadius: 8, padding: '10px 18px', fontWeight: 600, color: '#388e3c', marginBottom: 18, fontSize: 15 }}>
+            100% Guarantee Safe Checkout
+          </div>
+        </div>
+      </div>
+      {/* Tabs */}
+      <div style={{ maxWidth: 900, margin: '32px auto 0', background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: 24 }}>
+        <div style={{ display: 'flex', gap: 32, borderBottom: '2px solid #eee', marginBottom: 18 }}>
+          <span style={{ fontWeight: 600, color: tab === 'description' ? '#924DAC' : '#888', borderBottom: tab === 'description' ? '3px solid #924DAC' : 'none', paddingBottom: 8, cursor: 'pointer' }} onClick={() => setTab('description')}>DESCRIPTION</span>
+          <span style={{ fontWeight: 600, color: tab === 'specification' ? '#924DAC' : '#888', borderBottom: tab === 'specification' ? '3px solid #924DAC' : 'none', paddingBottom: 8, cursor: 'pointer' }} onClick={() => setTab('specification')}>SPECIFICATION</span>
+          <span style={{ fontWeight: 600, color: tab === 'review' ? '#924DAC' : '#888', borderBottom: tab === 'review' ? '3px solid #924DAC' : 'none', paddingBottom: 8, cursor: 'pointer' }} onClick={() => setTab('review')}>REVIEW</span>
+        </div>
+        <div style={{ color: '#444', fontSize: 16, minHeight: 80 }}>
+          {tab === 'description' && <div>{mockProduct.description}</div>}
+          {tab === 'specification' && <div style={{ whiteSpace: 'pre-line' }}>{mockProduct.specification}</div>}
+          {tab === 'review' && <div>{mockProduct.review}</div>}
+        </div>
+      </div>
     </div>
   );
 } 

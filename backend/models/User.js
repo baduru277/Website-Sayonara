@@ -8,7 +8,7 @@ const User = sequelize.define('User', {
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
-  username: {
+  name: {
     type: DataTypes.STRING,
     allowNull: false,
     unique: true,
@@ -30,14 +30,6 @@ const User = sequelize.define('User', {
     validate: {
       len: [6, 100]
     }
-  },
-  firstName: {
-    type: DataTypes.STRING,
-    allowNull: false
-  },
-  lastName: {
-    type: DataTypes.STRING,
-    allowNull: false
   },
   avatar: {
     type: DataTypes.STRING,
@@ -74,6 +66,14 @@ const User = sequelize.define('User', {
   lastActive: {
     type: DataTypes.DATE,
     defaultValue: DataTypes.NOW
+  },
+  otpCode: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  otpExpires: {
+    type: DataTypes.DATE,
+    allowNull: true
   }
 }, {
   hooks: {

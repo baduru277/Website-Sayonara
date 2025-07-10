@@ -65,7 +65,7 @@ router.get('/', optionalAuth, async (req, res) => {
         {
           model: User,
           as: 'seller',
-          attributes: ['id', 'username', 'rating', 'totalReviews', 'isVerified', 'isPrime']
+          attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime']
         }
       ],
       order: [[sortBy, order]],
@@ -93,7 +93,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
         {
           model: User,
           as: 'seller',
-          attributes: ['id', 'username', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'location']
+          attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'location']
         },
         {
           model: Bid,
@@ -102,7 +102,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
             {
               model: User,
               as: 'bidder',
-              attributes: ['id', 'username']
+              attributes: ['id', 'name']
             }
           ],
           order: [['amount', 'DESC']],
@@ -193,7 +193,7 @@ router.post('/', auth, async (req, res) => {
         {
           model: User,
           as: 'seller',
-          attributes: ['id', 'username', 'rating', 'totalReviews', 'isVerified', 'isPrime']
+          attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime']
         }
       ]
     });
@@ -324,7 +324,7 @@ router.get('/featured/items', async (req, res) => {
         {
           model: User,
           as: 'seller',
-          attributes: ['id', 'username', 'rating', 'totalReviews', 'isVerified', 'isPrime']
+          attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime']
         }
       ],
       order: [['createdAt', 'DESC']],

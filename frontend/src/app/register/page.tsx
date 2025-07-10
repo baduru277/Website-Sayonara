@@ -2,8 +2,6 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -58,7 +56,6 @@ export default function RegisterPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <main className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4">
         <div className="w-full max-w-sm mx-auto">
           <div className="bg-white rounded-2xl shadow-xl px-8 py-8 flex flex-col items-center">
@@ -172,7 +169,6 @@ export default function RegisterPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 } 

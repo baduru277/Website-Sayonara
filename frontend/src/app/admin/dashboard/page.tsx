@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '../../../components/Header';
-import Footer from '../../../components/Footer';
 
 // Mock admin data
 const stats = {
@@ -89,7 +87,6 @@ export default function AdminDashboard() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <main className="flex-1 bg-gray-50 py-8">
         <div className="container max-w-7xl">
           {/* Page Header */}
@@ -477,7 +474,6 @@ export default function AdminDashboard() {
           </div>
         )}
       </main>
-      <Footer />
     </div>
   );
 } 

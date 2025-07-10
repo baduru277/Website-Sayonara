@@ -1,8 +1,9 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import apiService from '@/services/api';
 
 interface BiddingItem {
   id: string;
@@ -30,160 +31,10 @@ interface BiddingItem {
   }>;
 }
 
-const biddingItems: BiddingItem[] = [
-  {
-    id: '1',
-    title: 'Limited Edition Supreme Box Logo Hoodie',
-    description: 'Rare Supreme Box Logo Hoodie from 2018. Size Large, perfect condition.',
-    image: '/api/placeholder/300/300',
-    category: 'Fashion',
-    condition: 'Like New',
-    currentBid: 450,
-    startingBid: 200,
-    buyNowPrice: 800,
-    timeLeft: '2h 15m',
-    totalBids: 23,
-    location: 'New York, NY',
-    postedDate: '1 day ago',
-    userRating: 4.9,
-    userReviews: 156,
-    isVerified: true,
-    priority: 'high',
-    auctionEndDate: '2024-01-15T20:00:00Z',
-    bidHistory: [
-      { amount: 450, user: 'bidder123', time: '2 minutes ago' },
-      { amount: 425, user: 'sneakerhead', time: '5 minutes ago' },
-      { amount: 400, user: 'bidder123', time: '10 minutes ago' }
-    ]
-  },
-  {
-    id: '2',
-    title: 'Apple MacBook Pro M2 Pro 16"',
-    description: '2023 MacBook Pro with M2 Pro chip, 16GB RAM, 512GB SSD. Mint condition.',
-    image: '/api/placeholder/300/300',
-    category: 'Electronics',
-    condition: 'Excellent',
-    currentBid: 1800,
-    startingBid: 1500,
-    buyNowPrice: 2500,
-    timeLeft: '5h 42m',
-    totalBids: 18,
-    location: 'San Francisco, CA',
-    postedDate: '2 days ago',
-    userRating: 4.8,
-    userReviews: 203,
-    isVerified: true,
-    priority: 'high',
-    auctionEndDate: '2024-01-15T23:00:00Z',
-    bidHistory: [
-      { amount: 1800, user: 'techlover', time: '1 minute ago' },
-      { amount: 1750, user: 'macuser', time: '3 minutes ago' },
-      { amount: 1700, user: 'techlover', time: '8 minutes ago' }
-    ]
-  },
-  {
-    id: '3',
-    title: 'Vintage Rolex Daytona 116520',
-    description: 'Classic Rolex Daytona from 2005. White dial, excellent condition with papers.',
-    image: '/api/placeholder/300/300',
-    category: 'Luxury',
-    condition: 'Excellent',
-    currentBid: 8500,
-    startingBid: 7000,
-    buyNowPrice: 12000,
-    timeLeft: '1d 3h',
-    totalBids: 45,
-    location: 'Beverly Hills, CA',
-    postedDate: '3 days ago',
-    userRating: 5.0,
-    userReviews: 89,
-    isVerified: true,
-    priority: 'high',
-    auctionEndDate: '2024-01-16T15:00:00Z',
-    bidHistory: [
-      { amount: 8500, user: 'watchcollector', time: '30 seconds ago' },
-      { amount: 8200, user: 'luxurylover', time: '2 minutes ago' },
-      { amount: 8000, user: 'watchcollector', time: '5 minutes ago' }
-    ]
-  },
-  {
-    id: '4',
-    title: 'Nintendo Switch OLED + Games Bundle',
-    description: 'Nintendo Switch OLED with 8 games including Zelda, Mario, and Pokemon.',
-    image: '/api/placeholder/300/300',
-    category: 'Electronics',
-    condition: 'Very Good',
-    currentBid: 280,
-    startingBid: 200,
-    buyNowPrice: 450,
-    timeLeft: '8h 30m',
-    totalBids: 12,
-    location: 'Seattle, WA',
-    postedDate: '1 day ago',
-    userRating: 4.6,
-    userReviews: 67,
-    isVerified: false,
-    priority: 'medium',
-    auctionEndDate: '2024-01-16T02:00:00Z',
-    bidHistory: [
-      { amount: 280, user: 'gamer123', time: '5 minutes ago' },
-      { amount: 260, user: 'switchfan', time: '10 minutes ago' },
-      { amount: 250, user: 'gamer123', time: '15 minutes ago' }
-    ]
-  },
-  {
-    id: '5',
-    title: 'Autographed Michael Jordan Jersey',
-    description: 'Chicago Bulls #23 jersey signed by Michael Jordan. Includes certificate of authenticity.',
-    image: '/api/placeholder/300/300',
-    category: 'Collectibles',
-    condition: 'Good',
-    currentBid: 1200,
-    startingBid: 800,
-    buyNowPrice: 2000,
-    timeLeft: '2d 5h',
-    totalBids: 31,
-    location: 'Chicago, IL',
-    postedDate: '4 days ago',
-    userRating: 4.7,
-    userReviews: 134,
-    isVerified: true,
-    priority: 'medium',
-    auctionEndDate: '2024-01-17T18:00:00Z',
-    bidHistory: [
-      { amount: 1200, user: 'sportsfan', time: '1 hour ago' },
-      { amount: 1150, user: 'jordanfan', time: '2 hours ago' },
-      { amount: 1100, user: 'sportsfan', time: '3 hours ago' }
-    ]
-  },
-  {
-    id: '6',
-    title: 'DJI Mavic 3 Pro Drone',
-    description: 'Professional drone with 4K camera and multiple batteries. Perfect for photography.',
-    image: '/api/placeholder/300/300',
-    category: 'Electronics',
-    condition: 'Like New',
-    currentBid: 950,
-    startingBid: 800,
-    buyNowPrice: 1400,
-    timeLeft: '12h 15m',
-    totalBids: 19,
-    location: 'Miami, FL',
-    postedDate: '2 days ago',
-    userRating: 4.5,
-    userReviews: 92,
-    isVerified: true,
-    priority: 'low',
-    auctionEndDate: '2024-01-16T06:00:00Z',
-    bidHistory: [
-      { amount: 950, user: 'dronepilot', time: '30 minutes ago' },
-      { amount: 920, user: 'photographer', time: '1 hour ago' },
-      { amount: 900, user: 'dronepilot', time: '2 hours ago' }
-    ]
-  }
-];
-
 export default function BiddingPage() {
+  const [biddingItems, setBiddingItems] = useState<BiddingItem[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [selectedCategory, setSelectedCategory] = useState('All');
   const [selectedPriority, setSelectedPriority] = useState('All');
   const [sortBy, setSortBy] = useState('ending-soon');
@@ -191,9 +42,175 @@ export default function BiddingPage() {
   const [selectedItem, setSelectedItem] = useState<BiddingItem | null>(null);
   const [bidAmount, setBidAmount] = useState('');
   const [showBidModal, setShowBidModal] = useState(false);
+  const [submittingBid, setSubmittingBid] = useState(false);
 
   const categories = ['All', 'Electronics', 'Fashion', 'Luxury', 'Collectibles', 'Sports', 'Music'];
   const priorities = ['All', 'high', 'medium', 'low'];
+
+  // Mock data for visuality
+  const mockAuctions: BiddingItem[] = [
+    {
+      id: '1',
+      title: 'Apple iPhone 14 Pro',
+      description: 'Brand new, sealed box. 128GB, Deep Purple.',
+      image: 'https://images.unsplash.com/photo-1511707171634-5f897ff02aa9?auto=format&fit=crop&w=400&q=80',
+      category: 'Electronics',
+      condition: 'New',
+      currentBid: 950,
+      startingBid: 800,
+      buyNowPrice: 1200,
+      timeLeft: '2d 5h',
+      totalBids: 12,
+      location: 'New York, NY',
+      postedDate: 'Today',
+      userRating: 4.8,
+      userReviews: 120,
+      isVerified: true,
+      priority: 'high',
+      auctionEndDate: new Date(Date.now() + 2 * 24 * 60 * 60 * 1000).toISOString(),
+      bidHistory: [],
+    },
+    {
+      id: '2',
+      title: 'Vintage Guitar',
+      description: 'Fender Stratocaster, 1972, excellent condition.',
+      image: 'https://images.unsplash.com/photo-1511379938547-c1f69419868d?auto=format&fit=crop&w=400&q=80',
+      category: 'Music',
+      condition: 'Excellent',
+      currentBid: 2200,
+      startingBid: 1500,
+      buyNowPrice: 3000,
+      timeLeft: '1d 3h',
+      totalBids: 8,
+      location: 'Austin, TX',
+      postedDate: '1 day ago',
+      userRating: 4.6,
+      userReviews: 45,
+      isVerified: false,
+      priority: 'medium',
+      auctionEndDate: new Date(Date.now() + 1 * 24 * 60 * 60 * 1000 + 3 * 60 * 60 * 1000).toISOString(),
+      bidHistory: [],
+    },
+    {
+      id: '3',
+      title: 'Designer Handbag',
+      description: 'Louis Vuitton, gently used, with dust bag.',
+      image: 'https://images.unsplash.com/photo-1512436991641-6745cdb1723f?auto=format&fit=crop&w=400&q=80',
+      category: 'Fashion',
+      condition: 'Very Good',
+      currentBid: 600,
+      startingBid: 400,
+      buyNowPrice: 900,
+      timeLeft: '5h',
+      totalBids: 15,
+      location: 'Los Angeles, CA',
+      postedDate: 'Today',
+      userRating: 4.9,
+      userReviews: 200,
+      isVerified: true,
+      priority: 'high',
+      auctionEndDate: new Date(Date.now() + 5 * 60 * 60 * 1000).toISOString(),
+      bidHistory: [],
+    },
+  ];
+
+  // Fetch bidding items from API
+  useEffect(() => {
+    const fetchBiddingItems = async () => {
+      try {
+        setLoading(true);
+        setError(null);
+        const response = await apiService.getBiddingItems();
+        
+        // Transform API response to match our interface
+        const transformedItems = response.items?.map((item: any) => ({
+          id: item.id,
+          title: item.title,
+          description: item.description,
+          image: item.images?.[0] || '/api/placeholder/300/300',
+          category: item.category,
+          condition: item.condition,
+          currentBid: parseFloat(item.currentBid) || parseFloat(item.startingBid),
+          startingBid: parseFloat(item.startingBid),
+          buyNowPrice: parseFloat(item.buyNowPrice) || 0,
+          timeLeft: calculateTimeLeft(item.auctionEndDate),
+          totalBids: item.totalBids || 0,
+          location: item.location || 'Unknown',
+          postedDate: formatPostedDate(item.createdAt),
+          userRating: item.user?.rating || 4.5,
+          userReviews: item.user?.reviewCount || 0,
+          isVerified: item.user?.isVerified || false,
+          priority: calculatePriority(item.auctionEndDate, item.totalBids),
+          auctionEndDate: item.auctionEndDate,
+          bidHistory: item.bids?.map((bid: any) => ({
+            amount: parseFloat(bid.amount),
+            user: bid.bidder?.username || 'Anonymous',
+            time: formatBidTime(bid.createdAt)
+          })) || []
+        })) || [];
+        
+        setBiddingItems(transformedItems);
+      } catch (err) {
+        console.error('Failed to fetch bidding items:', err);
+        setError('Failed to load auctions. Please try again later.');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchBiddingItems();
+  }, []);
+
+  // Helper functions
+  const calculateTimeLeft = (auctionEndDate: string) => {
+    const end = new Date(auctionEndDate);
+    const now = new Date();
+    const diff = end.getTime() - now.getTime();
+    
+    if (diff <= 0) return 'Ended';
+    
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    const days = Math.floor(hours / 24);
+    
+    if (days > 0) return `${days}d ${hours % 24}h`;
+    if (hours > 0) return `${hours}h`;
+    return 'Ending Soon!';
+  };
+
+  const calculatePriority = (auctionEndDate: string, totalBids: number) => {
+    const end = new Date(auctionEndDate);
+    const now = new Date();
+    const diff = end.getTime() - now.getTime();
+    const hours = Math.floor(diff / (1000 * 60 * 60));
+    
+    if (hours < 3 || totalBids > 20) return 'high';
+    if (hours < 12 || totalBids > 10) return 'medium';
+    return 'low';
+  };
+
+  const formatPostedDate = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+    
+    if (days === 0) return 'Today';
+    if (days === 1) return '1 day ago';
+    return `${days} days ago`;
+  };
+
+  const formatBidTime = (dateString: string) => {
+    const date = new Date(dateString);
+    const now = new Date();
+    const diff = now.getTime() - date.getTime();
+    const minutes = Math.floor(diff / (1000 * 60));
+    const hours = Math.floor(minutes / 60);
+    
+    if (minutes < 1) return 'Just now';
+    if (minutes < 60) return `${minutes} minutes ago`;
+    if (hours < 24) return `${hours} hours ago`;
+    return `${Math.floor(hours / 24)} days ago`;
+  };
 
   const filteredItems = biddingItems.filter(item => {
     const categoryMatch = selectedCategory === 'All' || item.category === selectedCategory;
@@ -208,8 +225,8 @@ export default function BiddingPage() {
   const sortedItems = [...filteredItems].sort((a, b) => {
     if (sortBy === 'ending-soon') {
       // Sort by time left (simplified)
-      const timeA = parseInt(a.timeLeft.split('h')[0]);
-      const timeB = parseInt(b.timeLeft.split('h')[0]);
+      const timeA = parseInt(a.timeLeft.split('h')[0]) || 0;
+      const timeB = parseInt(b.timeLeft.split('h')[0]) || 0;
       return timeA - timeB;
     }
     if (sortBy === 'highest-bid') {
@@ -266,18 +283,75 @@ export default function BiddingPage() {
     setShowBidModal(true);
   };
 
-  const submitBid = () => {
-    if (selectedItem && bidAmount) {
-      const amount = parseInt(bidAmount);
-      if (amount > selectedItem.currentBid) {
-        // Here you would typically make an API call to submit the bid
-        console.log(`Bidding $${amount} on ${selectedItem.title}`);
-        setShowBidModal(false);
-        setSelectedItem(null);
-        setBidAmount('');
-      }
+  const submitBid = async () => {
+    if (!selectedItem || !bidAmount) return;
+    
+    const amount = parseInt(bidAmount);
+    if (amount <= selectedItem.currentBid) {
+      alert('Bid must be higher than current bid');
+      return;
+    }
+
+    try {
+      setSubmittingBid(true);
+      await apiService.placeBid(selectedItem.id, amount);
+      
+      // Update the item in the list
+      setBiddingItems(prev => prev.map(item => 
+        item.id === selectedItem.id 
+          ? { ...item, currentBid: amount, totalBids: item.totalBids + 1 }
+          : item
+      ));
+      
+      setShowBidModal(false);
+      setSelectedItem(null);
+      setBidAmount('');
+      alert('Bid placed successfully!');
+    } catch (err) {
+      console.error('Failed to place bid:', err);
+      alert('Failed to place bid. Please try again.');
+    } finally {
+      setSubmittingBid(false);
     }
   };
+
+  // Use mock data if error or no items
+  const displayItems = error || biddingItems.length === 0 ? mockAuctions : sortedItems;
+
+  // Loading state
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-orange-600 mx-auto mb-4"></div>
+          <p className="text-gray-600">Loading auctions...</p>
+        </div>
+      </div>
+    );
+  }
+
+  // Error state
+  if (error) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <div className="w-24 h-24 bg-red-100 rounded-full flex items-center justify-center mx-auto mb-4">
+            <svg className="w-12 h-12 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+            </svg>
+          </div>
+          <h3 className="text-lg font-medium text-gray-900 mb-2">Error Loading Auctions</h3>
+          <p className="text-gray-600 mb-4">{error}</p>
+          <button
+            onClick={() => window.location.reload()}
+            className="sayonara-btn"
+          >
+            Try Again
+          </button>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-gray-50">
@@ -291,7 +365,7 @@ export default function BiddingPage() {
             </div>
             <Link
               href="/add-item?type=auction"
-              className="btn bg-orange-600 hover:bg-orange-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
+              className="sayonara-btn"
             >
               Create Auction
             </Link>
@@ -364,7 +438,7 @@ export default function BiddingPage() {
         {/* Results Count */}
         <div className="flex items-center justify-between mb-6">
           <span className="text-sm text-gray-600">
-            {sortedItems.length} auctions active
+            {displayItems.length} auctions active
           </span>
           <div className="flex items-center gap-2 text-sm text-gray-600">
             <span className="w-3 h-3 bg-red-500 rounded-full"></span>
@@ -378,14 +452,15 @@ export default function BiddingPage() {
 
         {/* Items Grid */}
         <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-          {sortedItems.map((item) => (
+          {displayItems.map((item) => (
             <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
               {/* Item Image */}
               <div className="relative h-48 bg-gray-100">
                 <Image
                   src={item.image}
                   alt={item.title}
-                  fill
+                  width={300}
+                  height={300}
                   className="object-cover"
                 />
                 <div className="absolute top-3 left-3">
@@ -437,10 +512,12 @@ export default function BiddingPage() {
                     <span className="text-xs text-gray-500">Starting Bid:</span>
                     <span className="text-sm text-gray-600">${item.startingBid.toLocaleString()}</span>
                   </div>
-                  <div className="flex items-center justify-between">
-                    <span className="text-xs text-gray-500">Buy Now:</span>
-                    <span className="text-sm font-medium text-green-600">${item.buyNowPrice.toLocaleString()}</span>
-                  </div>
+                  {item.buyNowPrice > 0 && (
+                    <div className="flex items-center justify-between">
+                      <span className="text-xs text-gray-500">Buy Now:</span>
+                      <span className="text-sm font-medium text-green-600">${item.buyNowPrice.toLocaleString()}</span>
+                    </div>
+                  )}
                 </div>
 
                 <div className="flex items-center justify-between mb-4">
@@ -469,16 +546,18 @@ export default function BiddingPage() {
                   <div className="flex gap-2">
                     <button
                       onClick={() => handleBid(item)}
-                      className="btn bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105"
+                      className="sayonara-btn"
                     >
                       Place Bid
                     </button>
-                    <Link
-                      href={`/bidding/${item.id}?buyNow=true`}
-                      className="btn border border-green-600 text-green-600 hover:bg-green-600 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300"
-                    >
-                      Buy Now
-                    </Link>
+                    {item.buyNowPrice > 0 && (
+                      <Link
+                        href={`/item/${item.id}?buyNow=true`}
+                        className="sayonara-btn border border-green-600 text-green-600 hover:bg-green-600 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300"
+                      >
+                        Buy Now
+                      </Link>
+                    )}
                   </div>
                 </div>
               </div>
@@ -487,7 +566,7 @@ export default function BiddingPage() {
         </div>
 
         {/* No Results */}
-        {sortedItems.length === 0 && (
+        {displayItems.length === 0 && (
           <div className="text-center py-12">
             <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
               <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -502,7 +581,7 @@ export default function BiddingPage() {
                 setSelectedPriority('All');
                 setSearchQuery('');
               }}
-              className="btn bg-orange-600 hover:bg-orange-700 text-white px-6 py-2 rounded-lg font-medium"
+              className="sayonara-btn"
             >
               Clear Filters
             </button>
@@ -535,15 +614,24 @@ export default function BiddingPage() {
             <div className="flex gap-3">
               <button
                 onClick={() => setShowBidModal(false)}
-                className="flex-1 btn border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium"
+                disabled={submittingBid}
+                className="flex-1 sayonara-btn border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg font-medium disabled:opacity-50"
               >
                 Cancel
               </button>
               <button
                 onClick={submitBid}
-                className="flex-1 btn bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium"
+                disabled={submittingBid || !bidAmount || parseInt(bidAmount) <= selectedItem.currentBid}
+                className="flex-1 sayonara-btn bg-orange-600 hover:bg-orange-700 text-white px-4 py-2 rounded-lg font-medium disabled:opacity-50 flex items-center justify-center"
               >
-                Place Bid
+                {submittingBid ? (
+                  <>
+                    <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-white mr-2"></div>
+                    Placing Bid...
+                  </>
+                ) : (
+                  'Place Bid'
+                )}
               </button>
             </div>
           </div>

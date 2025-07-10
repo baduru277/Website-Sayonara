@@ -15,7 +15,7 @@
     "cors": "^2.8.5",
     "debug": "~2.6.9",
     "dotenv": "^17.0.1",
-    "express": "~4.16.1",
+    "express": "^4.21.2",
     "jsonwebtoken": "^9.0.2",
     "morgan": "~1.9.1",
     "multer": "^2.0.1",

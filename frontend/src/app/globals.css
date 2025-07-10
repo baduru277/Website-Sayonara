@@ -230,6 +230,9 @@ body {
 body {
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
+  background: #fff !important;
+  color: #222;
+  font-family: 'Quicksand', 'Montserrat', 'Inter', sans-serif;
 }
 
 * {
@@ -580,3 +583,36 @@ button {
     --background-end: #000000;
   }
 }
+
+.sayonara-btn {
+  display: inline-block;
+  padding: 8px 24px;
+  border: 2px solid #924DAC;
+  background: #fff;
+  color: #924DAC;
+  font-weight: 600;
+  font-size: 1rem;
+  border-radius: 999px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  outline: none;
+  box-shadow: none;
+  text-align: center;
+  text-decoration: none !important;
+}
+.sayonara-btn:hover, .sayonara-btn:focus {
+  background: #f3eaff;
+  color: #6d2fa6;
+  border-color: #6d2fa6;
+  text-decoration: none !important;
+}
+.sayonara-btn:active {
+  text-decoration: none !important;
+}
+
+/* Remove backgrounds from main containers except footer */
+main, .main-content, .container {
+  background: #fff !important;
+}
+
+/* Footer styles remain unchanged */

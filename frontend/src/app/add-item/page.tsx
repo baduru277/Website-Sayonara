@@ -1,290 +1,349 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
+import "../../components/Header.css";
+
+const allCategories = [
+  { group: 'Electronics', items: ['Phones and accessories', 'Computers', 'TVs and accessories', 'Consoles and slot machines'] },
+  { group: 'Fashion', items: [] },
+  { group: 'Home and Garden', items: [] },
+  { group: 'Supermarket', items: [] },
+  { group: 'Beauty', items: [] },
+  { group: 'Culture', items: [] },
+  { group: 'Sports and tourism', items: [] },
+  { group: 'Automotive', items: [] },
+  { group: 'Properties', items: [] },
+];
+const subCategories = {
+  'Phones and accessories': ['Smartphones', 'Smartwatches', 'Tablets', 'Accessories GSM', 'Cases and covers'],
+  'Computers': ['Laptops', 'Laptop components', 'Desktop Computers', 'Computer components', 'Printers and scanners'],
+  'TVs and accessories': ['TVs', 'Projectors', 'Headphones', 'Audio for home', 'Home cinema'],
+  'Consoles and slot machines': ['Consoles PlayStation 5', 'Consoles Xbox Series X/S', 'Consoles PlayStation 4', 'Consoles Xbox One', 'Consoles Nintendo Switch'],
+};
 
 export default function AddItemPage() {
+  const [step, setStep] = useState(1);
+  // Step 1 state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: '',
-    condition: '',
-    tradeFor: '',
-    location: '',
-    images: [] as File[]
+    availability: '',
+    length: '',
+    width: '',
+    height: '',
+    price: '',
   });
+  // Step 2 state
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  // Step 3 state
+  const [images, setImages] = useState<File[]>([]);
+  const [condition, setCondition] = useState('New');
+  // Step 4 state
+  const [actionType, setActionType] = useState('');
+  const [bidAmount, setBidAmount] = useState('');
+  const [exchangeFor, setExchangeFor] = useState('');
+  const [resellAmount, setResellAmount] = useState('');
 
-  const [errors, setErrors] = useState<Record<string, string>>({});
-
-  const categories = [
-    'Electronics',
-    'Fashion',
-    'Sports',
-    'Music',
-    'Books',
-    'Home & Garden',
-    'Collectibles',
-    'Tools',
-    'Other'
-  ];
-
-  const conditions = [
-    'Like New',
-    'Excellent',
-    'Very Good',
-    'Good',
-    'Fair'
-  ];
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    
-    // Basic validation
-    const newErrors: Record<string, string> = {};
-    
-    if (!formData.title) newErrors.title = 'Title is required';
-    if (!formData.description) newErrors.description = 'Description is required';
-    if (!formData.category) newErrors.category = 'Category is required';
-    if (!formData.condition) newErrors.condition = 'Condition is required';
-    if (!formData.tradeFor) newErrors.tradeFor = 'Trade preference is required';
-    if (!formData.location) newErrors.location = 'Location is required';
-
-    if (Object.keys(newErrors).length > 0) {
-      setErrors(newErrors);
-      return;
-    }
-
-    // Handle form submission
-    console.log('Adding item:', formData);
-  };
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
+  // Step 1 handlers
+  const maxTitle = 60;
+  const maxDesc = 1200;
+  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
-    setFormData(prev => ({
-      ...prev,
-      [name]: value
-    }));
-    
-    if (errors[name]) {
-      setErrors(prev => ({ ...prev, [name]: '' }));
-    }
+    setFormData(prev => ({ ...prev, [name]: value }));
   };
 
+  // Step 2 handlers
+  const handleCategorySelect = (cat: string) => {
+    if (selectedCategories.includes(cat)) {
+      setSelectedCategories(selectedCategories.filter(c => c !== cat));
+    } else if (selectedCategories.length < 3) {
+      setSelectedCategories([...selectedCategories, cat]);
+    }
+  };
+  const handleRemoveCategory = (cat: string) => {
+    setSelectedCategories(selectedCategories.filter(c => c !== cat));
+  };
+
+  // Step 3 handlers
   const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
-      const files = Array.from(e.target.files);
-      setFormData(prev => ({
-        ...prev,
-        images: [...prev.images, ...files]
-      }));
+      const files = Array.from(e.target.files).slice(0, 10 - images.length);
+      setImages(prev => [...prev, ...files]);
     }
   };
-
-  const removeImage = (index: number) => {
-    setFormData(prev => ({
-      ...prev,
-      images: prev.images.filter((_, i) => i !== index)
-    }));
+  const handleRemoveImage = (idx: number) => {
+    setImages(prev => prev.filter((_, i) => i !== idx));
   };
 
-  return (
-    <div className="min-h-screen flex flex-col">
-      <Header />
-      <main className="flex-1 bg-gradient-to-br from-purple-100 via-white to-purple-50 py-12 px-2 flex items-center justify-center">
-        <div className="w-full max-w-2xl mx-auto">
-          <div className="backdrop-blur-lg bg-white/80 border-2 border-purple-200 rounded-3xl shadow-2xl p-10 md:p-12 transition-all duration-300">
-            <div className="mb-8 text-center">
-              <h1 className="text-4xl font-extrabold text-purple-700 mb-2 flex items-center justify-center gap-2">
-                <svg className="w-8 h-8 text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                Add New Item
-              </h1>
-              <p className="text-purple-500 font-medium">List an item you&apos;d like to trade on Sayonara</p>
-            </div>
-            <form onSubmit={handleSubmit} className="space-y-8">
-              {/* Basic Information */}
-              <div>
-                <h2 className="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
-                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M9 17v-6a2 2 0 012-2h2a2 2 0 012 2v6" /></svg>
-                  Basic Information
-                </h2>
-                <div className="space-y-6">
-                  {/* Title */}
-                  <div className="relative">
-                    <input
-                      type="text"
-                      id="title"
-                      name="title"
-                      value={formData.title}
-                      onChange={handleChange}
-                      className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm ${errors.title ? 'border-red-400' : 'border-gray-200'} ${formData.title && !errors.title ? 'border-green-400' : ''}`}
-                      placeholder=" "
-                      autoComplete="off"
-                    />
-                    <label htmlFor="title" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">Item Title *</label>
-                    {errors.title && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
-                    {formData.title && !errors.title && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
-                  </div>
-                  {/* Description */}
-                  <div className="relative">
-                    <textarea
-                      id="description"
-                      name="description"
-                      rows={3}
-                      value={formData.description}
-                      onChange={handleChange}
-                      className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm resize-none ${errors.description ? 'border-red-400' : 'border-gray-200'} ${formData.description && !errors.description ? 'border-green-400' : ''}`}
-                      placeholder=" "
-                      autoComplete="off"
-                    />
-                    <label htmlFor="description" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">Description *</label>
-                    {errors.description && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
-                    {formData.description && !errors.description && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
-                  </div>
-                  {/* Category & Condition */}
-                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                    <div className="relative">
-                      <select
-                        id="category"
-                        name="category"
-                        value={formData.category}
-                        onChange={handleChange}
-                        className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm ${errors.category ? 'border-red-400' : 'border-gray-200'} ${formData.category && !errors.category ? 'border-green-400' : ''}`}
-                      >
-                        <option value="" disabled>Select category</option>
-                        {categories.map(category => (
-                          <option key={category} value={category}>{category}</option>
-                        ))}
-                      </select>
-                      <label htmlFor="category" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">Category *</label>
-                      {errors.category && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
-                      {formData.category && !errors.category && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
-                    </div>
-                    <div className="relative">
-                      <select
-                        id="condition"
-                        name="condition"
-                        value={formData.condition}
-                        onChange={handleChange}
-                        className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm ${errors.condition ? 'border-red-400' : 'border-gray-200'} ${formData.condition && !errors.condition ? 'border-green-400' : ''}`}
-                      >
-                        <option value="" disabled>Select condition</option>
-                        {conditions.map(condition => (
-                          <option key={condition} value={condition}>{condition}</option>
-                        ))}
-                      </select>
-                      <label htmlFor="condition" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">Condition *</label>
-                      {errors.condition && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
-                      {formData.condition && !errors.condition && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
-                    </div>
-                  </div>
-                </div>
-              </div>
-              {/* Trade Preferences */}
-              <div>
-                <h2 className="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
-                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M4 6h16M4 10h16M4 14h16M4 18h16" /></svg>
-                  Trade Preferences
-                </h2>
-                <div className="relative">
-                  <input
-                    type="text"
-                    id="tradeFor"
-                    name="tradeFor"
-                    value={formData.tradeFor}
-                    onChange={handleChange}
-                    className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm ${errors.tradeFor ? 'border-red-400' : 'border-gray-200'} ${formData.tradeFor && !errors.tradeFor ? 'border-green-400' : ''}`}
-                    placeholder=" "
-                    autoComplete="off"
-                  />
-                  <label htmlFor="tradeFor" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">What would you like to trade for? *</label>
-                  {errors.tradeFor && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
-                  {formData.tradeFor && !errors.tradeFor && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
-                </div>
-              </div>
-              {/* Location */}
-              <div>
-                <h2 className="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
-                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17.657 16.657L13.414 20.9a2 2 0 01-2.828 0l-4.243-4.243a8 8 0 1111.314 0z" /><circle cx="12" cy="11" r="3" /></svg>
-                  Location
-                </h2>
-                <div className="relative">
-                  <input
-                    type="text"
-                    id="location"
-                    name="location"
-                    value={formData.location}
-                    onChange={handleChange}
-                    className={`peer w-full px-4 py-3 bg-white/80 border-2 rounded-xl outline-none transition-all duration-200 focus:border-purple-500 focus:bg-white/90 shadow-sm ${errors.location ? 'border-red-400' : 'border-gray-200'} ${formData.location && !errors.location ? 'border-green-400' : ''}`}
-                    placeholder=" "
-                    autoComplete="off"
-                  />
-                  <label htmlFor="location" className="absolute left-4 top-3 text-gray-500 pointer-events-none transition-all duration-200 peer-focus:-top-5 peer-focus:text-xs peer-focus:text-purple-700 peer-placeholder-shown:top-3 peer-placeholder-shown:text-base peer-placeholder-shown:text-gray-500 -top-5 text-xs bg-white/80 px-1">Location *</label>
-                  {errors.location && <span className="absolute right-3 top-3 text-red-500 text-lg">*</span>}
-                  {formData.location && !errors.location && <span className="absolute right-3 top-3 text-green-500 text-lg">✔</span>}
-                </div>
-              </div>
-              {/* Image Upload */}
-              <div>
-                <h2 className="text-2xl font-bold text-purple-700 mb-4 flex items-center gap-2">
-                  <svg className="w-6 h-6 text-purple-400" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M3 7v10a2 2 0 002 2h14a2 2 0 002-2V7" /><path strokeLinecap="round" strokeLinejoin="round" d="M16 3v4H8V3" /></svg>
-                  Images
-                </h2>
-                <div className="mb-4">
-                  <label htmlFor="images" className="block text-sm font-medium text-gray-700 mb-2">Upload Images</label>
-                  <div className="relative flex flex-col items-center justify-center border-2 border-dashed border-purple-400 rounded-2xl bg-purple-50/40 py-8 px-4 transition-all duration-200 hover:bg-purple-100/60 cursor-pointer">
-                    <input
-                      id="images"
-                      name="images"
-                      type="file"
-                      accept="image/*"
-                      multiple
-                      onChange={handleImageUpload}
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                    />
-                    <svg className="w-10 h-10 text-purple-400 mb-2" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M12 4v16m8-8H4" /></svg>
-                    <span className="text-purple-700 font-semibold">Drag & drop or click to upload</span>
-                    <span className="text-xs text-purple-400">(Up to 5 images, JPG/PNG/GIF)</span>
-                  </div>
-                  {/* Image Previews */}
-                  {formData.images.length > 0 && (
-                    <div className="flex flex-wrap gap-4 mt-4">
-                      {formData.images.map((file, idx) => (
-                        <div key={idx} className="relative group">
-                          <img
-                            src={URL.createObjectURL(file)}
-                            alt={`Preview ${idx + 1}`}
-                            className="w-24 h-24 object-cover rounded-xl border-2 border-purple-200 shadow-md"
-                          />
-                          <button
-                            type="button"
-                            onClick={() => removeImage(idx)}
-                            className="absolute -top-2 -right-2 bg-white border border-purple-400 text-purple-700 rounded-full w-7 h-7 flex items-center justify-center shadow hover:bg-purple-100 transition-all"
-                            aria-label="Remove image"
-                          >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M6 18L18 6M6 6l12 12" /></svg>
-                          </button>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-              {/* Submit Button */}
-              <div className="pt-4">
-                <button
-                  type="submit"
-                  className="w-full py-4 rounded-full font-extrabold text-lg bg-gradient-to-r from-purple-600 to-purple-400 text-white shadow-xl hover:scale-105 hover:from-purple-700 hover:to-purple-500 transition-all duration-200 flex items-center justify-center gap-2"
-                >
-                  Add Item
-                  <svg className="w-6 h-6 ml-1" fill="none" stroke="currentColor" strokeWidth={2} viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" d="M17 8l4 4m0 0l-4 4m4-4H3" /></svg>
-                </button>
-              </div>
-            </form>
+  // Stepper UI
+  const stepper = (
+    <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 32, gap: 48 }}>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ background: step === 1 ? '#924DAC' : '#eee', color: step === 1 ? '#fff' : '#924DAC', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: 22 }}>
+          <span>①</span>
+        </div>
+        <div style={{ fontWeight: 600, color: step === 1 ? '#924DAC' : '#888', marginTop: 6 }}>Description</div>
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ background: step === 2 ? '#924DAC' : '#eee', color: step === 2 ? '#fff' : '#924DAC', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: 22 }}>
+          <span>②</span>
+        </div>
+        <div style={{ fontWeight: 600, color: step === 2 ? '#924DAC' : '#888', marginTop: 6 }}>Categories</div>
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ background: step === 3 ? '#924DAC' : '#eee', color: step === 3 ? '#fff' : '#924DAC', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: 22 }}>
+          <span>③</span>
+        </div>
+        <div style={{ fontWeight: 600, color: step === 3 ? '#924DAC' : '#888', marginTop: 6 }}>Photos</div>
+      </div>
+      <div style={{ textAlign: 'center' }}>
+        <div style={{ background: step === 4 ? '#924DAC' : '#eee', color: step === 4 ? '#fff' : '#924DAC', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: 22 }}>
+          <span>④</span>
+        </div>
+        <div style={{ fontWeight: 600, color: step === 4 ? '#924DAC' : '#888', marginTop: 6 }}>Action</div>
+      </div>
+    </div>
+  );
+
+  // Step 1: Description
+  const step1 = (
+    <form style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }} onSubmit={e => { e.preventDefault(); if (formData.title && formData.description) setStep(2); }}>
+      {/* Left column */}
+      <div style={{ flex: 2, minWidth: 260 }}>
+        <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 18 }}>Fill in the basic information about your item</div>
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Product name</label>
+          <input
+            type="text"
+            name="title"
+            value={formData.title}
+            onChange={handleChange}
+            maxLength={maxTitle}
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
+            placeholder="e.g. GIGABYTE GeForce RTX 3050"
+            required
+          />
+          <div style={{ fontSize: 13, color: '#888', marginTop: 2 }}>{formData.title.length}/{maxTitle}</div>
+        </div>
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Description</label>
+          <textarea
+            name="description"
+            value={formData.description}
+            onChange={handleChange}
+            maxLength={maxDesc}
+            rows={4}
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa', resize: 'vertical' }}
+            placeholder="Describe your item..."
+            required
+          />
+          <div style={{ fontSize: 13, color: '#888', marginTop: 2 }}>{formData.description.length}/{maxDesc}</div>
+        </div>
+      </div>
+      {/* Right column */}
+      <div style={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 18 }}>
+        <div>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Number of units available</label>
+          <input
+            type="text"
+            name="availability"
+            value={formData.availability}
+            onChange={handleChange}
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
+            placeholder="Availability"
+          />
+        </div>
+        <div>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Dimensions (optional)</label>
+          <div style={{ display: 'flex', gap: 8 }}>
+            <input
+              type="number"
+              name="length"
+              value={formData.length}
+              onChange={handleChange}
+              style={{ width: 60, padding: '8px 6px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 15, background: '#f7f7fa' }}
+              placeholder="L"
+            />
+            <input
+              type="number"
+              name="width"
+              value={formData.width}
+              onChange={handleChange}
+              style={{ width: 60, padding: '8px 6px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 15, background: '#f7f7fa' }}
+              placeholder="W"
+            />
+            <input
+              type="number"
+              name="height"
+              value={formData.height}
+              onChange={handleChange}
+              style={{ width: 60, padding: '8px 6px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 15, background: '#f7f7fa' }}
+              placeholder="H"
+            />
           </div>
         </div>
-      </main>
-      <Footer />
+        <div>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Initial price</label>
+          <input
+            type="text"
+            name="price"
+            value={formData.price}
+            onChange={handleChange}
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
+            placeholder="Product price"
+          />
+        </div>
+      </div>
+      <div style={{ width: '100%', display: 'flex', justifyContent: 'center', gap: 18, marginTop: 36 }}>
+        <button type="submit" className="sayonara-btn" style={{ minWidth: 120 }} disabled={!formData.title || !formData.description}>Next</button>
+      </div>
+    </form>
+  );
+
+  // Step 2: Categories
+  const allSubcats = Object.entries(subCategories);
+  const step2 = (
+    <div>
+      <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 18 }}>Select the category your goods belong to (max. 3)</div>
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 18 }}>
+        {allSubcats.map(([group, cats]) => (
+          <div key={group} style={{ minWidth: 180 }}>
+            <div style={{ fontWeight: 500, marginBottom: 6 }}>{group}</div>
+            {cats.map(cat => (
+              <label key={cat} style={{ display: 'block', marginBottom: 4, cursor: 'pointer', fontWeight: 400 }}>
+                <input
+                  type="checkbox"
+                  checked={selectedCategories.includes(cat)}
+                  onChange={() => handleCategorySelect(cat)}
+                  disabled={!selectedCategories.includes(cat) && selectedCategories.length >= 3}
+                  style={{ marginRight: 6 }}
+                />
+                {cat}
+              </label>
+            ))}
+          </div>
+        ))}
+      </div>
+      <div style={{ marginBottom: 18 }}>
+        <span style={{ fontWeight: 500 }}>Selected categories:</span>
+        {selectedCategories.length === 0 && <span style={{ color: '#888', marginLeft: 8 }}>None</span>}
+        {selectedCategories.map(cat => (
+          <span key={cat} style={{ display: 'inline-block', background: '#f0e6fa', color: '#924DAC', borderRadius: 16, padding: '4px 12px', margin: '0 6px', fontWeight: 500 }}>
+            {cat} <span style={{ cursor: 'pointer', marginLeft: 4 }} onClick={() => handleRemoveCategory(cat)}>&times;</span>
+          </span>
+        ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginTop: 32 }}>
+        <button className="sayonara-btn" style={{ minWidth: 120 }} onClick={() => setStep(1)}>Back</button>
+        <button className="sayonara-btn" style={{ minWidth: 120 }} disabled={selectedCategories.length === 0} onClick={() => setStep(3)}>Next</button>
+      </div>
+    </div>
+  );
+
+  // Step 3: Photos
+  const step3 = (
+    <div>
+      <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 18 }}>Add product photos (max 10)</div>
+      <div style={{ border: '2px dashed #ccc', borderRadius: 12, padding: 24, marginBottom: 18, minHeight: 120, background: '#faf9fd' }}>
+        <label style={{ display: 'inline-block', cursor: 'pointer', color: '#924DAC', fontWeight: 600, border: '2px solid #924DAC', borderRadius: 8, padding: '10px 18px', marginBottom: 12 }}>
+          Upload a photo
+          <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImageUpload} disabled={images.length >= 10} />
+        </label>
+        <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
+          {images.map((img, idx) => (
+            <div key={idx} style={{ position: 'relative', width: 80, height: 80, borderRadius: 8, overflow: 'hidden', background: '#fff', border: '1.5px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+              <img src={URL.createObjectURL(img)} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              <span style={{ position: 'absolute', top: 2, right: 6, color: '#924DAC', fontWeight: 700, cursor: 'pointer', fontSize: 18 }} onClick={() => handleRemoveImage(idx)}>&times;</span>
+            </div>
+          ))}
+        </div>
+      </div>
+      <div style={{ marginBottom: 18 }}>
+        <span style={{ fontWeight: 500, marginRight: 12 }}>Condition:</span>
+        {['New', 'Used', 'Refurbished'].map(opt => (
+          <label key={opt} style={{ marginRight: 18, fontWeight: 500, color: condition === opt ? '#924DAC' : '#444', cursor: 'pointer' }}>
+            <input type="radio" name="condition" value={opt} checked={condition === opt} onChange={e => setCondition(e.target.value)} style={{ marginRight: 6 }} />
+            {opt}
+          </label>
+        ))}
+      </div>
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginTop: 36 }}>
+        <button className="sayonara-btn" style={{ minWidth: 120 }} onClick={() => setStep(2)}>Back</button>
+        <button className="sayonara-btn" style={{ minWidth: 120 }} disabled={images.length === 0} onClick={() => setStep(4)}>Next</button>
+        <button className="sayonara-btn" style={{ minWidth: 120, background: '#fff', color: '#924DAC', border: '2px solid #924DAC' }} onClick={() => setStep(1)}>Draft</button>
+      </div>
+    </div>
+  );
+
+  // Step 4: Action
+  const step4 = (
+    <div>
+      <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 18 }}>What do you want to do?</div>
+      <div style={{ display: 'flex', gap: 32, marginBottom: 24 }}>
+        <label style={{ fontWeight: 500, cursor: 'pointer' }}>
+          <input type="radio" name="actionType" value="bid" checked={actionType === 'bid'} onChange={() => { setActionType('bid'); setBidAmount(''); setExchangeFor(''); setResellAmount(''); }} style={{ marginRight: 8 }} />
+          Bid
+        </label>
+        <label style={{ fontWeight: 500, cursor: 'pointer' }}>
+          <input type="radio" name="actionType" value="exchange" checked={actionType === 'exchange'} onChange={() => { setActionType('exchange'); setBidAmount(''); setExchangeFor(''); setResellAmount(''); }} style={{ marginRight: 8 }} />
+          Exchange
+        </label>
+        <label style={{ fontWeight: 500, cursor: 'pointer' }}>
+          <input type="radio" name="actionType" value="resell" checked={actionType === 'resell'} onChange={() => { setActionType('resell'); setBidAmount(''); setExchangeFor(''); setResellAmount(''); }} style={{ marginRight: 8 }} />
+          Resell
+        </label>
+      </div>
+      {actionType === 'bid' && (
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>How much are you looking for?</label>
+          <input type="number" value={bidAmount} onChange={e => setBidAmount(e.target.value)} style={{ width: 240, padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }} placeholder="Expected bid amount" />
+        </div>
+      )}
+      {actionType === 'exchange' && (
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>What are you looking for in exchange?</label>
+          <input type="text" value={exchangeFor} onChange={e => setExchangeFor(e.target.value)} style={{ width: 240, padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }} placeholder="Desired item" />
+        </div>
+      )}
+      {actionType === 'resell' && (
+        <div style={{ marginBottom: 18 }}>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Resell amount</label>
+          <input type="number" value={resellAmount} onChange={e => setResellAmount(e.target.value)} style={{ width: 240, padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }} placeholder="Resell price" />
+        </div>
+      )}
+      <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginTop: 36 }}>
+        <button className="sayonara-btn" style={{ minWidth: 120 }} onClick={() => setStep(3)}>Back</button>
+        <button className="sayonara-btn" style={{ minWidth: 120 }} disabled={
+          (actionType === 'bid' && !bidAmount) ||
+          (actionType === 'exchange' && !exchangeFor) ||
+          (actionType === 'resell' && !resellAmount) ||
+          !actionType
+        } onClick={() => setStep(5)}>Publish</button>
+        <button className="sayonara-btn" style={{ minWidth: 120, background: '#fff', color: '#924DAC', border: '2px solid #924DAC' }} onClick={() => setStep(1)}>Draft</button>
+      </div>
+    </div>
+  );
+
+  // Step 5: Success
+  const step5 = (
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
+      <div style={{ background: '#eafbe7', borderRadius: '50%', width: 80, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
+        <span style={{ color: '#2ecc40', fontSize: 48 }}>✔</span>
+      </div>
+      <div style={{ fontWeight: 700, fontSize: 22, color: '#222', marginBottom: 8 }}>Your Product is successfully Uploaded</div>
+    </div>
+  );
+
+  return (
+    <div style={{ minHeight: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f7fa', padding: '32px 0' }}>
+      <div style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', maxWidth: 900, width: '100%', padding: 36 }}>
+        {stepper}
+        {step === 1 && step1}
+        {step === 2 && step2}
+        {step === 3 && step3}
+        {step === 4 && step4}
+        {step === 5 && step5}
+      </div>
     </div>
   );
 } 

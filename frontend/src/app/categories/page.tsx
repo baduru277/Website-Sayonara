@@ -1,6 +1,3 @@
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
-
 const categories = [
   {
     name: 'Electronics',
@@ -91,7 +88,6 @@ const categories = [
 export default function CategoriesPage() {
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <main className="flex-1 bg-gray-50 py-8">
         <div className="container">
           {/* Page Header */}
@@ -234,7 +230,6 @@ export default function CategoriesPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 } 

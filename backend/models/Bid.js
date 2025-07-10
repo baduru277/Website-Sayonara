@@ -29,10 +29,10 @@ const Bid = sequelize.define('Bid', {
 }, {
   indexes: [
     {
-      fields: ['ItemId']
+      fields: ['itemId']
     },
     {
-      fields: ['UserId']
+      fields: ['userId']
     },
     {
       fields: ['createdAt']

@@ -8,12 +8,12 @@ const router = express.Router();
 // Register
 router.post('/register', async (req, res) => {
   try {
-    const { username, email, password, firstName, lastName, location } = req.body;
+    const { name, email, password, firstName, lastName, location } = req.body;
 
     // Check if user already exists
     const existingUser = await User.findOne({
       where: {
-        [require('sequelize').Op.or]: [{ email }, { username }]
+        [require('sequelize').Op.or]: [{ email }, { name }]
       }
     });
 
@@ -23,7 +23,7 @@ router.post('/register', async (req, res) => {
 
     // Create new user
     const user = await User.create({
-      username,
+      name,
       email,
       password,
       firstName,

@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from 'react';
 import Link from 'next/link';
 
 const featuredItems = [
@@ -18,20 +17,20 @@ const featuredItems = [
     likes: 23,
     action: "Bid"
   },
-//   {
-//     id: 2,
-//     title: "Nike Air Jordan 1",
-//     description: "Retro High OG, Size 10, Like new",
-//     image: "https://images.unsplash.com/photo-1517263904808-5dc0d6e1ad21?auto=format&fit=crop&w=400&q=80",
-//     category: "Fashion",
-//     owner: "SneakerHead",
-//     location: "Los Angeles, CA",
-//     tradeFor: "Yeezy 350 or cash",
-//     price: 15000,
-//     views: 89,
-//     likes: 45,
-//     action: "Exchange"
-//   },
+  {
+    id: 2,
+    title: "Nike Air Jordan 1",
+    description: "Retro High OG, Size 10, Like new",
+    image: "https://images.unsplash.com/photo-1517263904808-5dc0d6e1ad21?auto=format&fit=crop&w=400&q=80",
+    category: "Fashion",
+    owner: "SneakerHead",
+    location: "Los Angeles, CA",
+    tradeFor: "Yeezy 350 or cash",
+    price: 15000,
+    views: 89,
+    likes: 45,
+    action: "Exchange"
+  },
   {
     id: 3,
     title: "Guitar - Fender Stratocaster",
@@ -78,117 +77,83 @@ const featuredItems = [
     id: 6,
     title: "Mountain Bike",
     description: "Trek Fuel EX 8, Carbon frame, 29er",
-    image: "/api/placeholder/300/200",
+    image: "https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=400&q=80",
     category: "Sports",
     owner: "BikeRider",
     location: "Denver, CO",
     tradeFor: "Road bike or camping gear",
     price: 80000,
     views: 145,
-    likes: 56
+    likes: 56,
+    action: "Exchange"
   },
   {
     id: 7,
     title: "Dell Optiplex 7040 All-in-One Computer",
     description: "With 24in Monitor, Windows 10 Pro",
-    image: "/api/placeholder/300/200",
+    image: "https://images.unsplash.com/photo-1519389950473-47ba0277781c?auto=format&fit=crop&w=400&q=80",
     category: "Computers",
     owner: "OfficeDeals",
     location: "Chicago, IL",
     tradeFor: "Laptop or cash",
     price: 40000,
     views: 120,
-    likes: 22
+    likes: 22,
+    action: "Buy/Sell"
   },
   {
     id: 8,
     title: "4K UHD LED Smart TV with Chromecast",
     description: "Brand new, 55in, warranty included",
-    image: "/api/placeholder/300/200",
+    image: "https://images.unsplash.com/photo-1519125323398-675f0ddb6308?auto=format&fit=crop&w=400&q=80",
     category: "Electronics",
     owner: "HomeTech",
     location: "Houston, TX",
     tradeFor: "Soundbar or cash",
     price: 60000,
     views: 99,
-    likes: 18
+    likes: 18,
+    action: "Bid"
   }
 ];
 
-const ITEMS_PER_PAGE = 5;
-
 export default function FeaturedItems() {
-  const [page, setPage] = useState(0);
-  const totalPages = Math.ceil(featuredItems.length / ITEMS_PER_PAGE);
-  const startIdx = page * ITEMS_PER_PAGE;
-  const itemsToShow = featuredItems.slice(startIdx, startIdx + ITEMS_PER_PAGE);
-
   return (
-    <section className="py-16 bg-gray-100">
-      <div className="max-w-7xl mx-auto px-4">
-        <h2 className="text-4xl font-extrabold text-center text-purple-700 mb-10">Featured Items</h2>
-        <div className="flex gap-8 overflow-x-auto flex-nowrap pb-2 hide-scrollbar justify-center">
-          {itemsToShow.map((item) => (
-            <div
-              key={item.id}
-              className="bg-white rounded-2xl shadow-md flex flex-col w-72 h-[400px] mx-auto transition-transform hover:-translate-y-2 hover:shadow-lg"
-            >
-              <div className="h-40 flex items-center justify-center overflow-hidden rounded-t-2xl bg-gray-50 p-4 border border-gray-200">
-                <img
-                  src={item.image}
-                  alt={item.title}
-                  className="object-contain w-full h-full drop-shadow-md bg-white rounded-xl"
-                  style={{ maxHeight: '100%', maxWidth: '100%' }}
-                />
-              </div>
-              <div className="flex-1 flex flex-col items-center justify-between px-4 py-3 min-h-[180px]">
-                <span className="uppercase text-xs text-gray-400 tracking-wider mb-1">{item.category}</span>
-                <h3 className="text-lg font-bold text-purple-700 mb-1 text-center">{item.title}</h3>
-                <p className="text-gray-500 text-sm mb-2 text-center">{item.description}</p>
-                {/* Action label as pill button */}
-                {item.action === 'Exchange' ? (
-                  <Link href="/exchange" className="block w-full mb-2 py-2 border-2 border-purple-500 text-purple-700 font-semibold rounded-full text-center hover:bg-purple-100 hover:text-purple-900 transition-colors">Exchange</Link>
-                ) : item.action === 'Bid' ? (
-                  <Link href="/bidding" className="block w-full mb-2 py-2 border-2 border-purple-500 text-purple-700 font-semibold rounded-full text-center hover:bg-purple-100 hover:text-purple-900 transition-colors">Bid</Link>
-                ) : item.action === 'Buy/Sell' ? (
-                  <Link href="/resell" className="block w-full mb-2 py-2 border-2 border-purple-500 text-purple-700 font-semibold rounded-full text-center hover:bg-purple-100 hover:text-purple-900 transition-colors">Buy/Sell</Link>
-                ) : null}
-                <Link
-                  href={`/item/${item.id}`}
-                  className="mt-auto w-full border-2 border-purple-500 text-purple-700 font-bold rounded-full py-2 text-center hover:bg-purple-100 hover:text-purple-900 transition-all duration-200 text-base shadow-none focus:outline-none"
-                >
-                  View Item
-                </Link>
-              </div>
-            </div>
-          ))}
-        </div>
-
-        {/* Pagination Dots */}
-        <div className="flex justify-center mt-6 gap-2">
-          {Array.from({ length: totalPages }).map((_, idx) => (
-            <button
-              key={idx}
-              className={`w-3 h-3 rounded-full border-2 ${page === idx ? 'bg-purple-600 border-purple-600' : 'bg-white border-purple-300'} transition-all`}
-              onClick={() => setPage(idx)}
-              aria-label={`Go to page ${idx + 1}`}
+    <div style={{ display: 'flex', justifyContent: 'center', gap: 32, flexWrap: 'wrap', margin: '0 auto', maxWidth: 1200 }}>
+      {featuredItems.slice(0, 4).map((item) => (
+        <div
+          key={item.id}
+          style={{
+            background: '#fff',
+            borderRadius: 12,
+            boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+            width: 300,
+            margin: '16px 0',
+            display: 'flex',
+            flexDirection: 'column',
+            alignItems: 'center',
+            overflow: 'hidden',
+          }}
+        >
+          <div style={{ width: '100%', height: 180, background: '#f5f6fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            <img
+              src={item.image}
+              alt={item.title}
+              style={{ width: '100%', height: '100%', objectFit: 'cover', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}
             />
-          ))}
+          </div>
+          <div style={{ padding: 20, width: '100%', textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>
+            <div style={{ color: '#b0b0b0', fontSize: 15, marginBottom: 4 }}>{item.category}</div>
+            <div style={{ fontWeight: 700, fontSize: 19, marginBottom: 4 }}>{item.title}</div>
+            <div style={{ color: '#444', fontSize: 15, marginBottom: 8 }}>{item.description}</div>
+            <div style={{ fontWeight: 700, fontSize: 16, marginBottom: 8 }}>{item.action}</div>
+            <Link href={`/item/${item.id}`} style={{ color: '#222', fontWeight: 600, fontSize: 15, textDecoration: 'underline', marginTop: 'auto', display: 'inline-block' }}>
+              View Item
+            </Link>
+          </div>
         </div>
-
-        <div className="text-center mt-10">
-          <Link
-            href="/browse"
-            className="group inline-flex items-center px-8 py-4 text-lg font-semibold text-purple-600 border-2 border-purple-600 rounded-xl hover:bg-purple-100 hover:text-purple-900 transition-all duration-300 transform hover:scale-105"
-          >
-            Browse All Items
-            <svg className="w-5 h-5 ml-2 group-hover:translate-x-1 transition-transform duration-300" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 7l5 5m0 0l-5 5m5-5H6" />
-            </svg>
-          </Link>
-        </div>
-      </div>
-    </section>
+      ))}
+    </div>
   );
 }
 

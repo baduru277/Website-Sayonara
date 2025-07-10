@@ -1,8 +1,6 @@
 'use client';
 
 import { useState } from 'react';
-import Header from '../../components/Header';
-import Footer from '../../components/Footer';
 
 // Mock trade data
 const trades = [
@@ -116,7 +114,6 @@ export default function TradesPage() {
 
   return (
     <div className="min-h-screen flex flex-col">
-      <Header />
       <main className="flex-1 bg-gray-50 py-8">
         <div className="container max-w-6xl">
           {/* Page Header */}
@@ -344,7 +341,6 @@ export default function TradesPage() {
           </div>
         </div>
       </main>
-      <Footer />
     </div>
   );
 } 

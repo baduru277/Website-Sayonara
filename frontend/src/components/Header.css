@@ -1,0 +1,29 @@
+/* frontend/src/components/Header.css */
+.logo-shadow {
+  text-shadow: 0 2px 8px rgba(168, 85, 247, 0.2);
+}
+
+.sayonara-btn {
+  border: 2px solid #924DAC;
+  color: #924DAC;
+  background: #fff;
+  border-radius: 24px;
+  font-weight: 600;
+  font-size: 18px;
+  padding: 6px 28px;
+  cursor: pointer;
+  transition: background 0.2s, color 0.2s, border 0.2s;
+  text-decoration: none !important;
+}
+.sayonara-btn:hover {
+  background: #924DAC;
+  color: #fff;
+  border-color: #924DAC;
+  text-decoration: none !important;
+}
+.sayonara-btn:active {
+  background: #fff;
+  color: #924DAC;
+  border-color: #924DAC;
+  text-decoration: none !important;
+} 
