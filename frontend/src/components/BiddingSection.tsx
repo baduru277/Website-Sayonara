@@ -76,7 +76,7 @@ export default function BiddingSection() {
           userRating: item.user?.rating || 4.5,
           userReviews: item.user?.reviewCount || 0,
           isVerified: item.user?.isVerified || false,
-          priority: calculatePriority(item.auctionEndDate, item.totalBids),
+          priority: calculatePriority(item.auctionEndDate, item.totalBids || 0),
           auctionEndDate: item.auctionEndDate
         })) || [];
         
