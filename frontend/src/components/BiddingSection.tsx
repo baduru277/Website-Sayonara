@@ -68,7 +68,7 @@ export default function BiddingSection() {
           condition: item.condition,
           currentBid: parseFloat(item.currentBid) || parseFloat(item.startingBid),
           startingBid: parseFloat(item.startingBid),
-          buyNowPrice: parseFloat(item.buyNowPrice) || 0,
+          buyNowPrice: parseFloat(item.buyNowPrice || '0'),
           timeLeft: calculateTimeLeft(item.auctionEndDate),
           totalBids: item.totalBids || 0,
           location: item.location || 'Unknown',
