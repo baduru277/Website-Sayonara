@@ -24,11 +24,6 @@ export default function Header() {
       .catch(() => setLocation('Oguru'));
   }, []);
 
-  const handleLogin = () => {
-    localStorage.setItem('isLoggedIn', 'true');
-    setIsLoggedIn(true);
-  };
-
   const handleLogout = () => {
     localStorage.removeItem('isLoggedIn');
     setIsLoggedIn(false);

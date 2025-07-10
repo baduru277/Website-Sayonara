@@ -3,17 +3,6 @@
 import { useState } from 'react';
 import "../../components/Header.css";
 
-const allCategories = [
-  { group: 'Electronics', items: ['Phones and accessories', 'Computers', 'TVs and accessories', 'Consoles and slot machines'] },
-  { group: 'Fashion', items: [] },
-  { group: 'Home and Garden', items: [] },
-  { group: 'Supermarket', items: [] },
-  { group: 'Beauty', items: [] },
-  { group: 'Culture', items: [] },
-  { group: 'Sports and tourism', items: [] },
-  { group: 'Automotive', items: [] },
-  { group: 'Properties', items: [] },
-];
 const subCategories = {
   'Phones and accessories': ['Smartphones', 'Smartwatches', 'Tablets', 'Accessories GSM', 'Cases and covers'],
   'Computers': ['Laptops', 'Laptop components', 'Desktop Computers', 'Computer components', 'Printers and scanners'],

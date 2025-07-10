@@ -1,16 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
-import Link from "next/link";
 import apiService from '@/services/api';
-
-const steps = [
-  "login-signup",
-  "forgot-password",
-  "reset-password",
-  "verify-email",
-  "basic-info"
-];
 
 export default function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [step, setStep] = useState("login-signup");
@@ -46,8 +37,9 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         setErrorMsg(res.error || 'Login failed.');
         setLoading(false);
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Login failed.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Login failed.';
+      setErrorMsg(errorMessage);
       setLoading(false);
     }
   }
@@ -67,8 +59,9 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         setErrorMsg(res.error || 'Signup failed.');
         setLoading(false);
       }
-    } catch (err: any) {
-      setErrorMsg(err.message || 'Signup failed.');
+    } catch (err: unknown) {
+      const errorMessage = err instanceof Error ? err.message : 'Signup failed.';
+      setErrorMsg(errorMessage);
       setLoading(false);
     }
   }

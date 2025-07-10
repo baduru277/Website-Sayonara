@@ -123,7 +123,33 @@ export default function BiddingPage() {
         const response = await apiService.getBiddingItems();
         
         // Transform API response to match our interface
-        const transformedItems = response.items?.map((item: any) => ({
+        const transformedItems = response.items?.map((item: {
+          id: string;
+          title: string;
+          description: string;
+          images?: string[];
+          category: string;
+          condition: string;
+          currentBid: string;
+          startingBid: string;
+          buyNowPrice?: string;
+          totalBids?: number;
+          location?: string;
+          createdAt: string;
+          auctionEndDate: string;
+          user?: {
+            rating?: number;
+            reviewCount?: number;
+            isVerified?: boolean;
+          };
+          bids?: Array<{
+            amount: string;
+            bidder?: {
+              username?: string;
+            };
+            createdAt: string;
+          }>;
+        }) => ({
           id: item.id,
           title: item.title,
           description: item.description,
@@ -132,7 +158,7 @@ export default function BiddingPage() {
           condition: item.condition,
           currentBid: parseFloat(item.currentBid) || parseFloat(item.startingBid),
           startingBid: parseFloat(item.startingBid),
-          buyNowPrice: parseFloat(item.buyNowPrice) || 0,
+          buyNowPrice: parseFloat(item.buyNowPrice || '0'),
           timeLeft: calculateTimeLeft(item.auctionEndDate),
           totalBids: item.totalBids || 0,
           location: item.location || 'Unknown',
@@ -140,9 +166,15 @@ export default function BiddingPage() {
           userRating: item.user?.rating || 4.5,
           userReviews: item.user?.reviewCount || 0,
           isVerified: item.user?.isVerified || false,
-          priority: calculatePriority(item.auctionEndDate, item.totalBids),
+          priority: calculatePriority(item.auctionEndDate, item.totalBids || 0),
           auctionEndDate: item.auctionEndDate,
-          bidHistory: item.bids?.map((bid: any) => ({
+          bidHistory: item.bids?.map((bid: {
+            amount: string;
+            bidder?: {
+              username?: string;
+            };
+            createdAt: string;
+          }) => ({
             amount: parseFloat(bid.amount),
             user: bid.bidder?.username || 'Anonymous',
             time: formatBidTime(bid.createdAt)

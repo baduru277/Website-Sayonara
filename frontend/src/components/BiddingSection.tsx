@@ -30,12 +30,6 @@ export default function BiddingSection() {
   const [biddingItems, setBiddingItems] = useState<BiddingItem[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedPriority, setSelectedPriority] = useState('All');
-  const [sortBy, setSortBy] = useState('ending-soon');
-
-  const categories = ['All', 'Electronics', 'Fashion', 'Luxury', 'Collectibles', 'Sports', 'Music'];
-  const priorities = ['All', 'high', 'medium', 'low'];
 
   // Fetch bidding items from API
   useEffect(() => {
@@ -46,7 +40,26 @@ export default function BiddingSection() {
         const response = await apiService.getBiddingItems();
         
         // Transform API response to match our interface
-        const transformedItems = response.items?.map((item: any) => ({
+        const transformedItems = response.items?.map((item: {
+          id: string;
+          title: string;
+          description: string;
+          images?: string[];
+          category: string;
+          condition: string;
+          currentBid: string;
+          startingBid: string;
+          buyNowPrice?: string;
+          totalBids?: number;
+          location?: string;
+          createdAt: string;
+          auctionEndDate: string;
+          user?: {
+            rating?: number;
+            reviewCount?: number;
+            isVerified?: boolean;
+          };
+        }) => ({
           id: item.id,
           title: item.title,
           description: item.description,
@@ -242,26 +255,12 @@ export default function BiddingSection() {
     }
   ];
 
-  const filteredItems = biddingItems.filter(item => {
-    const categoryMatch = selectedCategory === 'All' || item.category === selectedCategory;
-    const priorityMatch = selectedPriority === 'All' || item.priority === selectedPriority;
-    return categoryMatch && priorityMatch;
-  });
-
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    if (sortBy === 'ending-soon') {
-      // Sort by time left (simplified)
-      const timeA = parseInt(a.timeLeft.split('h')[0]) || 0;
-      const timeB = parseInt(b.timeLeft.split('h')[0]) || 0;
-      return timeA - timeB;
-    }
-    if (sortBy === 'highest-bid') {
-      return b.currentBid - a.currentBid;
-    }
-    if (sortBy === 'most-bids') {
-      return b.totalBids - a.totalBids;
-    }
-    return 0;
+  // Sort items by ending soon (simplified)
+  const sortedItems = [...biddingItems].sort((a, b) => {
+    // Sort by time left (simplified)
+    const timeA = parseInt(a.timeLeft.split('h')[0]) || 0;
+    const timeB = parseInt(b.timeLeft.split('h')[0]) || 0;
+    return timeA - timeB;
   });
 
   const getPriorityColor = (priority: string) => {

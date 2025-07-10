@@ -126,7 +126,7 @@ export default function DashboardPage() {
                 { name: "Basic Plan", price: 99, desc: "Basic features for casual users.", color: "#f3eaff" },
                 { name: "Standard Plan", price: 299, desc: "Standard features for regular users.", color: "#eafff3" },
                 { name: "Premium Plan", price: 499, desc: "All features for power users.", color: "#fff3ea" },
-              ].map((plan, idx) => (
+              ].map((plan) => (
                 <div key={plan.name} style={{ background: plan.color, borderRadius: 12, boxShadow: "0 2px 8px rgba(146,77,172,0.04)", padding: 28, minWidth: 220 }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 8 }}>{plan.name}</div>
                   <div style={{ color: "#444", marginBottom: 12 }}>{plan.desc}</div>
