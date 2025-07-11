@@ -41,31 +41,4 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Database sync and server start
-const PORT = process.env.PORT || 5000;
-
-const startServer = async () => {
-  try {
-    // Test database connection
-    await sequelize.authenticate();
-    console.log('Database connection established successfully.');
-
-    // Sync database (in production, use migrations instead)
-    if (process.env.NODE_ENV !== 'production') {
-      await sequelize.sync({ alter: true });
-      console.log('Database synced successfully.');
-    }
-
-    app.listen(PORT, () => {
-      console.log(`Server is running on port ${PORT}`);
-      console.log(`Environment: ${process.env.NODE_ENV || 'development'}`);
-    });
-  } catch (error) {
-    console.error('Unable to start server:', error);
-    process.exit(1);
-  }
-};
-
-startServer();
-
 module.exports = app;
