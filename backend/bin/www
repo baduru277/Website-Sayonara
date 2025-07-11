@@ -12,7 +12,8 @@ var http = require('http');
  * Get port from environment and store in Express.
  */
 
-var port = process.env.PORT ? parseInt(process.env.PORT, 10) : 3001;
+var port = process.env.PORT && !isNaN(process.env.PORT) ? parseInt(process.env.PORT, 10) : 3001;
+console.log('process.env.PORT:', process.env.PORT, 'port:', port);
 app.set('port', port);
 
 /**
