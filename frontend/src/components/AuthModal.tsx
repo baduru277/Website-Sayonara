@@ -34,11 +34,16 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         onClose();
         window.location.reload(); // To update header state
       } else {
-        setErrorMsg(res.error || 'Login failed.');
+        setErrorMsg(res.error || res.message || 'Login failed.');
         setLoading(false);
       }
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Login failed.';
+    } catch (err: any) {
+      // Try to extract backend error message
+      let errorMessage = 'Login failed.';
+      if (err && err.message) errorMessage = err.message;
+      if (err && err.response && err.response.data && err.response.data.error) {
+        errorMessage = err.response.data.error;
+      }
       setErrorMsg(errorMessage);
       setLoading(false);
     }
@@ -56,11 +61,16 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         setLoading(false);
         setStep('verify-email');
       } else {
-        setErrorMsg(res.error || 'Signup failed.');
+        setErrorMsg(res.error || res.message || 'Signup failed.');
         setLoading(false);
       }
-    } catch (err: unknown) {
-      const errorMessage = err instanceof Error ? err.message : 'Signup failed.';
+    } catch (err: any) {
+      // Try to extract backend error message
+      let errorMessage = 'Signup failed.';
+      if (err && err.message) errorMessage = err.message;
+      if (err && err.response && err.response.data && err.response.data.error) {
+        errorMessage = err.response.data.error;
+      }
       setErrorMsg(errorMessage);
       setLoading(false);
     }

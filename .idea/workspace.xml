@@ -4,7 +4,26 @@
     <option name="autoReloadType" value="SELECTIVE" />
   </component>
   <component name="ChangeListManager">
-    <list default="true" id="c36eb7b2-3465-439f-8471-a4d8df58846e" name="Changes" comment="" />
+    <list default="true" id="c36eb7b2-3465-439f-8471-a4d8df58846e" name="Changes" comment="">
+      <change beforePath="$PROJECT_DIR$/.idea/workspace.xml" beforeDir="false" afterPath="$PROJECT_DIR$/.idea/workspace.xml" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/env.example" beforeDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/models/User.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/models/User.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/node_modules/.package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/node_modules/depd/History.md" beforeDir="false" afterPath="$PROJECT_DIR$/backend/node_modules/depd/History.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/node_modules/depd/LICENSE" beforeDir="false" afterPath="$PROJECT_DIR$/backend/node_modules/depd/LICENSE" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/node_modules/depd/Readme.md" beforeDir="false" afterPath="$PROJECT_DIR$/backend/node_modules/depd/Readme.md" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/node_modules/depd/index.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/node_modules/depd/index.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/node_modules/depd/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/node_modules/depd/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/node_modules/multer/lib/make-middleware.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/node_modules/multer/lib/make-middleware.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/node_modules/multer/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/node_modules/multer/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/backend/package.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/backend/routes/auth.js" beforeDir="false" afterPath="$PROJECT_DIR$/backend/routes/auth.js" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/frontend/src/components/AuthModal.tsx" beforeDir="false" afterPath="$PROJECT_DIR$/frontend/src/components/AuthModal.tsx" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/node_modules/.package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/node_modules/.package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package-lock.json" beforeDir="false" afterPath="$PROJECT_DIR$/package-lock.json" afterDir="false" />
+      <change beforePath="$PROJECT_DIR$/package.json" beforeDir="false" afterPath="$PROJECT_DIR$/package.json" afterDir="false" />
+    </list>
     <option name="SHOW_DIALOG" value="false" />
     <option name="HIGHLIGHT_CONFLICTS" value="true" />
     <option name="HIGHLIGHT_NON_ACTIVE_CHANGELIST" value="false" />
@@ -22,13 +41,13 @@
     <option name="hideEmptyMiddlePackages" value="true" />
     <option name="showLibraryContents" value="true" />
   </component>
-  <component name="PropertiesComponent"><![CDATA[{
-  "keyToString": {
-    "RunOnceActivity.OpenProjectViewOnStart": "true",
-    "RunOnceActivity.ShowReadmeOnStart": "true",
-    "last_opened_file_path": "C:/Users/Bindu/PycharmProjects/Website-Sayonara"
+  <component name="PropertiesComponent">{
+  &quot;keyToString&quot;: {
+    &quot;RunOnceActivity.OpenProjectViewOnStart&quot;: &quot;true&quot;,
+    &quot;RunOnceActivity.ShowReadmeOnStart&quot;: &quot;true&quot;,
+    &quot;last_opened_file_path&quot;: &quot;C:/Users/Bindu/PycharmProjects/Website-Sayonara&quot;
   }
-}]]></component>
+}</component>
   <component name="SpellCheckerSettings" RuntimeDictionaries="0" Folders="0" CustomDictionaries="0" DefaultDictionary="application-level" UseSingleDictionary="true" transferred="true" />
   <component name="TaskManager">
     <task active="true" id="Default" summary="Default task">

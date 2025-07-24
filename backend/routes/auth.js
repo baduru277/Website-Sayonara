@@ -2,6 +2,7 @@ const express = require('express');
 const jwt = require('jsonwebtoken');
 const { User } = require('../models');
 const { auth } = require('../middleware/auth');
+const nodemailer = require('nodemailer');
 
 const router = express.Router();
 
@@ -31,19 +32,69 @@ router.post('/register', async (req, res) => {
       location
     });
 
+    // Generate verification code
+    const otpCode = Math.floor(100000 + Math.random() * 900000).toString();
+    const otpExpires = new Date(Date.now() + 15 * 60 * 1000); // 15 min expiry
+    await user.update({ otpCode, otpExpires });
+    let transporter;
+    if (process.env.NODE_ENV === 'development') {
+      // Use Ethereal for dev email testing
+      const testAccount = await nodemailer.createTestAccount();
+      transporter = nodemailer.createTransport({
+        host: testAccount.smtp.host,
+        port: testAccount.smtp.port,
+        secure: testAccount.smtp.secure,
+        auth: {
+          user: testAccount.user,
+          pass: testAccount.pass
+        }
+      });
+    } else {
+      // Use real SMTP credentials in production
+      transporter = nodemailer.createTransport({
+        host: process.env.EMAIL_HOST,
+        port: process.env.EMAIL_PORT,
+        secure: false,
+        auth: {
+          user: process.env.EMAIL_USER,
+          pass: process.env.EMAIL_PASS
+        }
+      });
+    }
+    const info = await transporter.sendMail({
+      from: '"Sayonara" <no-reply@sayonara.com>',
+      to: user.email,
+      subject: 'Verify your email address',
+      text: `Your verification code is: ${otpCode}`,
+      html: `<p>Your verification code is: <b>${otpCode}</b></p>`
+    });
+    if (process.env.NODE_ENV === 'development') {
+      console.log('Preview URL: %s', nodemailer.getTestMessageUrl(info));
+    }
+
     // Generate token
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET, {
       expiresIn: '7d'
     });
 
     res.status(201).json({
-      message: 'User created successfully',
+      message: 'User created successfully. Verification email sent.',
       user: user.toJSON(),
       token
     });
   } catch (error) {
-    console.error('Registration error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Registration error:', error.message, error.stack);
+    // If Sequelize validation error, return details
+    if (error.name === 'SequelizeValidationError') {
+      return res.status(400).json({ error: error.errors.map(e => e.message).join(', ') });
+    }
+    // Handle unique constraint error
+    if (error.name === 'SequelizeUniqueConstraintError') {
+      // Try to determine which field is duplicated
+      const fields = error.errors.map(e => e.path).join(', ');
+      return res.status(400).json({ error: `A user with that ${fields} already exists.` });
+    }
+    res.status(500).json({ error: error.message || 'Server error' });
   }
 });
 
@@ -81,8 +132,8 @@ router.post('/login', async (req, res) => {
       token
     });
   } catch (error) {
-    console.error('Login error:', error);
-    res.status(500).json({ error: 'Server error' });
+    console.error('Login error:', error.message, error.stack);
+    res.status(500).json({ error: error.message || 'Server error' });
   }
 });
 

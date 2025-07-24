@@ -78,11 +78,17 @@ const User = sequelize.define('User', {
 }, {
   hooks: {
     beforeCreate: async (user) => {
+      if (user.email) {
+        user.email = user.email.toLowerCase();
+      }
       if (user.password) {
         user.password = await bcrypt.hash(user.password, 12);
       }
     },
     beforeUpdate: async (user) => {
+      if (user.changed('email') && user.email) {
+        user.email = user.email.toLowerCase();
+      }
       if (user.changed('password')) {
         user.password = await bcrypt.hash(user.password, 12);
       }
