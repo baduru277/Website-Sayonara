@@ -1,6 +1,7 @@
 "use client";
 
 import Link from 'next/link';
+import Image from 'next/image';
 
 const featuredItems = [
   {
@@ -135,11 +136,12 @@ export default function FeaturedItems() {
             overflow: 'hidden',
           }}
         >
-          <div style={{ width: '100%', height: 180, background: '#f5f6fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-            <img
+          <div style={{ width: '100%', height: 180, background: '#f5f6fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+            <Image
               src={item.image}
               alt={item.title}
-              style={{ width: '100%', height: '100%', objectFit: 'cover', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}
+              fill
+              style={{ objectFit: 'cover', borderTopLeftRadius: 12, borderTopRightRadius: 12 }}
             />
           </div>
           <div style={{ padding: 20, width: '100%', textAlign: 'center', flex: 1, display: 'flex', flexDirection: 'column', justifyContent: 'flex-start' }}>

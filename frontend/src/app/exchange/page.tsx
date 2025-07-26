@@ -254,7 +254,7 @@ export default function ExchangePage() {
                   placeholder="Search items..."
                   value={searchQuery}
                   onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
@@ -264,7 +264,7 @@ export default function ExchangePage() {
                 <select
                   value={selectedCategory}
                   onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {categories.map(category => (
                     <option key={category} value={category}>{category}</option>
@@ -278,7 +278,7 @@ export default function ExchangePage() {
                 <select
                   value={selectedPriority}
                   onChange={(e) => setSelectedPriority(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {priorities.map(priority => (
                     <option key={priority} value={priority}>
@@ -294,7 +294,7 @@ export default function ExchangePage() {
                 <select
                   value={selectedCondition}
                   onChange={(e) => setSelectedCondition(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 >
                   {conditions.map(condition => (
                     <option key={condition} value={condition}>{condition}</option>
@@ -312,7 +312,7 @@ export default function ExchangePage() {
                         type="checkbox"
                         checked={selectedTags.includes(tag)}
                         onChange={() => toggleTag(tag)}
-                        className="rounded border-gray-300 text-purple-600 focus:ring-purple-500"
+                        className="rounded border-gray-300 text-purple-600 focus:ring-blue-500"
                       />
                       <span className="ml-2 text-sm text-gray-700">{tag}</span>
                     </label>
@@ -361,7 +361,7 @@ export default function ExchangePage() {
                   <select
                     value={sortBy}
                     onChange={(e) => setSortBy(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-purple-500 focus:border-transparent"
+                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                   >
                     <option value="priority">Priority</option>
                     <option value="rating">Rating</option>

@@ -1,6 +1,7 @@
 'use client';
 
 import { useState } from 'react';
+import Image from 'next/image';
 import '../../../components/Header.css';
 
 const mockProduct = {
@@ -44,12 +45,14 @@ export default function ItemDetailPage() {
       <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         {/* Image Gallery */}
         <div style={{ flex: 1, minWidth: 320 }}>
-          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: 18, marginBottom: 18 }}>
-            <img src={mockProduct.images[mainImg]} alt="main" style={{ width: '100%', borderRadius: 8, objectFit: 'contain', maxHeight: 320 }} />
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: 18, marginBottom: 18, position: 'relative', height: 320 }}>
+            <Image src={mockProduct.images[mainImg]} alt="main" fill style={{ borderRadius: 8, objectFit: 'contain' }} />
           </div>
           <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
             {mockProduct.images.map((img, idx) => (
-              <img key={img} src={img} alt={"thumb"+idx} style={{ width: 56, height: 56, borderRadius: 6, border: mainImg === idx ? '2px solid #924DAC' : '1.5px solid #eee', cursor: 'pointer', objectFit: 'cover' }} onClick={() => setMainImg(idx)} />
+              <div key={img} style={{ position: 'relative', width: 56, height: 56, borderRadius: 6, border: mainImg === idx ? '2px solid #924DAC' : '1.5px solid #eee', cursor: 'pointer', overflow: 'hidden' }} onClick={() => setMainImg(idx)}>
+                <Image src={img} alt={"thumb"+idx} fill style={{ objectFit: 'cover' }} />
+              </div>
             ))}
           </div>
         </div>
