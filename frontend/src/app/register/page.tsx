@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import apiService from '@/services/api';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -15,8 +16,10 @@ export default function RegisterPage() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [loading, setLoading] = useState(false);
+  const [success, setSuccess] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -37,8 +40,34 @@ export default function RegisterPage() {
       return;
     }
 
-    // Handle registration logic here
-    console.log('Registration attempt:', formData);
+    setLoading(true);
+    setErrors({});
+
+    try {
+      // Create account using the API service
+      const response = await apiService.register({
+        name: `${formData.firstName} ${formData.lastName}`,
+        email: formData.email,
+        password: formData.password
+      });
+
+      if (response.token || response.user) {
+        setSuccess(true);
+        // Optionally redirect to login or dashboard
+        setTimeout(() => {
+          window.location.href = '/'; // Redirect to homepage
+        }, 2000);
+      } else {
+        setErrors({ general: response.error || 'Registration failed' });
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setErrors({ 
+        general: error.message || 'Registration failed. Please try again.' 
+      });
+    } finally {
+      setLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -54,12 +83,37 @@ export default function RegisterPage() {
     }
   };
 
+  if (success) {
+    return (
+      <div className="min-h-screen flex flex-col">
+        <main className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4">
+          <div className="w-full max-w-sm mx-auto">
+            <div className="bg-white rounded-2xl shadow-xl px-8 py-8 flex flex-col items-center">
+              <div className="text-green-600 text-6xl mb-4">✓</div>
+              <h2 className="mb-4 text-center text-2xl font-bold text-gray-900">Account Created Successfully!</h2>
+              <p className="text-center text-gray-600 mb-4">
+                Your account has been created. You will be redirected shortly.
+              </p>
+            </div>
+          </div>
+        </main>
+      </div>
+    );
+  }
+
   return (
     <div className="min-h-screen flex flex-col">
       <main className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4">
         <div className="w-full max-w-sm mx-auto">
           <div className="bg-white rounded-2xl shadow-xl px-8 py-8 flex flex-col items-center">
             <h2 className="mb-6 text-center text-3xl font-bold text-gray-900">Create your account</h2>
+            
+            {errors.general && (
+              <div className="w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {errors.general}
+              </div>
+            )}
+
             <form className="w-full" onSubmit={handleSubmit}>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
@@ -155,9 +209,10 @@ export default function RegisterPage() {
               </div>
               <button
                 type="submit"
-                className="w-full py-3 rounded-lg font-bold text-white text-lg bg-purple-700 hover:bg-purple-800 transition-colors shadow-md mb-4"
+                disabled={loading}
+                className="w-full py-3 rounded-lg font-bold text-white text-lg bg-purple-700 hover:bg-purple-800 transition-colors shadow-md mb-4 disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                SIGN UP
+                {loading ? 'Creating Account...' : 'SIGN UP'}
               </button>
             </form>
             <p className="mt-6 text-sm text-gray-600">
