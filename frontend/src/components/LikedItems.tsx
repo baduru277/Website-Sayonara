@@ -1,6 +1,7 @@
 "use client";
 import { useState } from 'react';
 import Link from 'next/link';
+import Image from 'next/image';
 
 const likedItems = [
   {
@@ -113,11 +114,14 @@ export default function LikedItems() {
               key={item.id}
               className="bg-white rounded-2xl shadow-lg flex flex-col items-center p-6 w-72 h-[420px] transition-transform hover:-translate-y-2 hover:shadow-2xl"
             >
-              <img
-                src={item.image}
-                alt={item.title}
-                className="w-full h-40 object-cover rounded-xl mb-4 border border-gray-100 shadow-sm"
-              />
+              <div className="w-full h-40 relative mb-4">
+                <Image
+                  src={item.image}
+                  alt={item.title}
+                  fill
+                  className="object-cover rounded-xl border border-gray-100 shadow-sm"
+                />
+              </div>
               <div className="w-full flex flex-col items-center flex-1 justify-between">
                 <span className="text-xs text-gray-400 mb-1">{item.category}</span>
                 <h3 className="text-xl font-bold text-gray-900 mb-1 text-center">{item.title}</h3>

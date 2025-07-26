@@ -1,6 +1,7 @@
 "use client";
 
 import React, { useState } from "react";
+import Image from "next/image";
 import apiService from '@/services/api';
 
 export default function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
@@ -37,13 +38,19 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         setErrorMsg(res.error || res.message || 'Login failed.');
         setLoading(false);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Try to extract backend error message
       let errorMessage = 'Login failed.';
-      if (err && err.message) errorMessage = err.message;
-      if (err && err.response && err.response.data && err.response.data.error) {
-        errorMessage = err.response.data.error;
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { error?: string } } };
+        if (axiosError.response?.data?.error) {
+          errorMessage = axiosError.response.data.error;
+        }
       }
+      
       setErrorMsg(errorMessage);
       setLoading(false);
     }
@@ -64,13 +71,19 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         setErrorMsg(res.error || res.message || 'Signup failed.');
         setLoading(false);
       }
-    } catch (err: any) {
+    } catch (err: unknown) {
       // Try to extract backend error message
       let errorMessage = 'Signup failed.';
-      if (err && err.message) errorMessage = err.message;
-      if (err && err.response && err.response.data && err.response.data.error) {
-        errorMessage = err.response.data.error;
+      
+      if (err instanceof Error) {
+        errorMessage = err.message;
+      } else if (err && typeof err === 'object' && 'response' in err) {
+        const axiosError = err as { response?: { data?: { error?: string } } };
+        if (axiosError.response?.data?.error) {
+          errorMessage = axiosError.response.data.error;
+        }
       }
+      
       setErrorMsg(errorMessage);
       setLoading(false);
     }
@@ -196,10 +209,10 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   </button>
                   <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
                   <button type="button" className="sayonara-btn" style={{ width: '100%', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
-                    <img src="/google.svg" alt="Google" style={{ width: 22, height: 22 }} /> Login with Google
+                    <Image src="/google.svg" alt="Google" width={22} height={22} /> Login with Google
                   </button>
                   <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
-                    <img src="/apple.svg" alt="Apple" style={{ width: 22, height: 22 }} /> Login with Apple
+                    <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Login with Apple
                   </button>
                 </form>
               ) : (
@@ -253,10 +266,10 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   </button>
                   <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
                   <button type="button" className="sayonara-btn" style={{ width: '100%', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
-                    <img src="/google.svg" alt="Google" style={{ width: 22, height: 22 }} /> Sign up with Google
+                    <Image src="/google.svg" alt="Google" width={22} height={22} /> Sign up with Google
                   </button>
                   <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
-                    <img src="/apple.svg" alt="Apple" style={{ width: 22, height: 22 }} /> Sign up with Apple
+                    <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Sign up with Apple
                   </button>
                 </form>
               )}
