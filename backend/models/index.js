@@ -1,16 +1,19 @@
-const User = require('./User');
-const Item = require('./Item');
-const Bid = require('./Bid');
+// Mock models for development without database
+console.log('Warning: Using mock models for development');
 
-// Define associations
-User.hasMany(Item, { as: 'items', foreignKey: 'userId' });
-Item.belongsTo(User, { as: 'seller', foreignKey: 'userId' });
+const mockModel = {
+  findOne: () => Promise.resolve(null),
+  findAll: () => Promise.resolve([]),
+  create: (data) => Promise.resolve({ id: 1, ...data, toJSON: () => ({ id: 1, ...data }) }),
+  update: () => Promise.resolve([1]),
+  destroy: () => Promise.resolve(1),
+  hasMany: () => {},
+  belongsTo: () => {}
+};
 
-User.hasMany(Bid, { as: 'bids', foreignKey: 'userId' });
-Bid.belongsTo(User, { as: 'bidder', foreignKey: 'userId' });
-
-Item.hasMany(Bid, { as: 'bids', foreignKey: 'itemId' });
-Bid.belongsTo(Item, { as: 'item', foreignKey: 'itemId' });
+const User = mockModel;
+const Item = mockModel;
+const Bid = mockModel;
 
 module.exports = {
   User,

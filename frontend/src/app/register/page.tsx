@@ -2,6 +2,7 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import apiService from '@/services/api';
 
 export default function RegisterPage() {
   const [formData, setFormData] = useState({
@@ -15,8 +16,10 @@ export default function RegisterPage() {
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
+  const [isLoading, setIsLoading] = useState(false);
+  const [successMessage, setSuccessMessage] = useState('');
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
     // Basic validation
@@ -37,8 +40,35 @@ export default function RegisterPage() {
       return;
     }
 
-    // Handle registration logic here
-    console.log('Registration attempt:', formData);
+    // Handle registration API call
+    setIsLoading(true);
+    setErrors({});
+    setSuccessMessage('');
+    
+    try {
+      const userData = {
+        name: `${formData.firstName} ${formData.lastName}`,
+        firstName: formData.firstName,
+        lastName: formData.lastName,
+        email: formData.email,
+        password: formData.password
+      };
+      
+      const response = await apiService.register(userData);
+      
+      if (response.token || response.user) {
+        setSuccessMessage('Registration successful! Please check your email for verification.');
+        // Optionally redirect to login or verification page
+        // window.location.href = '/login';
+      } else {
+        setErrors({ general: response.error || 'Registration failed. Please try again.' });
+      }
+    } catch (error: any) {
+      console.error('Registration error:', error);
+      setErrors({ general: error.message || 'Registration failed. Please check your connection and try again.' });
+    } finally {
+      setIsLoading(false);
+    }
   };
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -60,6 +90,16 @@ export default function RegisterPage() {
         <div className="w-full max-w-sm mx-auto">
           <div className="bg-white rounded-2xl shadow-xl px-8 py-8 flex flex-col items-center">
             <h2 className="mb-6 text-center text-3xl font-bold text-gray-900">Create your account</h2>
+            {errors.general && (
+              <div className="w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
+                {errors.general}
+              </div>
+            )}
+            {successMessage && (
+              <div className="w-full mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
+                {successMessage}
+              </div>
+            )}
             <form className="w-full" onSubmit={handleSubmit}>
               <div className="grid grid-cols-2 gap-4 mb-4">
                 <div>
@@ -155,9 +195,10 @@ export default function RegisterPage() {
               </div>
               <button
                 type="submit"
-                className="w-full py-3 rounded-lg font-bold text-white text-lg bg-purple-700 hover:bg-purple-800 transition-colors shadow-md mb-4"
+                disabled={isLoading}
+                className="w-full py-3 rounded-lg font-bold text-white text-lg bg-purple-700 hover:bg-purple-800 disabled:bg-purple-400 disabled:cursor-not-allowed transition-colors shadow-md mb-4"
               >
-                SIGN UP
+                {isLoading ? 'SIGNING UP...' : 'SIGN UP'}
               </button>
             </form>
             <p className="mt-6 text-sm text-gray-600">
