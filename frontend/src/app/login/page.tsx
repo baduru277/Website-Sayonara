@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
+import { initGoogleSignIn, onSignIn, signOut, GoogleUser } from "@/utils/googleAuth";
 
 export default function LoginPage() {
   const [tab, setTab] = useState<'login' | 'signup'>('login');
@@ -21,9 +21,9 @@ export default function LoginPage() {
     if (typeof window !== 'undefined' && window.gapi) {
       const auth2 = window.gapi.auth2.getAuthInstance();
       if (auth2) {
-        auth2.signIn().then((googleUser: any) => {
+        auth2.signIn().then((googleUser: GoogleUser) => {
           onSignIn(googleUser);
-        }).catch((error: any) => {
+        }).catch((error: Error) => {
           console.error('Google Sign-In failed:', error);
         });
       }

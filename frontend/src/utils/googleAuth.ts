@@ -1,9 +1,35 @@
 // Google Sign-In utility functions
 
+interface GoogleAPI {
+  load: (api: string, callback: () => void) => void;
+  auth2: {
+    init: (config: { client_id: string }) => void;
+    getAuthInstance: () => GoogleAuth2;
+  };
+  signin2: {
+    render: (elementId: string, options: GoogleSignInOptions) => void;
+  };
+}
+
+interface GoogleAuth2 {
+  signIn: () => Promise<GoogleUser>;
+  signOut: () => Promise<void>;
+}
+
+interface GoogleSignInOptions {
+  scope: string;
+  width: number;
+  height: number;
+  longtitle: boolean;
+  theme: 'dark' | 'light';
+  onsuccess: (googleUser: GoogleUser) => void;
+  onfailure: (error: Error) => void;
+}
+
 declare global {
   interface Window {
-    gapi: any;
-    onSignIn: (googleUser: any) => void;
+    gapi: GoogleAPI;
+    onSignIn: (googleUser: GoogleUser) => void;
     signOut: () => void;
   }
 }
@@ -86,7 +112,7 @@ export const renderGoogleButton = (elementId: string, theme: 'dark' | 'light' = 
         'longtitle': true,
         'theme': theme,
         'onsuccess': onSignIn,
-        'onfailure': (error: any) => console.error('Google Sign-In failed:', error)
+        'onfailure': (error: Error) => console.error('Google Sign-In failed:', error)
       });
     });
   }

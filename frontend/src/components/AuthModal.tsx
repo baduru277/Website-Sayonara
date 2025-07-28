@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import apiService from '@/services/api';
-import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
+import { initGoogleSignIn, onSignIn, GoogleUser } from "@/utils/googleAuth";
 
 export default function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [step, setStep] = useState("login-signup");
@@ -38,10 +38,10 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
     if (typeof window !== 'undefined' && window.gapi) {
       const auth2 = window.gapi.auth2.getAuthInstance();
       if (auth2) {
-        auth2.signIn().then((googleUser: any) => {
+        auth2.signIn().then((googleUser: GoogleUser) => {
           onSignIn(googleUser);
           onClose(); // Close modal after successful sign-in
-        }).catch((error: any) => {
+        }).catch((error: Error) => {
           console.error('Google Sign-In failed:', error);
           setErrorMsg('Google Sign-In failed. Please try again.');
         });
