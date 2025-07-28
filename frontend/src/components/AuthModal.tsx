@@ -1,8 +1,9 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import apiService from '@/services/api';
+import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
 
 export default function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [step, setStep] = useState("login-signup");
@@ -20,7 +21,33 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
+  useEffect(() => {
+    if (open) {
+      // Initialize Google Sign-In when modal opens
+      const timer = setTimeout(() => {
+        initGoogleSignIn();
+      }, 1000); // Wait for Google API to load
+
+      return () => clearTimeout(timer);
+    }
+  }, [open]);
+
   if (!open) return null;
+
+  const handleGoogleSignIn = () => {
+    if (typeof window !== 'undefined' && window.gapi) {
+      const auth2 = window.gapi.auth2.getAuthInstance();
+      if (auth2) {
+        auth2.signIn().then((googleUser: any) => {
+          onSignIn(googleUser);
+          onClose(); // Close modal after successful sign-in
+        }).catch((error: any) => {
+          console.error('Google Sign-In failed:', error);
+          setErrorMsg('Google Sign-In failed. Please try again.');
+        });
+      }
+    }
+  };
 
   // Login handler
   async function handleLogin(e: React.FormEvent) {
@@ -208,9 +235,28 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                     {loading ? 'Signing In...' : 'SIGN IN'}
                   </button>
                   <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
-                  <button type="button" className="sayonara-btn" style={{ width: '100%', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
+                  
+                  {/* Google Sign-In Button */}
+                  <div className="g-signin2" data-onsuccess="onSignIn" style={{ marginBottom: 10 }}></div>
+                  <button 
+                    type="button" 
+                    className="sayonara-btn" 
+                    onClick={handleGoogleSignIn}
+                    style={{ 
+                      width: '100%', 
+                      marginBottom: 10, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: 10, 
+                      background: '#fff', 
+                      color: '#444', 
+                      border: '2px solid #924DAC' 
+                    }}
+                  >
                     <Image src="/google.svg" alt="Google" width={22} height={22} /> Login with Google
                   </button>
+                  
                   <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
                     <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Login with Apple
                   </button>
@@ -265,9 +311,27 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                     {loading ? 'Signing Up...' : 'SIGN UP'}
                   </button>
                   <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
-                  <button type="button" className="sayonara-btn" style={{ width: '100%', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
+                  
+                  {/* Google Sign-Up Button */}
+                  <button 
+                    type="button" 
+                    className="sayonara-btn" 
+                    onClick={handleGoogleSignIn}
+                    style={{ 
+                      width: '100%', 
+                      marginBottom: 10, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: 10, 
+                      background: '#fff', 
+                      color: '#444', 
+                      border: '2px solid #924DAC' 
+                    }}
+                  >
                     <Image src="/google.svg" alt="Google" width={22} height={22} /> Sign up with Google
                   </button>
+                  
                   <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
                     <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Sign up with Apple
                   </button>

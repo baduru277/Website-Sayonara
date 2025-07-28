@@ -1,11 +1,34 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
+import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
 
 export default function LoginPage() {
   const [tab, setTab] = useState<'login' | 'signup'>('login');
+
+  useEffect(() => {
+    // Initialize Google Sign-In when component mounts
+    const timer = setTimeout(() => {
+      initGoogleSignIn();
+    }, 1000); // Wait for Google API to load
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleGoogleSignIn = () => {
+    if (typeof window !== 'undefined' && window.gapi) {
+      const auth2 = window.gapi.auth2.getAuthInstance();
+      if (auth2) {
+        auth2.signIn().then((googleUser: any) => {
+          onSignIn(googleUser);
+        }).catch((error: any) => {
+          console.error('Google Sign-In failed:', error);
+        });
+      }
+    }
+  };
 
   return (
     <div style={{
@@ -119,9 +142,28 @@ export default function LoginPage() {
               SIGN IN
             </button>
             <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
-            <button type="button" className="sayonara-btn" style={{ width: '100%', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
+            
+            {/* Google Sign-In Button */}
+            <div className="g-signin2" data-onsuccess="onSignIn" style={{ marginBottom: 10 }}></div>
+            <button 
+              type="button" 
+              className="sayonara-btn" 
+              onClick={handleGoogleSignIn}
+              style={{ 
+                width: '100%', 
+                marginBottom: 10, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: 10, 
+                background: '#fff', 
+                color: '#444', 
+                border: '2px solid #924DAC' 
+              }}
+            >
               <Image src="/google.svg" alt="Google" width={22} height={22} /> Login with Google
             </button>
+            
             <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
               <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Login with Apple
             </button>
@@ -170,14 +212,39 @@ export default function LoginPage() {
               SIGN UP
             </button>
             <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
-            <button type="button" className="sayonara-btn" style={{ width: '100%', marginBottom: 10, display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
+            
+            {/* Google Sign-Up Button */}
+            <button 
+              type="button" 
+              className="sayonara-btn" 
+              onClick={handleGoogleSignIn}
+              style={{ 
+                width: '100%', 
+                marginBottom: 10, 
+                display: 'flex', 
+                alignItems: 'center', 
+                justifyContent: 'center', 
+                gap: 10, 
+                background: '#fff', 
+                color: '#444', 
+                border: '2px solid #924DAC' 
+              }}
+            >
               <Image src="/google.svg" alt="Google" width={22} height={22} /> Sign up with Google
             </button>
+            
             <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
               <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Sign up with Apple
             </button>
           </form>
         )}
+      </div>
+      
+      {/* Sign Out Link for Testing */}
+      <div style={{ marginTop: 20 }}>
+        <a href="#" onClick={(e) => { e.preventDefault(); signOut(); }} style={{ color: '#924DAC', textDecoration: 'underline' }}>
+          Sign out
+        </a>
       </div>
     </div>
   );
