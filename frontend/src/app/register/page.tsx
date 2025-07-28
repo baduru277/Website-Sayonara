@@ -63,9 +63,10 @@ export default function RegisterPage() {
       } else {
         setErrors({ general: response.error || 'Registration failed. Please try again.' });
       }
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Registration error:', error);
-      setErrors({ general: error.message || 'Registration failed. Please check your connection and try again.' });
+      const errorMessage = error instanceof Error ? error.message : 'Registration failed. Please check your connection and try again.';
+      setErrors({ general: errorMessage });
     } finally {
       setIsLoading(false);
     }
