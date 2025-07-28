@@ -20,6 +20,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
+      <head>
+        <meta name="google-signin-client_id" content="380078509373-814un77hbu18p9s6s8tqeit1t18lfnk1.apps.googleusercontent.com" />
+        <script src="https://apis.google.com/js/platform.js" async defer></script>
+      </head>
       <body className={quicksand.className + ' ' + montserrat.className + ' ' + inter.className}>
         <Header />
         {children}
