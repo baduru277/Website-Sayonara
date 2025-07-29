@@ -1,0 +1,223 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Debug Google Sign-In</title>
+    <meta name="google-signin-client_id" content="380078509373-814un77hbu18p9s6s8tqeit1t18lfnk1.apps.googleusercontent.com">
+    <script src="https://apis.google.com/js/api.js" async defer></script>
+    <script src="https://apis.google.com/js/platform.js" async defer></script>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            background: #f9f9f9;
+            padding: 20px;
+            border-radius: 8px;
+            margin: 20px 0;
+            border-left: 4px solid #007bff;
+        }
+        .success { border-left-color: #28a745; }
+        .error { border-left-color: #dc3545; }
+        .warning { border-left-color: #ffc107; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 10px 20px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 5px;
+        }
+        button:hover { background: #0056b3; }
+        button:disabled { 
+            background: #6c757d; 
+            cursor: not-allowed;
+        }
+        .log {
+            background: #000;
+            color: #0f0;
+            padding: 15px;
+            border-radius: 5px;
+            font-family: monospace;
+            font-size: 12px;
+            max-height: 300px;
+            overflow-y: auto;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>Google Sign-In Debug Page</h1>
+    
+    <div class="test-section" id="api-status">
+        <h3>1. Google API Status</h3>
+        <p id="api-message">Checking...</p>
+        <button onclick="checkAPI()">Recheck API</button>
+    </div>
+    
+    <div class="test-section" id="init-status">
+        <h3>2. Initialization Status</h3>
+        <p id="init-message">Not initialized</p>
+        <button onclick="initializeAuth()" id="init-btn">Initialize Auth2</button>
+    </div>
+    
+    <div class="test-section" id="signin-status">
+        <h3>3. Sign-In Test</h3>
+        <p id="signin-message">Auth2 not ready</p>
+        <button onclick="testSignIn()" id="signin-btn" disabled>Test Sign In</button>
+        <button onclick="testSignOut()" id="signout-btn" disabled>Test Sign Out</button>
+    </div>
+    
+    <div class="test-section">
+        <h3>4. Auto-rendered Button</h3>
+        <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
+    </div>
+    
+    <div class="test-section">
+        <h3>5. Debug Log</h3>
+        <button onclick="clearLog()">Clear Log</button>
+        <div class="log" id="debug-log"></div>
+    </div>
+
+    <script>
+        let authInstance = null;
+        
+        function log(message, type = 'info') {
+            const timestamp = new Date().toLocaleTimeString();
+            const logDiv = document.getElementById('debug-log');
+            const color = type === 'error' ? '#f00' : type === 'success' ? '#0f0' : '#fff';
+            logDiv.innerHTML += `<div style="color: ${color}">[${timestamp}] ${message}</div>`;
+            logDiv.scrollTop = logDiv.scrollHeight;
+            console.log(`[Debug] ${message}`);
+        }
+        
+        function clearLog() {
+            document.getElementById('debug-log').innerHTML = '';
+        }
+        
+        function updateStatus(sectionId, message, type = 'info') {
+            const section = document.getElementById(sectionId);
+            const messageEl = section.querySelector('p');
+            messageEl.textContent = message;
+            
+            section.className = 'test-section';
+            if (type === 'success') section.classList.add('success');
+            if (type === 'error') section.classList.add('error');
+            if (type === 'warning') section.classList.add('warning');
+        }
+        
+        function checkAPI() {
+            log('Checking Google API availability...');
+            
+            if (typeof window.gapi === 'undefined') {
+                updateStatus('api-status', 'Google API not loaded', 'error');
+                log('Google API (gapi) is not available', 'error');
+                return false;
+            }
+            
+            updateStatus('api-status', 'Google API loaded successfully', 'success');
+            log('Google API (gapi) is available', 'success');
+            return true;
+        }
+        
+        function initializeAuth() {
+            log('Initializing Google Auth2...');
+            
+            if (!checkAPI()) {
+                return;
+            }
+            
+            window.gapi.load('auth2', function() {
+                log('Auth2 library loaded, initializing...');
+                
+                window.gapi.auth2.init({
+                    client_id: '380078509373-814un77hbu18p9s6s8tqeit1t18lfnk1.apps.googleusercontent.com'
+                }).then(function(auth2) {
+                    log('Auth2 initialized successfully', 'success');
+                    authInstance = auth2;
+                    updateStatus('init-status', 'Auth2 initialized successfully', 'success');
+                    updateStatus('signin-status', 'Ready for sign-in', 'success');
+                    
+                    document.getElementById('signin-btn').disabled = false;
+                    document.getElementById('signout-btn').disabled = false;
+                    
+                    // Check if user is already signed in
+                    if (auth2.isSignedIn.get()) {
+                        log('User is already signed in', 'success');
+                        updateStatus('signin-status', 'User is already signed in', 'success');
+                    }
+                    
+                }).catch(function(error) {
+                    log('Auth2 initialization failed: ' + JSON.stringify(error), 'error');
+                    updateStatus('init-status', 'Auth2 initialization failed: ' + error.error, 'error');
+                });
+            });
+        }
+        
+        function testSignIn() {
+            log('Testing sign-in...');
+            
+            if (!authInstance) {
+                log('Auth2 not initialized', 'error');
+                return;
+            }
+            
+            authInstance.signIn().then(function(googleUser) {
+                log('Sign-in successful!', 'success');
+                const profile = googleUser.getBasicProfile();
+                log('User: ' + profile.getName() + ' (' + profile.getEmail() + ')', 'success');
+                updateStatus('signin-status', 'Signed in as: ' + profile.getName(), 'success');
+            }).catch(function(error) {
+                log('Sign-in failed: ' + JSON.stringify(error), 'error');
+                updateStatus('signin-status', 'Sign-in failed: ' + error.error, 'error');
+            });
+        }
+        
+        function testSignOut() {
+            log('Testing sign-out...');
+            
+            if (!authInstance) {
+                log('Auth2 not initialized', 'error');
+                return;
+            }
+            
+            authInstance.signOut().then(function() {
+                log('Sign-out successful!', 'success');
+                updateStatus('signin-status', 'Signed out successfully', 'success');
+            }).catch(function(error) {
+                log('Sign-out failed: ' + JSON.stringify(error), 'error');
+            });
+        }
+        
+        // Global function for auto-rendered button
+        function onSignIn(googleUser) {
+            log('Auto-rendered button sign-in triggered!', 'success');
+            const profile = googleUser.getBasicProfile();
+            log('Auto sign-in user: ' + profile.getName() + ' (' + profile.getEmail() + ')', 'success');
+        }
+        
+        // Initialize on page load
+        window.addEventListener('load', function() {
+            log('Page loaded, starting checks...');
+            
+            // Wait a moment for scripts to load
+            setTimeout(function() {
+                checkAPI();
+                
+                // Auto-initialize if API is available
+                if (window.gapi) {
+                    setTimeout(initializeAuth, 500);
+                }
+            }, 1000);
+        });
+        
+        // Make onSignIn globally available
+        window.onSignIn = onSignIn;
+    </script>
+</body>
+</html>
