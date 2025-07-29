@@ -3,30 +3,39 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { initGoogleSignIn, onSignIn, signOut, GoogleUser } from "@/utils/googleAuth";
+import { initGoogleSignIn, triggerGoogleSignIn, isGoogleSignInReady, signOut, GoogleUser } from "@/utils/googleAuth";
 
 export default function LoginPage() {
   const [tab, setTab] = useState<'login' | 'signup'>('login');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
 
   useEffect(() => {
     // Initialize Google Sign-In when component mounts
-    const timer = setTimeout(() => {
-      initGoogleSignIn();
-    }, 1000); // Wait for Google API to load
-
-    return () => clearTimeout(timer);
+    initGoogleSignIn().catch(error => {
+      console.error('Failed to initialize Google Sign-In:', error);
+      setErrorMsg('Failed to initialize Google Sign-In. Please refresh the page.');
+    });
   }, []);
 
-  const handleGoogleSignIn = () => {
-    if (typeof window !== 'undefined' && window.gapi) {
-      const auth2 = window.gapi.auth2.getAuthInstance();
-      if (auth2) {
-        auth2.signIn().then((googleUser: GoogleUser) => {
-          onSignIn(googleUser);
-        }).catch((error: Error) => {
-          console.error('Google Sign-In failed:', error);
-        });
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    
+    try {
+      // Check if Google Sign-In is ready
+      if (!isGoogleSignInReady()) {
+        // Try to initialize if not ready
+        await initGoogleSignIn();
       }
+      
+      // Trigger the sign-in
+      await triggerGoogleSignIn();
+    } catch (error: any) {
+      console.error('Google Sign-In failed:', error);
+      setErrorMsg(error.message || 'Google Sign-In failed. Please try again.');
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -92,6 +101,8 @@ export default function LoginPage() {
             Sign Up
           </button>
         </div>
+        {/* Error Message */}
+        {errorMsg && <div style={{ color: 'red', textAlign: 'center', marginBottom: 10, fontSize: 14 }}>{errorMsg}</div>}
         {/* Form */}
         {tab === 'login' ? (
           <form>
@@ -149,6 +160,7 @@ export default function LoginPage() {
               type="button" 
               className="sayonara-btn" 
               onClick={handleGoogleSignIn}
+              disabled={loading}
               style={{ 
                 width: '100%', 
                 marginBottom: 10, 
@@ -158,10 +170,13 @@ export default function LoginPage() {
                 gap: 10, 
                 background: '#fff', 
                 color: '#444', 
-                border: '2px solid #924DAC' 
+                border: '2px solid #924DAC',
+                opacity: loading ? 0.6 : 1,
+                cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              <Image src="/google.svg" alt="Google" width={22} height={22} /> Login with Google
+              <Image src="/google.svg" alt="Google" width={22} height={22} /> 
+              {loading ? 'Signing in...' : 'Login with Google'}
             </button>
             
             <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
@@ -218,6 +233,7 @@ export default function LoginPage() {
               type="button" 
               className="sayonara-btn" 
               onClick={handleGoogleSignIn}
+              disabled={loading}
               style={{ 
                 width: '100%', 
                 marginBottom: 10, 
@@ -227,10 +243,13 @@ export default function LoginPage() {
                 gap: 10, 
                 background: '#fff', 
                 color: '#444', 
-                border: '2px solid #924DAC' 
+                border: '2px solid #924DAC',
+                opacity: loading ? 0.6 : 1,
+                cursor: loading ? 'not-allowed' : 'pointer'
               }}
             >
-              <Image src="/google.svg" alt="Google" width={22} height={22} /> Sign up with Google
+              <Image src="/google.svg" alt="Google" width={22} height={22} /> 
+              {loading ? 'Signing up...' : 'Sign up with Google'}
             </button>
             
             <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
