@@ -463,9 +463,8 @@ def scrape_container_or_bol(identifier: str) -> Dict[str, Any]:
         # Decide variant: container-number vs B/L reference
         is_reference_variant = False
         try:
-            is_reference_variant = len(
-                results.find_elements(By.CSS_SELECTOR, ".routing-details-v2 li.card-container-v2")
-            ) > 0
+            results.find_element(By.CSS_SELECTOR, ".routing-details-v2")
+            is_reference_variant = True
         except Exception:
             is_reference_variant = False
 
