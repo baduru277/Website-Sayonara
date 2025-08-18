@@ -2,6 +2,7 @@ from __future__ import annotations
 
 import json
 from datetime import datetime
+import re
 from typing import Any, Dict, List, Optional, Tuple
 
 from flask import Flask, Response, request
@@ -70,15 +71,10 @@ def combine_date_time(date_text: str, time_text: str) -> Optional[str]:
     if not date_text and not time_text:
         return None
     if date_text and time_text:
-        # Normalize times like "19:31 PM" -> "19:31" if 24h clock is used with AM/PM
-        normalized_time = time_text
-        if ("AM" in time_text or "PM" in time_text) and ":" in time_text:
-            try:
-                hh = int(time_text.split(":", 1)[0].replace("AM", "").replace("PM", "").strip())
-                if hh > 12:
-                    normalized_time = time_text.replace("AM", "").replace("PM", "").strip()
-            except Exception:
-                pass
+        # Always strip AM/PM suffixes (case-insensitive)
+        normalized_time = re.sub(r"\s?(AM|PM)$", "", time_text, flags=re.IGNORECASE).strip()
+        # Also remove any stray AM/PM anywhere in the time string
+        normalized_time = re.sub(r"(AM|PM)", "", normalized_time, flags=re.IGNORECASE).strip()
         return f"{date_text} {normalized_time}".strip()
     return date_text or time_text
 
@@ -196,6 +192,106 @@ def derive_pod_eta(events: List[Dict[str, Any]]) -> Optional[str]:
             dt = ev.get("eventTime") or ""
             return dt.split(" ")[0] if dt else None
     return None
+
+
+def derive_routes_from_events(events: List[Dict[str, Any]]) -> List[Dict[str, Any]]:
+    if not events:
+        return []
+    # Ensure chronological order by stopIndex if available
+    def parse_index(ev: Dict[str, Any]) -> int:
+        try:
+            return int(str(ev.get("stopIndex", 0)))
+        except Exception:
+            return 0
+
+    ordered = sorted(events, key=parse_index)
+
+    legs: List[Dict[str, Any]] = []
+    current_vessel: Optional[str] = None
+    current_voyage: Optional[str] = None
+    start_loc: Optional[str] = None
+    start_date: Optional[str] = None
+
+    for ev in ordered:
+        vessel_name = (ev.get("vesselInfo") or {}).get("name")
+        voyage_ref = ev.get("voyageReference")
+
+        # Skip legs with missing or "N/A" vessel info
+        if vessel_name:
+            vessel_name = vessel_name.strip() or None
+        if voyage_ref:
+            voyage_ref = voyage_ref.strip() or None
+        if voyage_ref and voyage_ref.upper() == "N/A":
+            voyage_ref = None
+
+        location_name = ((ev.get("location") or {}).get("name") or None)
+        event_time = ev.get("eventTime") or None
+        date_only = event_time.split(" ")[0] if event_time else None
+
+        if vessel_name and voyage_ref:
+            # New leg if vessel/voyage changed
+            if current_vessel != vessel_name or current_voyage != voyage_ref:
+                # flush previous leg if any
+                if current_vessel and current_voyage and start_loc and start_date:
+                    # Determine last known location/date from the previous event in ordered list
+                    # We'll set it when closing based on last stored end fields on previous iteration
+                    pass
+                # Start a new leg
+                current_vessel = vessel_name
+                current_voyage = voyage_ref
+                start_loc = location_name
+                start_date = date_only
+                # Set a placeholder leg and update end info as we go
+                legs.append({
+                    "vessel": current_vessel,
+                    "voyage": current_voyage,
+                    "start_loc": start_loc,
+                    "start_date": start_date,
+                    "end_loc": location_name,
+                    "end_date": date_only,
+                })
+            else:
+                # Update end info of current leg
+                if legs:
+                    legs[-1]["end_loc"] = location_name or legs[-1].get("end_loc")
+                    legs[-1]["end_date"] = date_only or legs[-1].get("end_date")
+        else:
+            # No vessel info; still update end_loc/date for current leg if exists
+            if legs:
+                legs[-1]["end_loc"] = location_name or legs[-1].get("end_loc")
+                legs[-1]["end_date"] = date_only or legs[-1].get("end_date")
+
+    # Transform legs into route dicts, de-duplicated and with POL/POD composition
+    seen = set()
+    routes: List[Dict[str, Any]] = []
+    for leg in legs:
+        vessel = leg.get("vessel")
+        voyage = leg.get("voyage")
+        pol = leg.get("start_loc")
+        pod = leg.get("end_loc")
+        dep = leg.get("start_date")
+        arr = leg.get("end_date")
+        if not (vessel and voyage and pol and pod):
+            continue
+        key = (vessel, voyage, pol, pod, dep, arr)
+        if key in seen:
+            continue
+        seen.add(key)
+        routes.append({
+            "place": None,
+            "date": None,
+            "berthing": None,
+            "vessel": vessel,
+            "voyage": voyage,
+            "actualLoading": None,
+            "portOfLoading": f"{pol} ~~ POL",
+            "departureDate": dep,
+            "departureDateExpected": None,
+            "portOfDischarging": f"{pod} ~~ POD",
+            "arrivalTime": arr,
+            "arrivalTimeExpected": None,
+        })
+    return routes
 
 
 def parse_details_card(driver) -> Dict[str, Optional[str]]:
@@ -377,13 +473,16 @@ def parse_reference_variant(results, driver) -> Tuple[List[Dict[str, Any]], Opti
                 )
             )
 
+        # Build routes from events for this container
+        event_routes = derive_routes_from_events(events)
+
         containers.append(
             {
                 "containerType": container_type,
                 "containerNum": (container_num or "").strip() or None,
                 "stops": [],
                 "events": events,
-                "routes": [],  # Filled later from details card
+                "routes": event_routes,  # may be merged with details routes below
                 "vesselMovements": [],
                 "cargoDeliveryInformationUsImportOnly": None,
                 "podETA": None,  # Filled later from details card
@@ -397,7 +496,16 @@ def parse_reference_variant(results, driver) -> Tuple[List[Dict[str, Any]], Opti
 
     # Attach routes and podETA to each container
     for c in containers:
-        c["routes"] = routes
+        # Merge routes uniquely
+        combined = []
+        seen_keys = set()
+        for r in (c.get("routes") or []) + (routes or []):
+            key = (r.get("vessel"), r.get("voyage"), r.get("portOfLoading"), r.get("portOfDischarging"), r.get("departureDate"), r.get("arrivalTime"))
+            if key in seen_keys:
+                continue
+            seen_keys.add(key)
+            combined.append(r)
+        c["routes"] = combined
         c["podETA"] = pod_eta
 
     return containers, current_status, routes, pod_eta
@@ -574,7 +682,7 @@ def scrape_container_or_bol(identifier: str) -> Dict[str, Any]:
                     )
                 )
 
-            routes = derive_routes(events)
+            routes = derive_routes_from_events(events)
             pod_eta = derive_pod_eta(events)
 
             # Compose final payload matching the provided schema
