@@ -747,6 +747,37 @@ def api_track() -> Response:
     return Response(json.dumps(result, ensure_ascii=False), mimetype="application/json")
 
 
+@app.get("/Zim4/cn/<string:container_num>")
+def api_track_container_path(container_num: str) -> Response:
+    identifier = (container_num or "").strip()
+    if not identifier:
+        return Response(
+            json.dumps({"error": "missing container number in path"}),
+            status=400,
+            mimetype="application/json",
+        )
+    result = scrape_container_or_bol(identifier)
+    result["refNum"] = identifier
+    result["refType"] = "Container"
+    result["bolNum"] = None
+    return Response(json.dumps(result, ensure_ascii=False), mimetype="application/json")
+
+
+@app.get("/Zim4/bl/<string:bol_num>")
+def api_track_bol_path(bol_num: str) -> Response:
+    identifier = (bol_num or "").strip()
+    if not identifier:
+        return Response(
+            json.dumps({"error": "missing B/L number in path"}),
+            status=400,
+            mimetype="application/json",
+        )
+    result = scrape_container_or_bol(identifier)
+    result["refNum"] = identifier
+    result["refType"] = "BillOfLanding"
+    result["bolNum"] = identifier
+    return Response(json.dumps(result, ensure_ascii=False), mimetype="application/json")
+
 if __name__ == "__main__":
     app.run(host="0.0.0.0", port=8000)
 
