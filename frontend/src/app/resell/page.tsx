@@ -1,14 +1,16 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
+import ProductGrid from '@/components/ProductGrid';
 
 interface ResellItem {
   id: string;
   title: string;
   description: string;
   image: string;
+  images: string[];
   category: string;
   condition: string;
   price: number;
@@ -21,18 +23,17 @@ interface ResellItem {
   userReviews: number;
   isVerified: boolean;
   priority: 'high' | 'medium' | 'low';
-  stock: number;
-  isPrime: boolean;
   fastShipping: boolean;
   tags: string[];
 }
 
-const resellItems: ResellItem[] = [
+const mockResellItems: ResellItem[] = [
   {
     id: '1',
     title: 'Sony WH-1000XM4 Wireless Noise Canceling Headphones',
     description: 'Industry-leading noise canceling with Dual Noise Sensor technology. Up to 30-hour battery life.',
-    image: '/api/placeholder/300/300',
+    image: 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Headphones',
+    images: ['https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Headphones'],
     category: 'Electronics',
     condition: 'Like New',
     price: 249.99,
@@ -45,8 +46,6 @@ const resellItems: ResellItem[] = [
     userReviews: 1247,
     isVerified: true,
     priority: 'high',
-    stock: 5,
-    isPrime: true,
     fastShipping: true,
     tags: ['Wireless', 'Noise Canceling', 'Premium']
   },
@@ -54,7 +53,8 @@ const resellItems: ResellItem[] = [
     id: '2',
     title: 'Nike Air Force 1 \'07 Low-Top Sneakers',
     description: 'Classic white Air Force 1s in excellent condition. Size 10, barely worn.',
-    image: '/api/placeholder/300/300',
+    image: 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Sneakers',
+    images: ['https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Sneakers'],
     category: 'Fashion',
     condition: 'Very Good',
     price: 89.99,
@@ -67,8 +67,6 @@ const resellItems: ResellItem[] = [
     userReviews: 892,
     isVerified: true,
     priority: 'high',
-    stock: 2,
-    isPrime: false,
     fastShipping: true,
     tags: ['Sneakers', 'Nike', 'Classic']
   },
@@ -76,7 +74,8 @@ const resellItems: ResellItem[] = [
     id: '3',
     title: 'Apple iPad Air (5th Generation) 64GB',
     description: 'M1 chip, 10.9-inch Liquid Retina display, Wi-Fi, Space Gray. Perfect condition with original box.',
-    image: '/api/placeholder/300/300',
+    image: 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=iPad',
+    images: ['https://via.placeholder.com/300x300/924DAC/FFFFFF?text=iPad'],
     category: 'Electronics',
     condition: 'Excellent',
     price: 449.99,
@@ -89,8 +88,6 @@ const resellItems: ResellItem[] = [
     userReviews: 567,
     isVerified: true,
     priority: 'high',
-    stock: 1,
-    isPrime: true,
     fastShipping: true,
     tags: ['Tablet', 'Apple', 'M1 Chip']
   },
@@ -98,7 +95,7 @@ const resellItems: ResellItem[] = [
     id: '4',
     title: 'The Legend of Zelda: Tears of the Kingdom (Nintendo Switch)',
     description: 'Brand new, sealed copy of the latest Zelda game for Nintendo Switch.',
-    image: '/api/placeholder/300/300',
+    image: 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Zelda+Game',
     category: 'Gaming',
     condition: 'New',
     price: 54.99,
@@ -111,8 +108,6 @@ const resellItems: ResellItem[] = [
     userReviews: 234,
     isVerified: false,
     priority: 'medium',
-    stock: 8,
-    isPrime: true,
     fastShipping: false,
     tags: ['Video Game', 'Nintendo', 'RPG']
   },
@@ -120,7 +115,7 @@ const resellItems: ResellItem[] = [
     id: '5',
     title: 'Le Creuset Dutch Oven 5.5 Quart',
     description: 'Classic round Dutch oven in Marseille blue. Excellent condition, perfect for cooking.',
-    image: '/api/placeholder/300/300',
+    image: 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Dutch+Oven',
     category: 'Home & Kitchen',
     condition: 'Very Good',
     price: 199.99,
@@ -133,8 +128,6 @@ const resellItems: ResellItem[] = [
     userReviews: 156,
     isVerified: true,
     priority: 'medium',
-    stock: 1,
-    isPrime: false,
     fastShipping: true,
     tags: ['Cookware', 'Le Creuset', 'Dutch Oven']
   },
@@ -142,7 +135,7 @@ const resellItems: ResellItem[] = [
     id: '6',
     title: 'Adidas Ultraboost 22 Running Shoes',
     description: 'Premium running shoes with Boost midsole technology. Size 9, excellent condition.',
-    image: '/api/placeholder/300/300',
+    image: 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Running+Shoes',
     category: 'Sports',
     condition: 'Good',
     price: 79.99,
@@ -155,8 +148,6 @@ const resellItems: ResellItem[] = [
     userReviews: 78,
     isVerified: false,
     priority: 'low',
-    stock: 3,
-    isPrime: false,
     fastShipping: false,
     tags: ['Running', 'Adidas', 'Athletic']
   },
@@ -164,7 +155,7 @@ const resellItems: ResellItem[] = [
     id: '7',
     title: 'Samsung 65" QLED 4K Smart TV',
     description: 'QLED 4K UHD Smart TV with Quantum Dot technology. Excellent picture quality.',
-    image: '/api/placeholder/300/300',
+    image: 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Smart+TV',
     category: 'Electronics',
     condition: 'Like New',
     price: 899.99,
@@ -177,8 +168,6 @@ const resellItems: ResellItem[] = [
     userReviews: 445,
     isVerified: true,
     priority: 'high',
-    stock: 2,
-    isPrime: true,
     fastShipping: true,
     tags: ['TV', '4K', 'Smart TV']
   },
@@ -186,7 +175,7 @@ const resellItems: ResellItem[] = [
     id: '8',
     title: 'Instant Pot Duo 7-in-1 Electric Pressure Cooker',
     description: '7-in-1 electric pressure cooker, slow cooker, rice cooker, steamer, sauté pan, yogurt maker, and warmer.',
-    image: '/api/placeholder/300/300',
+    image: 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Instant+Pot',
     category: 'Home & Kitchen',
     condition: 'Excellent',
     price: 69.99,
@@ -199,414 +188,222 @@ const resellItems: ResellItem[] = [
     userReviews: 892,
     isVerified: true,
     priority: 'medium',
-    stock: 6,
-    isPrime: true,
     fastShipping: true,
     tags: ['Kitchen', 'Pressure Cooker', 'Multi-function']
+  },
+  {
+    id: '9',
+    title: 'MacBook Pro M3 - 14-inch - 512GB SSD',
+    description: '2023 MacBook Pro with M3 chip, 16GB RAM, 512GB SSD. Perfect condition with AppleCare+ until 2025.',
+    image: 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=MacBook+Pro+M3',
+    category: 'Electronics',
+    condition: 'Like New',
+    price: 1499.99,
+    originalPrice: 1999.99,
+    discount: 25,
+    shipping: 'Free',
+    location: 'Austin, TX',
+    postedDate: '6 hours ago',
+    userRating: 4.9,
+    userReviews: 89,
+    isVerified: true,
+    priority: 'high',
+    fastShipping: true,
+    tags: ['Laptop', 'Apple', 'M3 Chip', 'Premium']
   }
 ];
 
 export default function ResellPage() {
-  const [selectedCategory, setSelectedCategory] = useState('All');
-  const [selectedPriority, setSelectedPriority] = useState('All');
-  const [selectedCondition, setSelectedCondition] = useState('All');
-  const [sortBy, setSortBy] = useState('best-deals');
-  const [priceRange, setPriceRange] = useState('all');
-  const [searchQuery, setSearchQuery] = useState('');
-  const [selectedTags, setSelectedTags] = useState<string[]>([]);
-  const [showPrimeOnly, setShowPrimeOnly] = useState(false);
-  const [showVerifiedOnly, setShowVerifiedOnly] = useState(false);
+  const [resellItems, setResellItems] = useState<ResellItem[]>(mockResellItems);
+  const [selectedItem, setSelectedItem] = useState<ResellItem | null>(mockResellItems[0]);
 
-  const categories = ['All', 'Electronics', 'Fashion', 'Gaming', 'Home & Kitchen', 'Sports', 'Books', 'Music'];
-  const priorities = ['All', 'high', 'medium', 'low'];
-  const conditions = ['All', 'New', 'Like New', 'Excellent', 'Very Good', 'Good'];
-  const allTags = Array.from(new Set(resellItems.flatMap(item => item.tags)));
-
-  const filteredItems = resellItems.filter(item => {
-    const categoryMatch = selectedCategory === 'All' || item.category === selectedCategory;
-    const priorityMatch = selectedPriority === 'All' || item.priority === selectedPriority;
-    const conditionMatch = selectedCondition === 'All' || item.condition === selectedCondition;
-    const searchMatch = searchQuery === '' || 
-      item.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      item.description.toLowerCase().includes(searchQuery.toLowerCase());
-    const tagMatch = selectedTags.length === 0 || 
-      selectedTags.some(tag => item.tags.includes(tag));
-    const primeMatch = !showPrimeOnly || item.isPrime;
-    const verifiedMatch = !showVerifiedOnly || item.isVerified;
-    
-    let priceMatch = true;
-    if (priceRange === 'under-50') priceMatch = item.price < 50;
-    else if (priceRange === '50-100') priceMatch = item.price >= 50 && item.price <= 100;
-    else if (priceRange === '100-200') priceMatch = item.price > 100 && item.price <= 200;
-    else if (priceRange === 'over-200') priceMatch = item.price > 200;
-    
-    return categoryMatch && priorityMatch && conditionMatch && searchMatch && tagMatch && priceMatch && primeMatch && verifiedMatch;
-  });
-
-  const sortedItems = [...filteredItems].sort((a, b) => {
-    if (sortBy === 'best-deals') {
-      return b.discount - a.discount;
-    }
-    if (sortBy === 'price-low') {
-      return a.price - b.price;
-    }
-    if (sortBy === 'price-high') {
-      return b.price - a.price;
-    }
-    if (sortBy === 'rating') {
-      return b.userRating - a.userRating;
-    }
-    return 0;
-  });
-
-  const getPriorityColor = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'bg-red-500 text-white';
-      case 'medium': return 'bg-yellow-500 text-white';
-      case 'low': return 'bg-green-500 text-white';
-      default: return 'bg-gray-500 text-white';
-    }
+  // Get 3 suggested items (excluding the selected item)
+  const getSuggestedItems = (currentItem: ResellItem) => {
+    return resellItems
+      .filter(item => item.id !== currentItem.id)
+      .slice(0, 3);
   };
 
-  const getPriorityText = (priority: string) => {
-    switch (priority) {
-      case 'high': return 'High Priority';
-      case 'medium': return 'Medium Priority';
-      case 'low': return 'Low Priority';
-      default: return 'Priority';
-    }
-  };
-
-  const toggleTag = (tag: string) => {
-    setSelectedTags(prev => 
-      prev.includes(tag) 
-        ? prev.filter(t => t !== tag)
-        : [...prev, tag]
+  if (!selectedItem) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <div className="text-center">
+          <h3 className="text-lg font-medium text-gray-900 mb-2">No items available</h3>
+          <p className="text-gray-600">There are currently no items available for purchase.</p>
+        </div>
+      </div>
     );
-  };
+  }
+
+  const suggestedItems = getSuggestedItems(selectedItem);
 
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
       <div className="bg-white border-b border-gray-200">
-        <div className="container py-6">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Direct Purchase</h1>
-              <p className="text-gray-600 mt-1">Buy items directly from verified sellers</p>
-            </div>
-            <Link
-              href="/add-item?type=resell"
-              className="btn bg-green-600 hover:bg-green-700 text-white px-6 py-3 rounded-lg font-medium transition-all duration-300 transform hover:scale-105 shadow-lg"
-            >
-              Sell Your Item
-            </Link>
-          </div>
+        <div className="max-w-6xl mx-auto px-4 py-6">
+          <h1 className="text-2xl font-bold text-gray-900">Direct Purchase</h1>
+          <p className="text-gray-600 mt-1">Buy items directly from verified sellers</p>
         </div>
       </div>
 
-      <div className="container py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
-          {/* Sidebar Filters */}
-          <div className="lg:col-span-1">
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 sticky top-8">
-              <h3 className="text-lg font-semibold text-gray-900 mb-4">Filters</h3>
-              
-              {/* Search */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Search</label>
-                <input
-                  type="text"
-                  placeholder="Search items..."
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
+      {/* Main Content */}
+      <div className="max-w-6xl mx-auto px-4 py-8">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
+          {/* Left Side - Main Item */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <div className="mb-4">
+              <div className="relative w-full h-64 rounded-lg overflow-hidden mb-4">
+                <Image
+                  src={selectedItem.image}
+                  alt={selectedItem.title}
+                  fill
+                  className="object-cover"
+                  onError={(e) => {
+                    const target = e.target as HTMLImageElement;
+                    target.src = 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Item+Image';
+                  }}
                 />
+                {selectedItem.discount > 0 && (
+                  <div className="absolute top-4 right-4">
+                    <div className="px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white">
+                      -{selectedItem.discount}%
+                    </div>
+                  </div>
+                )}
+              </div>
+              
+              <h2 className="text-xl font-semibold text-gray-900 mb-2">
+                {selectedItem.title}
+              </h2>
+              
+              <p className="text-gray-600 text-sm mb-4">
+                {selectedItem.description}
+              </p>
+
+              <div className="flex items-center gap-4 mb-4">
+                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                  {selectedItem.category}
+                </span>
+                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                  {selectedItem.condition}
+                </span>
+                <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
+                  {selectedItem.priority} priority
+                </span>
               </div>
 
-              {/* Category Filter */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Category</label>
-                <select
-                  value={selectedCategory}
-                  onChange={(e) => setSelectedCategory(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  {categories.map(category => (
-                    <option key={category} value={category}>{category}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Priority Filter */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Priority</label>
-                <select
-                  value={selectedPriority}
-                  onChange={(e) => setSelectedPriority(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  {priorities.map(priority => (
-                    <option key={priority} value={priority}>
-                      {priority === 'All' ? 'All Priorities' : priority.charAt(0).toUpperCase() + priority.slice(1)}
-                    </option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Condition Filter */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Condition</label>
-                <select
-                  value={selectedCondition}
-                  onChange={(e) => setSelectedCondition(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  {conditions.map(condition => (
-                    <option key={condition} value={condition}>{condition}</option>
-                  ))}
-                </select>
-              </div>
-
-              {/* Price Range */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Price Range</label>
-                <select
-                  value={priceRange}
-                  onChange={(e) => setPriceRange(e.target.value)}
-                  className="w-full border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                >
-                  <option value="all">All Prices</option>
-                  <option value="under-50">Under $50</option>
-                  <option value="50-100">$50 - $100</option>
-                  <option value="100-200">$100 - $200</option>
-                  <option value="over-200">Over $200</option>
-                </select>
-              </div>
-
-              {/* Prime Only */}
-              <div className="mb-6">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={showPrimeOnly}
-                    onChange={(e) => setShowPrimeOnly(e.target.checked)}
-                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Prime items only</span>
-                </label>
-              </div>
-
-              {/* Verified Only */}
-              <div className="mb-6">
-                <label className="flex items-center">
-                  <input
-                    type="checkbox"
-                    checked={showVerifiedOnly}
-                    onChange={(e) => setShowVerifiedOnly(e.target.checked)}
-                    className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                  />
-                  <span className="ml-2 text-sm text-gray-700">Verified sellers only</span>
-                </label>
-              </div>
-
-              {/* Tags Filter */}
-              <div className="mb-6">
-                <label className="block text-sm font-medium text-gray-700 mb-2">Tags</label>
-                <div className="space-y-2 max-h-40 overflow-y-auto">
-                  {allTags.map(tag => (
-                    <label key={tag} className="flex items-center">
-                      <input
-                        type="checkbox"
-                        checked={selectedTags.includes(tag)}
-                        onChange={() => toggleTag(tag)}
-                        className="rounded border-gray-300 text-green-600 focus:ring-green-500"
-                      />
-                      <span className="ml-2 text-sm text-gray-700">{tag}</span>
-                    </label>
-                  ))}
+              <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
+                <div className="flex items-baseline gap-2 mb-2">
+                  <span className="text-2xl font-bold text-gray-900">
+                    ${selectedItem.price.toFixed(2)}
+                  </span>
+                  {selectedItem.originalPrice > selectedItem.price && (
+                    <span className="text-sm text-gray-500 line-through">
+                      ${selectedItem.originalPrice.toFixed(2)}
+                    </span>
+                  )}
                 </div>
+                <div className="text-sm text-gray-600 mb-2">
+                  {selectedItem.shipping === 'Free' ? '🚚 Free shipping' : `🚚 ${selectedItem.shipping} shipping`}
+                </div>
+                {selectedItem.fastShipping && (
+                  <div className="text-sm font-medium text-green-600">
+                    ⚡ Fast delivery
+                  </div>
+                )}
               </div>
 
-              {/* Clear Filters */}
-              <button
-                onClick={() => {
-                  setSelectedCategory('All');
-                  setSelectedPriority('All');
-                  setSelectedCondition('All');
-                  setPriceRange('all');
-                  setSearchQuery('');
-                  setSelectedTags([]);
-                  setShowPrimeOnly(false);
-                  setShowVerifiedOnly(false);
-                }}
-                className="w-full btn border border-gray-300 text-gray-700 hover:bg-gray-50 px-4 py-2 rounded-lg text-sm font-medium transition-colors duration-300"
-              >
-                Clear All Filters
-              </button>
+              <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
+                <span>Rating: {selectedItem.userRating} ({selectedItem.userReviews} reviews)</span>
+                <span>{selectedItem.location}</span>
+              </div>
+
+              <div className="flex flex-wrap gap-2 mb-4">
+                {selectedItem.tags.map(tag => (
+                  <span key={tag} className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
+                    {tag}
+                  </span>
+                ))}
+              </div>
+
+              <div className="flex gap-2">
+                <Link
+                  href="/messages"
+                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center"
+                >
+                  Chat with Seller
+                </Link>
+                <Link
+                  href={`/resell/${selectedItem.id}`}
+                  className="flex-1 border border-green-600 text-green-600 hover:bg-green-600 hover:text-white px-4 py-2 rounded-lg font-medium transition-colors text-center"
+                >
+                  View Details
+                </Link>
+              </div>
             </div>
           </div>
 
-          {/* Main Content */}
-          <div className="lg:col-span-3">
-            {/* Sort and Results */}
-            <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-              <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between gap-4">
-                <div className="flex items-center gap-4">
-                  <span className="text-sm text-gray-600">
-                    {sortedItems.length} items available
-                  </span>
-                  {selectedTags.length > 0 && (
-                    <div className="flex items-center gap-2">
-                      <span className="text-sm text-gray-600">Tags:</span>
-                      {selectedTags.map(tag => (
-                        <span key={tag} className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded-full">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <label className="text-sm font-medium text-gray-700">Sort by:</label>
-                  <select
-                    value={sortBy}
-                    onChange={(e) => setSortBy(e.target.value)}
-                    className="border border-gray-300 rounded-lg px-3 py-2 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent"
-                  >
-                    <option value="best-deals">Best Deals</option>
-                    <option value="price-low">Price: Low to High</option>
-                    <option value="price-high">Price: High to Low</option>
-                    <option value="rating">Highest Rated</option>
-                  </select>
-                </div>
-              </div>
-            </div>
-
-            {/* Items Grid */}
-            <div className="grid grid-cols-1 md:grid-cols-2 xl:grid-cols-3 gap-6">
-              {sortedItems.map((item) => (
-                <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                  {/* Item Image */}
-                  <div className="relative h-48 bg-gray-100">
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      fill
-                      className="object-cover"
-                    />
-                    <div className="absolute top-3 left-3">
-                      <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(item.priority)}`}>
-                        {getPriorityText(item.priority)}
-                      </span>
-                    </div>
-                    <div className="absolute top-3 right-3 flex gap-1">
-                      {item.isPrime && (
-                        <div className="w-6 h-6 bg-blue-500 rounded-full flex items-center justify-center">
-                          <span className="text-white text-xs font-bold">P</span>
-                        </div>
-                      )}
-                      {item.isVerified && (
-                        <div className="w-6 h-6 bg-green-500 rounded-full flex items-center justify-center">
-                          <svg className="w-4 h-4 text-white" fill="currentColor" viewBox="0 0 20 20">
-                            <path fillRule="evenodd" d="M16.707 5.293a1 1 0 010 1.414l-8 8a1 1 0 01-1.414 0l-4-4a1 1 0 011.414-1.414L8 12.586l7.293-7.293a1 1 0 011.414 0z" clipRule="evenodd" />
-                          </svg>
+          {/* Right Side - Suggested Items */}
+          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
+            <h3 className="text-lg font-semibold text-gray-900 mb-4">Similar Items</h3>
+            
+            <div className="space-y-4">
+              {suggestedItems.map((item) => (
+                <div 
+                  key={item.id} 
+                  className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
+                  onClick={() => setSelectedItem(item)}
+                >
+                  <div className="flex gap-4">
+                    <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
+                      <Image
+                        src={item.image}
+                        alt={item.title}
+                        fill
+                        className="object-cover"
+                        onError={(e) => {
+                          const target = e.target as HTMLImageElement;
+                          target.src = 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Item+Image';
+                        }}
+                      />
+                      {item.discount > 0 && (
+                        <div className="absolute top-1 right-1">
+                          <div className="px-1 py-0.5 rounded text-xs font-bold bg-red-600 text-white">
+                            -{item.discount}%
+                          </div>
                         </div>
                       )}
                     </div>
-                    {item.discount > 0 && (
-                      <div className="absolute bottom-3 left-3">
-                        <span className="bg-red-500 text-white px-2 py-1 rounded text-xs font-bold">
-                          -{item.discount}%
-                        </span>
-                      </div>
-                    )}
-                    {item.stock <= 3 && item.stock > 0 && (
-                      <div className="absolute bottom-3 right-3">
-                        <span className="bg-orange-500 text-white px-2 py-1 rounded text-xs font-bold">
-                          Only {item.stock} left
-                        </span>
-                      </div>
-                    )}
-                  </div>
-
-                  {/* Item Details */}
-                  <div className="p-6">
-                    <div className="flex items-start justify-between mb-2">
-                      <h3 className="text-lg font-semibold text-gray-900 line-clamp-2">
+                    
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-medium text-gray-900 mb-1 line-clamp-2">
                         {item.title}
-                      </h3>
-                    </div>
-
-                    <p className="text-gray-600 text-sm mb-3 line-clamp-2">
-                      {item.description}
-                    </p>
-
-                    <div className="flex items-center gap-2 mb-3">
-                      <span className="text-xs font-medium text-gray-500">{item.condition}</span>
-                      <span className="text-gray-300">•</span>
-                      <span className="text-xs text-gray-500">{item.category}</span>
-                    </div>
-
-                    {/* Pricing */}
-                    <div className="mb-4">
-                      <div className="flex items-center gap-2 mb-1">
-                        <span className="text-2xl font-bold text-gray-900">${item.price.toFixed(2)}</span>
+                      </h4>
+                      
+                      <div className="flex items-center gap-2 mb-2">
+                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
+                          {item.category}
+                        </span>
+                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
+                          {item.condition}
+                        </span>
+                      </div>
+                      
+                      <div className="mb-2">
+                        <span className="text-sm font-bold text-gray-900">
+                          ${item.price.toFixed(2)}
+                        </span>
                         {item.originalPrice > item.price && (
-                          <span className="text-lg text-gray-500 line-through">${item.originalPrice.toFixed(2)}</span>
+                          <span className="text-xs text-gray-500 line-through ml-1">
+                            ${item.originalPrice.toFixed(2)}
+                          </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-2 text-sm text-gray-600">
-                        <span>{item.shipping === 'Free' ? '🚚 Free shipping' : `🚚 ${item.shipping} shipping`}</span>
-                        {item.fastShipping && <span>⚡ Fast delivery</span>}
-                      </div>
-                    </div>
-
-                    {/* Tags */}
-                    <div className="flex flex-wrap gap-1 mb-4">
-                      {item.tags.map(tag => (
-                        <span key={tag} className="bg-gray-100 text-gray-600 text-xs px-2 py-1 rounded-full">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-
-                    <div className="flex items-center justify-between mb-4">
-                      <div className="flex items-center gap-1">
-                        <div className="flex items-center">
-                          {[...Array(5)].map((_, i) => (
-                            <svg
-                              key={i}
-                              className={`w-4 h-4 ${i < Math.floor(item.userRating) ? 'text-yellow-400' : 'text-gray-300'}`}
-                              fill="currentColor"
-                              viewBox="0 0 20 20"
-                            >
-                              <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-                            </svg>
-                          ))}
-                        </div>
-                        <span className="text-sm text-gray-600 ml-1">
-                          {item.userRating} ({item.userReviews})
-                        </span>
-                      </div>
-                      <span className="text-xs text-gray-500">{item.location}</span>
-                    </div>
-
-                    <div className="flex items-center justify-between">
-                      <span className="text-xs text-gray-500">{item.postedDate}</span>
-                      <div className="flex gap-2">
-                        <Link
-                          href={`/resell/${item.id}`}
-                          className="btn bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg text-sm font-medium transition-all duration-300 transform hover:scale-105"
-                        >
-                          Buy Now
-                        </Link>
-                        <Link
-                          href={`/resell/${item.id}?addToCart=true`}
-                          className="btn border border-green-600 text-green-600 hover:bg-green-600 hover:text-white px-3 py-2 rounded-lg text-sm font-medium transition-all duration-300"
-                        >
-                          Add to Cart
-                        </Link>
+                      
+                      <div className="flex items-center justify-between text-xs text-gray-500">
+                        <span>Rating: {item.userRating}</span>
+                        <span>{item.location}</span>
                       </div>
                     </div>
                   </div>
@@ -614,35 +411,30 @@ export default function ResellPage() {
               ))}
             </div>
 
-            {/* No Results */}
-            {sortedItems.length === 0 && (
-              <div className="text-center py-12">
-                <div className="w-24 h-24 bg-gray-100 rounded-full flex items-center justify-center mx-auto mb-4">
-                  <svg className="w-12 h-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4m0 0L7 13m0 0l-2.5 5M7 13l2.5 5m6-5v6a2 2 0 01-2 2H9a2 2 0 01-2-2v-6m6 0V9a2 2 0 00-2-2H9a2 2 0 00-2 2v4.01" />
-                  </svg>
-                </div>
-                <h3 className="text-lg font-medium text-gray-900 mb-2">No items found</h3>
-                <p className="text-gray-600 mb-4">Try adjusting your filters or search terms</p>
-                <button
-                  onClick={() => {
-                    setSelectedCategory('All');
-                    setSelectedPriority('All');
-                    setSelectedCondition('All');
-                    setPriceRange('all');
-                    setSearchQuery('');
-                    setSelectedTags([]);
-                    setShowPrimeOnly(false);
-                    setShowVerifiedOnly(false);
-                  }}
-                  className="btn bg-green-600 hover:bg-green-700 text-white px-6 py-2 rounded-lg font-medium"
-                >
-                  Clear Filters
-                </button>
+            {suggestedItems.length === 0 && (
+              <div className="text-center py-8 text-gray-500">
+                <p>No similar items available</p>
               </div>
             )}
           </div>
         </div>
+
+                 {/* Product Grid */}
+         <div className="mt-8">
+           <h3 className="text-lg font-semibold text-gray-900 mb-6">All Available Items</h3>
+           <ProductGrid
+             items={resellItems.map(item => ({
+               ...item,
+               type: 'resell' as const,
+               isPrime: item.fastShipping,
+               deliveryDate: 'Monday 11 August',
+               limitedTimeDeal: item.discount > 30
+             }))}
+             onItemClick={(selectedItem) => {
+               setSelectedItem(selectedItem as any);
+             }}
+           />
+         </div>
       </div>
     </div>
   );

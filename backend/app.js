@@ -16,6 +16,23 @@ const { User, Item, Bid } = require('./models');
 
 const app = express();
 
+// Initialize database
+async function initializeDatabase() {
+  try {
+    await sequelize.authenticate();
+    console.log('Database connection established successfully.');
+    
+    // Sync all models with database
+    await sequelize.sync({ force: false }); // force: false keeps existing data
+    console.log('Database models synchronized.');
+  } catch (error) {
+    console.error('Unable to connect to the database:', error);
+  }
+}
+
+// Initialize database on startup
+initializeDatabase();
+
 // Middleware
 app.use(cors({
   origin: process.env.FRONTEND_URL || 'http://localhost:3000',

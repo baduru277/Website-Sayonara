@@ -9,13 +9,16 @@ const auth = async (req, res, next) => {
       return res.status(401).json({ error: 'Access denied. No token provided.' });
     }
 
-    const decoded = jwt.verify(token, process.env.JWT_SECRET);
-    const user = await User.findByPk(decoded.id);
-
+    const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+    
+    const user = await User.findOne({
+      where: { id: decoded.id }
+    });
+    
     if (!user) {
       return res.status(401).json({ error: 'Invalid token.' });
     }
-
+    
     req.user = user;
     next();
   } catch (error) {
@@ -28,8 +31,12 @@ const optionalAuth = async (req, res, next) => {
     const token = req.header('Authorization')?.replace('Bearer ', '');
     
     if (token) {
-      const decoded = jwt.verify(token, process.env.JWT_SECRET);
-      const user = await User.findByPk(decoded.id);
+      const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
+      
+      const user = await User.findOne({
+        where: { id: decoded.id }
+      });
+      
       if (user) {
         req.user = user;
       }

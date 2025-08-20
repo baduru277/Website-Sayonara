@@ -45,14 +45,31 @@ class ApiService {
       console.log('Making API request to:', url);
       const response = await fetch(url, config);
       
+      console.log('Response status:', response.status);
+      console.log('Response headers:', response.headers);
+      
       if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
+        let errorData = {};
+        try {
+          errorData = await response.json();
+        } catch (parseError) {
+          console.log('Could not parse error response as JSON');
+          errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
+        }
+        
         const errorMessage = errorData.error || errorData.message || `HTTP error! status: ${response.status}`;
         console.error('API error response:', errorData);
         throw new Error(errorMessage);
       }
 
-      const data = await response.json();
+      let data;
+      try {
+        data = await response.json();
+      } catch (parseError) {
+        console.log('Could not parse response as JSON, treating as text');
+        data = await response.text();
+      }
+      
       console.log('API response:', data);
       return data;
     } catch (error) {
@@ -93,7 +110,8 @@ class ApiService {
   }
 
   async getCurrentUser() {
-    return this.request('/auth/me');
+    const response = await this.request('/auth/me');
+    return response.user || response;
   }
 
   async updateProfile(profileData) {
@@ -114,6 +132,10 @@ class ApiService {
   }
 
   async getItem(id) {
+    return this.request(`/items/${id}`);
+  }
+
+  async getItemById(id) {
     return this.request(`/items/${id}`);
   }
 
@@ -165,7 +187,16 @@ class ApiService {
 
   // Bidding specific methods
   async getBiddingItems(filters = {}) {
-    return this.getItems({ type: 'bidding', ...filters });
+    // Handle both 'bid' and 'bidding' types for backward compatibility
+    const response = await this.getItems({ type: 'bidding', ...filters });
+    
+    // If no items found with 'bidding' type, try 'bid' type
+    if (!response.items || response.items.length === 0) {
+      const bidResponse = await this.getItems({ type: 'bid', ...filters });
+      return bidResponse;
+    }
+    
+    return response;
   }
 
   // Resell specific methods

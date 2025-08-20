@@ -309,7 +309,7 @@ export default function ResellSection() {
           {sortedItems.map((item) => (
             <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
               {/* Item Image */}
-              <div className="relative h-48 bg-gray-100">
+              <div className="grid-image-wrapper">
                 <Image
                   src={item.image}
                   alt={item.title}

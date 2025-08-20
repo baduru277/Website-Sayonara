@@ -223,9 +223,7 @@ export default function CategoriesPage() {
               <button className="btn btn-primary text-lg px-8 py-3">
                 Browse All Items
               </button>
-              <button className="btn btn-outline text-lg px-8 py-3">
-                Add Your Item
-              </button>
+              <p className="text-sm text-gray-500 mt-2">Use the "Post" button to add your own items</p>
             </div>
           </div>
         </div>

@@ -136,7 +136,7 @@ export default function FeaturedItems() {
             overflow: 'hidden',
           }}
         >
-          <div style={{ width: '100%', height: 180, background: '#f5f6fa', display: 'flex', alignItems: 'center', justifyContent: 'center', overflow: 'hidden', position: 'relative' }}>
+          <div className="grid-image-wrapper" style={{ borderTopLeftRadius: 12, borderTopRightRadius: 12 }}>
             <Image
               src={item.image}
               alt={item.title}

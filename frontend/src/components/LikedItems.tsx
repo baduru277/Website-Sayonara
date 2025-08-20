@@ -114,7 +114,7 @@ export default function LikedItems() {
               key={item.id}
               className="bg-white rounded-2xl shadow-lg flex flex-col items-center p-6 w-72 h-[420px] transition-transform hover:-translate-y-2 hover:shadow-2xl"
             >
-              <div className="w-full h-40 relative mb-4">
+              <div className="grid-image-wrapper mb-4" style={{ height: '160px', borderRadius: '12px' }}>
                 <Image
                   src={item.image}
                   alt={item.title}

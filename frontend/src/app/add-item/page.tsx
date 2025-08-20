@@ -2,31 +2,99 @@
 
 import { useState } from 'react';
 import Image from 'next/image';
+import { useRouter } from 'next/navigation';
+import apiService from '@/services/api';
+import { resizeImagesForGrid, validateImageFile, createThumbnail } from '@/utils/imageResize';
 import "../../components/Header.css";
 
 const subCategories = {
-  'Phones and accessories': ['Smartphones', 'Smartwatches', 'Tablets', 'Accessories GSM', 'Cases and covers'],
-  'Computers': ['Laptops', 'Laptop components', 'Desktop Computers', 'Computer components', 'Printers and scanners'],
-  'TVs and accessories': ['TVs', 'Projectors', 'Headphones', 'Audio for home', 'Home cinema'],
-  'Consoles and slot machines': ['Consoles PlayStation 5', 'Consoles Xbox Series X/S', 'Consoles PlayStation 4', 'Consoles Xbox One', 'Consoles Nintendo Switch'],
+  // Electronics
+  'Phones and accessories': ['Smartphones', 'Smartwatches', 'Tablets', 'Accessories GSM', 'Cases and covers', 'Chargers', 'Earphones', 'Power banks'],
+  'Computers': ['Laptops', 'Laptop components', 'Desktop Computers', 'Computer components', 'Printers and scanners', 'Monitors', 'Keyboards', 'Mice', 'Storage devices'],
+  'TVs and accessories': ['TVs', 'Smart TVs', 'Projectors', 'Headphones', 'Soundbars', 'Home cinema', 'Remote controls', 'Wall mounts'],
+  'Consoles and slot machines': ['Consoles PlayStation 5', 'Consoles Xbox Series X/S', 'Consoles PlayStation 4', 'Consoles Xbox One', 'Consoles Nintendo Switch', 'Game controllers', 'Gaming accessories'],
+  'Cameras and Photography': ['DSLR Cameras', 'Mirrorless Cameras', 'Camcorders', 'Camera lenses', 'Tripods', 'Memory cards', 'Camera accessories'],
+  'Networking': ['Wi-Fi Routers', 'Modems', 'Network switches', 'Range extenders', 'Cables'],
+  'Wearable Tech': ['Fitness trackers', 'Smart bands', 'VR headsets', 'AR devices'],
+  'Smart Home': ['Smart bulbs', 'Smart plugs', 'Smart thermostats', 'Security cameras', 'Smart speakers'],
+  'Audio Equipment': ['Speakers', 'Home audio systems', 'Turntables', 'Microphones', 'Studio equipment'],
+  'Office Equipment': ['Projectors', 'Fax machines', 'Paper shredders', 'Label printers'],
+  'Gaming': ['Gaming PCs', 'Gaming laptops', 'Gaming monitors', 'Gaming chairs', 'Gaming desks', 'Gamepads'],
+  'Software': ['Operating systems', 'Antivirus', 'Office suites', 'Design software', 'Developer tools'],
+
+  // Clothing
+  'Men Clothing': ['T-Shirts', 'Shirts', 'Jeans', 'Trousers', 'Jackets', 'Suits', 'Ethnic wear'],
+  'Women Clothing': ['Tops', 'Dresses', 'Jeans', 'Sarees', 'Kurtis', 'Skirts', 'Leggings', 'Jackets'],
+  'Kids Clothing': ['T-Shirts', 'Frocks', 'Shorts', 'Jeans', 'School uniforms', 'Party wear'],
+
+  // Fashion Accessories
+  'Watches and Accessories': ['Wrist Watches', 'Smartwatches', 'Bracelets', 'Watch straps'],
+  'Bags and Wallets': ['Backpacks', 'Handbags', 'Sling bags', 'Wallets', 'Clutches'],
+  'Eyewear and Headwear': ['Sunglasses', 'Eyeglasses', 'Hats', 'Caps', 'Scarves'],
+  'Belts and Other Accessories': ['Leather belts', 'Suspenders', 'Keychains', 'Fashion pins'],
+
+  // Jewelry
+  'Jewelry': ['Gold jewelry', 'Silver jewelry', 'Diamond jewelry', 'Imitation jewelry', 'Necklaces', 'Earrings', 'Bracelets', 'Rings', 'Anklets'],
+
+  // Footwear
+  'Footwear': ['Casual shoes', 'Formal shoes', 'Sports shoes', 'Sandals', 'Slippers', 'Heels', 'Boots', 'Flip-flops'],
+
+  // Food & Groceries
+  'Fruits and Vegetables': ['Fresh fruits', 'Fresh vegetables', 'Organic produce'],
+  'Snacks and Bakery': ['Chips', 'Cookies', 'Cakes', 'Biscuits', 'Namkeen'],
+  'Dairy and Eggs': ['Milk', 'Cheese', 'Butter', 'Yogurt', 'Eggs', 'Paneer'],
+  'Meat and Seafood': ['Chicken', 'Mutton', 'Fish', 'Shrimp', 'Frozen meat'],
+  'Frozen and Ready-to-eat': ['Frozen snacks', 'Ready meals', 'Instant noodles', 'Frozen paratha'],
+  'Beverages': ['Tea', 'Coffee', 'Juices', 'Soft drinks', 'Energy drinks', 'Bottled water'],
+  'Staples': ['Rice', 'Wheat', 'Pulses', 'Cooking oil', 'Spices', 'Salt', 'Sugar', 'Flour'],
+  'Dry Fruits and Nuts': ['Almonds', 'Cashews', 'Raisins', 'Pistachios', 'Dates', 'Walnuts'],
+
+  // Beauty & Personal Care
+  'Skincare': ['Face wash', 'Moisturizers', 'Sunscreens', 'Serums', 'Cleansers', 'Toners'],
+  'Haircare': ['Shampoos', 'Conditioners', 'Hair oils', 'Hair masks', 'Hair colors'],
+  'Makeup': ['Lipsticks', 'Foundations', 'Mascaras', 'Eyeliners', 'Blushes', 'Nail polish'],
+  'Bath & Body': ['Body wash', 'Soaps', 'Body lotions', 'Scrubs', 'Hand creams'],
+  'Men’s Grooming': ['Shaving creams', 'Razors', 'Beard oils', 'Aftershave', 'Face wash for men'],
+
+  // Healthcare
+  'Medicines': ['Prescription drugs', 'Over-the-counter medicines', 'Pain relievers', 'Allergy medications'],
+  'Supplements': ['Vitamins', 'Protein powders', 'Herbal supplements', 'Omega-3'],
+  'Medical Devices': ['Thermometers', 'Oximeters', 'Blood pressure monitors', 'Diabetic care'],
+  'Health Essentials': ['Sanitizers', 'Face masks', 'Disinfectants', 'First aid kits'],
+
+  // Home & Kitchen
+  'Kitchen Appliances': ['Microwaves', 'Mixers', 'Grinders', 'Electric kettles', 'Toasters', 'Blenders'],
+  'Cookware': ['Non-stick pans', 'Cookers', 'Tawas', 'Utensil sets', 'Pressure cookers'],
+  'Dining': ['Dinner sets', 'Cutlery', 'Bowls', 'Plates', 'Glassware'],
+  'Home Decor': ['Wall art', 'Lamps', 'Photo frames', 'Vases', 'Decorative items'],
+  'Furniture': ['Beds', 'Sofas', 'Tables', 'Chairs', 'Wardrobes'],
+  'Storage and Organization': ['Containers', 'Shelves', 'Racks', 'Boxes'],
+  'Cleaning Supplies': ['Detergents', 'Floor cleaners', 'Mops', 'Scrubs', 'Brooms'],
+
+  // Others
+  'Others': ['Miscellaneous', 'Uncategorized items', 'Gadgets', 'Tech gifts', 'Used/refurbished items']
 };
 
 export default function AddItemPage() {
   const [step, setStep] = useState(1);
+  const [loading, setLoading] = useState(false);
+  const router = useRouter();
   // Step 1 state
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    availability: '',
-    length: '',
-    width: '',
-    height: '',
+    warrantyStatus: '',
+    itemCondition: '',
+    damageInfo: '',
+    usageHistory: '',
+    originalBox: '',
     price: '',
   });
   // Step 2 state
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   // Step 3 state
   const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
   const [condition, setCondition] = useState('New');
   // Step 4 state
   const [actionType, setActionType] = useState('');
@@ -55,14 +123,123 @@ export default function AddItemPage() {
   };
 
   // Step 3 handlers
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    console.log('Image upload started');
     if (e.target.files) {
       const files = Array.from(e.target.files).slice(0, 10 - images.length);
-      setImages(prev => [...prev, ...files]);
+      console.log('Selected files:', files.length, 'files');
+      
+      // Validate files first
+      const validFiles = files.filter(file => {
+        console.log('Validating file:', file.name, file.type, file.size);
+        if (!validateImageFile(file)) {
+          alert(`Invalid file: ${file.name}. Please upload a valid image file (JPEG, PNG, WebP, GIF) under 5MB.`);
+          return false;
+        }
+        return true;
+      });
+
+      console.log('Valid files:', validFiles.length, 'files');
+
+      if (validFiles.length === 0) return;
+
+      try {
+        console.log('Starting image resizing process');
+        // Resize images for grid display (400x300 for consistent grid layout)
+        const resizedImages = await resizeImagesForGrid(validFiles, {
+          maxWidth: 400,
+          maxHeight: 300,
+          quality: 0.8,
+          maintainAspectRatio: true
+        });
+
+        console.log('Resized images completed:', resizedImages.length, 'images');
+
+        // Create thumbnails for preview
+        console.log('Creating thumbnails');
+        const thumbnailPromises = validFiles.map(file => createThumbnail(file, 80));
+        const thumbnails = await Promise.all(thumbnailPromises);
+        console.log('Thumbnails created:', thumbnails.length, 'thumbnails');
+
+        setImages(prev => [...prev, ...validFiles]);
+        setImagePreviews(prev => [...prev, ...resizedImages]);
+        
+        console.log('State updated with new images');
+      } catch (error) {
+        console.error('Error processing images:', error);
+        alert('Error processing images. Please try again.');
+      }
     }
   };
+  
   const handleRemoveImage = (idx: number) => {
     setImages(prev => prev.filter((_, i) => i !== idx));
+    setImagePreviews(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  // Handle item submission
+  const handleSubmitItem = async () => {
+    if (!actionType) return;
+    
+    setLoading(true);
+    try {
+      // Use existing Base64 previews instead of converting again
+      const imageUrls = imagePreviews;
+
+      // Prepare item data based on backend expectations
+      const itemData = {
+        title: formData.title,
+        description: formData.description,
+        category: selectedCategories[0] || 'Other', // Backend expects single category
+        condition: condition,
+        type: actionType, // This determines which page the item appears on
+        price: actionType === 'resell' ? parseFloat(resellAmount) : null,
+        stock: 1, // Default to 1 since we're dealing with individual items
+        images: imageUrls, // Send base64 image strings
+        tags: selectedCategories, // Use categories as tags
+        // Additional item details
+        warrantyStatus: formData.warrantyStatus,
+        itemCondition: formData.itemCondition,
+        damageInfo: formData.damageInfo,
+        usageHistory: formData.usageHistory,
+        originalBox: formData.originalBox,
+        // Action-specific data
+        lookingFor: actionType === 'exchange' ? exchangeFor : null,
+        startingBid: actionType === 'bidding' ? parseFloat(bidAmount) : null,
+        auctionEndDate: actionType === 'bidding' ? new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString() : null, // Exactly 7 days from now
+      };
+
+      console.log('Sending item data:', itemData);
+      console.log('Image URLs (first 100 chars):', imageUrls.map(url => url.substring(0, 100)));
+
+      // Create the item
+      const response = await apiService.createItem(itemData);
+      
+      if (response) {
+        setStep(5); // Show success message
+        // Redirect to appropriate page after 2 seconds
+        setTimeout(() => {
+                  switch (actionType) {
+          case 'bidding':
+            router.push('/bidding');
+            break;
+            case 'exchange':
+              router.push('/exchange');
+              break;
+            case 'resell':
+              router.push('/resell');
+              break;
+            default:
+              router.push('/');
+          }
+        }, 2000);
+      }
+    } catch (error) {
+      console.error('Failed to create item:', error);
+      alert('Failed to create item. Please try again.');
+    } finally {
+      setLoading(false);
+    }
   };
 
   // Stepper UI
@@ -109,7 +286,7 @@ export default function AddItemPage() {
             value={formData.title}
             onChange={handleChange}
             maxLength={maxTitle}
-            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
             placeholder="e.g. GIGABYTE GeForce RTX 3050"
             required
           />
@@ -123,7 +300,7 @@ export default function AddItemPage() {
             onChange={handleChange}
             maxLength={maxDesc}
             rows={4}
-            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa', resize: 'vertical' }}
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa', resize: 'vertical' }}
             placeholder="Describe your item..."
             required
           />
@@ -133,44 +310,78 @@ export default function AddItemPage() {
       {/* Right column */}
       <div style={{ flex: 1, minWidth: 220, display: 'flex', flexDirection: 'column', gap: 18 }}>
         <div>
-          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Number of units available</label>
-          <input
-            type="text"
-            name="availability"
-            value={formData.availability}
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Warranty Status</label>
+          <select
+            name="warrantyStatus"
+            value={formData.warrantyStatus}
             onChange={handleChange}
-            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
-            placeholder="Availability"
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
+          >
+            <option value="">Select warranty status</option>
+            <option value="Under Warranty">Under Warranty</option>
+            <option value="Out of Warranty">Out of Warranty</option>
+            <option value="No Warranty">No Warranty</option>
+            <option value="Extended Warranty">Extended Warranty</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Item Condition</label>
+          <select
+            name="itemCondition"
+            value={formData.itemCondition}
+            onChange={handleChange}
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
+          >
+            <option value="">Select condition</option>
+            <option value="Excellent">Excellent</option>
+            <option value="Good">Good</option>
+            <option value="Fair">Fair</option>
+            <option value="Poor">Poor</option>
+            <option value="For Parts">For Parts</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Damage Information</label>
+          <textarea
+            name="damageInfo"
+            value={formData.damageInfo}
+            onChange={handleChange}
+            rows={3}
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa', resize: 'vertical' }}
+            placeholder="Describe any damages, scratches, or issues..."
           />
         </div>
         <div>
-          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Dimensions (optional)</label>
-          <div style={{ display: 'flex', gap: 8 }}>
-            <input
-              type="number"
-              name="length"
-              value={formData.length}
-              onChange={handleChange}
-              style={{ width: 60, padding: '8px 6px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 15, background: '#f7f7fa' }}
-              placeholder="L"
-            />
-            <input
-              type="number"
-              name="width"
-              value={formData.width}
-              onChange={handleChange}
-              style={{ width: 60, padding: '8px 6px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 15, background: '#f7f7fa' }}
-              placeholder="W"
-            />
-            <input
-              type="number"
-              name="height"
-              value={formData.height}
-              onChange={handleChange}
-              style={{ width: 60, padding: '8px 6px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 15, background: '#f7f7fa' }}
-              placeholder="H"
-            />
-          </div>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Usage History</label>
+          <select
+            name="usageHistory"
+            value={formData.usageHistory}
+            onChange={handleChange}
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
+          >
+            <option value="">Select usage history</option>
+            <option value="Brand New">Brand New (Never Used)</option>
+            <option value="Lightly Used">Lightly Used (1-6 months)</option>
+            <option value="Moderately Used">Moderately Used (6-12 months)</option>
+            <option value="Heavily Used">Heavily Used (1+ years)</option>
+            <option value="Unknown">Unknown</option>
+          </select>
+        </div>
+        <div>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Original Box/Accessories</label>
+          <select
+            name="originalBox"
+            value={formData.originalBox}
+            onChange={handleChange}
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
+          >
+            <option value="">Select box/accessories status</option>
+            <option value="Complete">Complete (Box + All Accessories)</option>
+            <option value="Partial">Partial (Some Accessories Missing)</option>
+            <option value="No Box">No Original Box</option>
+            <option value="No Accessories">No Accessories</option>
+            <option value="N/A">Not Applicable</option>
+          </select>
         </div>
         <div>
           <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Initial price</label>
@@ -179,7 +390,7 @@ export default function AddItemPage() {
             name="price"
             value={formData.price}
             onChange={handleChange}
-            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
+            style={{ width: '100%', padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
             placeholder="Product price"
           />
         </div>
@@ -240,9 +451,9 @@ export default function AddItemPage() {
           <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImageUpload} disabled={images.length >= 10} />
         </label>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
-          {images.map((img, idx) => (
+          {imagePreviews.map((img, idx) => (
             <div key={idx} style={{ position: 'relative', width: 80, height: 80, borderRadius: 8, overflow: 'hidden', background: '#fff', border: '1.5px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-              <Image src={URL.createObjectURL(img)} alt="preview" fill style={{ objectFit: 'cover' }} />
+              <img src={img} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <span style={{ position: 'absolute', top: 2, right: 6, color: '#924DAC', fontWeight: 700, cursor: 'pointer', fontSize: 18 }} onClick={() => handleRemoveImage(idx)}>&times;</span>
             </div>
           ))}
@@ -271,7 +482,7 @@ export default function AddItemPage() {
       <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 18 }}>What do you want to do?</div>
       <div style={{ display: 'flex', gap: 32, marginBottom: 24 }}>
         <label style={{ fontWeight: 500, cursor: 'pointer' }}>
-          <input type="radio" name="actionType" value="bid" checked={actionType === 'bid'} onChange={() => { setActionType('bid'); setBidAmount(''); setExchangeFor(''); setResellAmount(''); }} style={{ marginRight: 8 }} />
+          <input type="radio" name="actionType" value="bidding" checked={actionType === 'bidding'} onChange={() => { setActionType('bidding'); setBidAmount(''); setExchangeFor(''); setResellAmount(''); }} style={{ marginRight: 8 }} />
           Bid
         </label>
         <label style={{ fontWeight: 500, cursor: 'pointer' }}>
@@ -283,32 +494,35 @@ export default function AddItemPage() {
           Resell
         </label>
       </div>
-      {actionType === 'bid' && (
+              {actionType === 'bidding' && (
         <div style={{ marginBottom: 18 }}>
           <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>How much are you looking for?</label>
-          <input type="number" value={bidAmount} onChange={e => setBidAmount(e.target.value)} style={{ width: 240, padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }} placeholder="Expected bid amount" />
+          <input type="number" value={bidAmount} onChange={e => setBidAmount(e.target.value)} style={{ width: 240, padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }} placeholder="Expected bid amount" />
         </div>
       )}
       {actionType === 'exchange' && (
         <div style={{ marginBottom: 18 }}>
           <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>What are you looking for in exchange?</label>
-          <input type="text" value={exchangeFor} onChange={e => setExchangeFor(e.target.value)} style={{ width: 240, padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }} placeholder="Desired item" />
+          <input type="text" value={exchangeFor} onChange={e => setExchangeFor(e.target.value)} style={{ width: 240, padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }} placeholder="Desired item" />
         </div>
       )}
       {actionType === 'resell' && (
         <div style={{ marginBottom: 18 }}>
           <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Resell amount</label>
-          <input type="number" value={resellAmount} onChange={e => setResellAmount(e.target.value)} style={{ width: 240, padding: '10px 12px', border: '1.5px solid #ccc', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }} placeholder="Resell price" />
+          <input type="number" value={resellAmount} onChange={e => setResellAmount(e.target.value)} style={{ width: 240, padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }} placeholder="Resell price" />
         </div>
       )}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginTop: 36 }}>
         <button className="sayonara-btn" style={{ minWidth: 120 }} onClick={() => setStep(3)}>Back</button>
         <button className="sayonara-btn" style={{ minWidth: 120 }} disabled={
-          (actionType === 'bid' && !bidAmount) ||
+          (actionType === 'bidding' && !bidAmount) ||
           (actionType === 'exchange' && !exchangeFor) ||
           (actionType === 'resell' && !resellAmount) ||
-          !actionType
-        } onClick={() => setStep(5)}>Publish</button>
+          !actionType ||
+          loading
+        } onClick={handleSubmitItem}>
+          {loading ? 'Publishing...' : 'Publish'}
+        </button>
         <button className="sayonara-btn" style={{ minWidth: 120, background: '#fff', color: '#924DAC', border: '2px solid #924DAC' }} onClick={() => setStep(1)}>Draft</button>
       </div>
     </div>
@@ -321,6 +535,9 @@ export default function AddItemPage() {
         <span style={{ color: '#2ecc40', fontSize: 48 }}>✔</span>
       </div>
       <div style={{ fontWeight: 700, fontSize: 22, color: '#222', marginBottom: 8 }}>Your Product is successfully Uploaded</div>
+      <div style={{ color: '#666', fontSize: 16, marginBottom: 16 }}>
+        Redirecting to {actionType === 'bidding' ? 'Bidding' : actionType === 'exchange' ? 'Exchange' : 'Resell'} page...
+      </div>
     </div>
   );
 

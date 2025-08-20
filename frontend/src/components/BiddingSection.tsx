@@ -359,14 +359,14 @@ export default function BiddingSection() {
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
               {previewItems.map((item) => (
                 <div key={item.id} className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden hover:shadow-lg transition-all duration-300 transform hover:-translate-y-1">
-                  {/* Item Image */}
-                  <div className="relative h-48 bg-gray-100">
-                    <Image
-                      src={item.image}
-                      alt={item.title}
-                      fill
-                      className="object-cover"
-                    />
+                                  {/* Item Image */}
+                <div className="grid-image-wrapper">
+                  <Image
+                    src={item.image}
+                    alt={item.title}
+                    fill
+                    className="object-cover"
+                  />
                     <div className="absolute top-3 left-3">
                       <span className={`px-2 py-1 rounded-full text-xs font-medium ${getPriorityColor(item.priority)}`}>
                         {getPriorityText(item.priority)}

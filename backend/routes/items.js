@@ -5,6 +5,51 @@ const { auth, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+// Test route to verify server is working
+router.get('/test', (req, res) => {
+  res.json({ message: 'Items API is working!' });
+});
+
+// Temporary GET route to clear all items (easier to access) - MUST BE BEFORE /:id route
+router.get('/clear', async (req, res) => {
+  try {
+    console.log('Clear route accessed');
+    // Clear all items from the mock database
+    if (Item.mockItems) {
+      Item.mockItems = [];
+      console.log('Cleared mockItems');
+    } else {
+      // If mockItems doesn't exist, try to clear the database
+      await Item.destroy({ where: {} });
+      console.log('Cleared database items');
+    }
+    res.json({ message: 'All items cleared successfully' });
+  } catch (error) {
+    console.error('Clear items error:', error);
+    res.status(500).json({ error: 'Failed to clear items' });
+  }
+});
+
+// Temporary route to clear all items
+router.delete('/clear', async (req, res) => {
+  try {
+    console.log('Clear DELETE route accessed');
+    // Clear all items from the mock database
+    if (Item.mockItems) {
+      Item.mockItems = [];
+      console.log('Cleared mockItems');
+    } else {
+      // If mockItems doesn't exist, try to clear the database
+      await Item.destroy({ where: {} });
+      console.log('Cleared database items');
+    }
+    res.json({ message: 'All items cleared successfully' });
+  } catch (error) {
+    console.error('Clear items error:', error);
+    res.status(500).json({ error: 'Failed to clear items' });
+  }
+});
+
 // Get all items with filtering
 router.get('/', optionalAuth, async (req, res) => {
   try {

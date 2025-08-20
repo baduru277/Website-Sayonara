@@ -118,6 +118,8 @@ const conditions = [
   "Fair"
 ];
 
+import Link from 'next/link';
+
 export default function BrowsePage() {
   return (
     <div className="min-h-screen flex flex-col">
@@ -230,9 +232,11 @@ export default function BrowsePage() {
             {items.map((item) => (
               <div key={item.id} className="card p-4 hover:shadow-lg transition-all duration-300">
                 <div className="relative mb-4">
-                  <div className="w-full h-48 bg-gray-200 rounded-lg flex items-center justify-center">
-                    <span className="text-gray-500">Image Placeholder</span>
-                  </div>
+                  <Link href={`/item/${item.id}`} style={{ textDecoration: 'none' }}>
+                    <div className="grid-image-wrapper rounded-lg flex items-center justify-center hover:opacity-80 transition-opacity cursor-pointer">
+                      <span className="text-gray-500">Image Placeholder</span>
+                    </div>
+                  </Link>
                   <div className="absolute top-2 left-2 bg-blue-600 text-white px-2 py-1 rounded text-xs font-medium">
                     {item.category}
                   </div>
@@ -241,9 +245,11 @@ export default function BrowsePage() {
                   </div>
                 </div>
 
-                <h3 className="text-lg font-semibold text-gray-900 mb-2">
-                  {item.title}
-                </h3>
+                <Link href={`/item/${item.id}`} style={{ textDecoration: 'none' }}>
+                  <h3 className="text-lg font-semibold text-gray-900 mb-2 hover:text-purple-600 transition-colors cursor-pointer">
+                    {item.title}
+                  </h3>
+                </Link>
                 <p className="text-gray-600 text-sm mb-3">
                   {item.description}
                 </p>
@@ -267,9 +273,9 @@ export default function BrowsePage() {
                     {item.postedDate}
                   </span>
                   <div className="flex gap-2">
-                    <button className="btn btn-primary text-sm px-3 py-1">
+                    <Link href={`/item/${item.id}`} className="btn btn-primary text-sm px-3 py-1" style={{ textDecoration: 'none' }}>
                       View
-                    </button>
+                    </Link>
                     <button className="btn btn-outline text-sm px-3 py-1">
                       💬
                     </button>

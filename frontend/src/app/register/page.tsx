@@ -2,34 +2,42 @@
 
 import { useState } from 'react';
 import Link from 'next/link';
+import { useRouter } from 'next/navigation';
 import apiService from '@/services/api';
 
 export default function RegisterPage() {
+  const router = useRouter();
   const [formData, setFormData] = useState({
     firstName: '',
     lastName: '',
     email: '',
     password: '',
     confirmPassword: '',
-    agreeToTerms: false,
-    agreeToMarketing: false
+    agreeToTerms: false
   });
 
   const [errors, setErrors] = useState<Record<string, string>>({});
   const [isLoading, setIsLoading] = useState(false);
   const [successMessage, setSuccessMessage] = useState('');
+  const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     
+    // Clear previous errors
+    setErrors({});
+    setSuccessMessage('');
+    
     // Basic validation
     const newErrors: Record<string, string> = {};
     
-    if (!formData.firstName) newErrors.firstName = 'First name is required';
-    if (!formData.lastName) newErrors.lastName = 'Last name is required';
-    if (!formData.email) newErrors.email = 'Email is required';
+    if (!formData.firstName.trim()) newErrors.firstName = 'First name is required';
+    if (!formData.lastName.trim()) newErrors.lastName = 'Last name is required';
+    if (!formData.email.trim()) newErrors.email = 'Email is required';
+    if (!formData.email.includes('@')) newErrors.email = 'Please enter a valid email';
     if (!formData.password) newErrors.password = 'Password is required';
-    if (formData.password.length < 8) newErrors.password = 'Password must be at least 8 characters';
+    if (formData.password.length < 6) newErrors.password = 'Password must be at least 6 characters';
     if (formData.password !== formData.confirmPassword) {
       newErrors.confirmPassword = 'Passwords do not match';
     }
@@ -40,28 +48,34 @@ export default function RegisterPage() {
       return;
     }
 
-    // Handle registration API call
     setIsLoading(true);
-    setErrors({});
-    setSuccessMessage('');
     
     try {
       const userData = {
         name: `${formData.firstName} ${formData.lastName}`,
-        firstName: formData.firstName,
-        lastName: formData.lastName,
-        email: formData.email,
+        firstName: formData.firstName.trim(),
+        lastName: formData.lastName.trim(),
+        email: formData.email.trim().toLowerCase(),
         password: formData.password
       };
       
+      console.log('Registering user:', userData);
       const response = await apiService.register(userData);
       
-      if (response.token || response.user) {
-        setSuccessMessage('Registration successful! Please check your email for verification.');
-        // Optionally redirect to login or verification page
-        // window.location.href = '/login';
+      console.log('Registration response:', response);
+      
+      if (response.token) {
+        // Store the token
+        apiService.setAuthToken(response.token);
+        
+        setSuccessMessage('Registration successful! Redirecting to dashboard...');
+        
+        // Redirect to dashboard after a short delay
+        setTimeout(() => {
+          router.push('/dashboard');
+        }, 2000);
       } else {
-        setErrors({ general: response.error || 'Registration failed. Please try again.' });
+        setErrors({ general: 'Registration failed. Please try again.' });
       }
     } catch (error: unknown) {
       console.error('Registration error:', error);
@@ -86,131 +100,273 @@ export default function RegisterPage() {
   };
 
   return (
-    <div className="min-h-screen flex flex-col">
-      <main className="flex-1 flex items-center justify-center bg-gray-50 py-12 px-4">
-        <div className="w-full max-w-sm mx-auto">
-          <div className="bg-white rounded-2xl shadow-xl px-8 py-8 flex flex-col items-center">
-            <h2 className="mb-6 text-center text-3xl font-bold text-gray-900">Create your account</h2>
-            {errors.general && (
-              <div className="w-full mb-4 p-3 bg-red-100 border border-red-400 text-red-700 rounded">
-                {errors.general}
-              </div>
-            )}
-            {successMessage && (
-              <div className="w-full mb-4 p-3 bg-green-100 border border-green-400 text-green-700 rounded">
-                {successMessage}
-              </div>
-            )}
-            <form className="w-full" onSubmit={handleSubmit}>
-              <div className="grid grid-cols-2 gap-4 mb-4">
-                <div>
-                  <label htmlFor="firstName" className="block text-sm font-medium text-gray-700 mb-1">First name</label>
-                  <input
-                    id="firstName"
-                    name="firstName"
-                    type="text"
-                    autoComplete="given-name"
-                    required
-                    value={formData.firstName}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.firstName ? 'border-red-500' : ''}`}
-                    placeholder="First name"
-                  />
-                  {errors.firstName && <p className="mt-1 text-sm text-red-600">{errors.firstName}</p>}
-                </div>
-                <div>
-                  <label htmlFor="lastName" className="block text-sm font-medium text-gray-700 mb-1">Last name</label>
-                  <input
-                    id="lastName"
-                    name="lastName"
-                    type="text"
-                    autoComplete="family-name"
-                    required
-                    value={formData.lastName}
-                    onChange={handleChange}
-                    className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.lastName ? 'border-red-500' : ''}`}
-                    placeholder="Last name"
-                  />
-                  {errors.lastName && <p className="mt-1 text-sm text-red-600">{errors.lastName}</p>}
-                </div>
-              </div>
-              <div className="mb-4">
-                <label htmlFor="email" className="block text-sm font-medium text-gray-700 mb-1">Email address</label>
-                <input
-                  id="email"
-                  name="email"
-                  type="email"
-                  autoComplete="email"
-                  required
-                  value={formData.email}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.email ? 'border-red-500' : ''}`}
-                  placeholder="Enter your email"
-                />
-                {errors.email && <p className="mt-1 text-sm text-red-600">{errors.email}</p>}
-              </div>
-              <div className="mb-4">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700 mb-1">Password</label>
-                <input
-                  id="password"
-                  name="password"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.password}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.password ? 'border-red-500' : ''}`}
-                  placeholder="Create a password"
-                />
-                {errors.password && <p className="mt-1 text-sm text-red-600">{errors.password}</p>}
-              </div>
-              <div className="mb-4">
-                <label htmlFor="confirmPassword" className="block text-sm font-medium text-gray-700 mb-1">Confirm password</label>
-                <input
-                  id="confirmPassword"
-                  name="confirmPassword"
-                  type="password"
-                  autoComplete="new-password"
-                  required
-                  value={formData.confirmPassword}
-                  onChange={handleChange}
-                  className={`w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500 ${errors.confirmPassword ? 'border-red-500' : ''}`}
-                  placeholder="Confirm your password"
-                />
-                {errors.confirmPassword && <p className="mt-1 text-sm text-red-600">{errors.confirmPassword}</p>}
-              </div>
-              <div className="flex items-center mb-4">
-                <input
-                  id="agreeToTerms"
-                  name="agreeToTerms"
-                  type="checkbox"
-                  checked={formData.agreeToTerms}
-                  onChange={handleChange}
-                  className="h-4 w-4 text-purple-600 focus:ring-blue-500 border-gray-300 rounded"
-                />
-                <label htmlFor="agreeToTerms" className="ml-2 block text-sm text-gray-900">
-                  I agree to the{' '}
-                  <Link href="/terms" className="text-purple-700 hover:underline">Terms of Service</Link>
-                </label>
-                {errors.agreeToTerms && <p className="ml-2 text-sm text-red-600">{errors.agreeToTerms}</p>}
-              </div>
-              <button
-                type="submit"
-                disabled={isLoading}
-                className="w-full py-3 rounded-lg font-bold text-white text-lg bg-purple-700 hover:bg-purple-800 disabled:bg-purple-400 disabled:cursor-not-allowed transition-colors shadow-md mb-4"
-              >
-                {isLoading ? 'SIGNING UP...' : 'SIGN UP'}
-              </button>
-            </form>
-            <p className="mt-6 text-sm text-gray-600">
-              Already have an account?{' '}
-              <Link href="/login" className="text-purple-700 font-semibold hover:underline">
-                Log In
-              </Link>
-            </p>
+    <div style={{
+      minHeight: '100vh',
+      background: '#f8f9fa',
+      display: 'flex',
+      flexDirection: 'column',
+      alignItems: 'center',
+      justifyContent: 'center',
+      fontFamily: 'Quicksand, Montserrat, sans-serif',
+    }}>
+      <div style={{
+        width: '100%',
+        maxWidth: 370,
+        background: '#fff',
+        borderRadius: 16,
+        boxShadow: '0 4px 24px rgba(146,77,172,0.08)',
+        padding: '32px 28px',
+        margin: '0 auto',
+      }}>
+        <h2 style={{ fontWeight: 700, fontSize: 24, color: '#222', marginBottom: 28, textAlign: 'center' }}>
+          Create Account
+        </h2>
+
+        {errors.general && (
+          <div style={{ color: 'red', textAlign: 'center', marginBottom: 10, fontSize: 14 }}>
+            {errors.general}
           </div>
+        )}
+
+        {successMessage && (
+          <div style={{ color: 'green', textAlign: 'center', marginBottom: 10, fontSize: 14 }}>
+            {successMessage}
+          </div>
+        )}
+
+        <form onSubmit={handleSubmit}>
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>First Name</label>
+            <input
+              type="text"
+              name="firstName"
+              placeholder="First name"
+              value={formData.firstName}
+              onChange={handleChange}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: errors.firstName ? '2px solid #ff4444' : '2px solid #f3eaff',
+                borderRadius: 8,
+                fontSize: 16,
+                marginTop: 6,
+                outline: 'none',
+                color: '#924DAC',
+                fontWeight: 500,
+                background: '#faf8fd',
+              }}
+            />
+            {errors.firstName && (
+              <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.firstName}</div>
+            )}
+          </div>
+
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Last Name</label>
+            <input
+              type="text"
+              name="lastName"
+              placeholder="Last name"
+              value={formData.lastName}
+              onChange={handleChange}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: errors.lastName ? '2px solid #ff4444' : '2px solid #f3eaff',
+                borderRadius: 8,
+                fontSize: 16,
+                marginTop: 6,
+                outline: 'none',
+                color: '#924DAC',
+                fontWeight: 500,
+                background: '#faf8fd',
+              }}
+            />
+            {errors.lastName && (
+              <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.lastName}</div>
+            )}
+          </div>
+
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Email Address</label>
+            <input
+              type="email"
+              name="email"
+              placeholder="Enter your email"
+              value={formData.email}
+              onChange={handleChange}
+              style={{
+                width: '100%',
+                padding: '12px 14px',
+                border: errors.email ? '2px solid #ff4444' : '2px solid #f3eaff',
+                borderRadius: 8,
+                fontSize: 16,
+                marginTop: 6,
+                outline: 'none',
+                color: '#924DAC',
+                fontWeight: 500,
+                background: '#faf8fd',
+              }}
+            />
+            {errors.email && (
+              <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.email}</div>
+            )}
+          </div>
+
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? 'text' : 'password'}
+                name="password"
+                placeholder="Create a password"
+                value={formData.password}
+                onChange={handleChange}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  paddingRight: '45px',
+                  border: errors.password ? '2px solid #ff4444' : '2px solid #f3eaff',
+                  borderRadius: 8,
+                  fontSize: 16,
+                  marginTop: 6,
+                  outline: 'none',
+                  color: '#924DAC',
+                  fontWeight: 500,
+                  background: '#faf8fd',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#924DAC',
+                  fontSize: '18px',
+                  padding: '4px',
+                }}
+              >
+                {showPassword ? (
+                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
+                    <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
+                    <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                  </svg>
+                )}
+              </button>
+            </div>
+            {errors.password && (
+              <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.password}</div>
+            )}
+          </div>
+
+          <div style={{ marginBottom: 18 }}>
+            <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Confirm Password</label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showConfirmPassword ? 'text' : 'password'}
+                name="confirmPassword"
+                placeholder="Confirm your password"
+                value={formData.confirmPassword}
+                onChange={handleChange}
+                style={{
+                  width: '100%',
+                  padding: '12px 14px',
+                  paddingRight: '45px',
+                  border: errors.confirmPassword ? '2px solid #ff4444' : '2px solid #f3eaff',
+                  borderRadius: 8,
+                  fontSize: 16,
+                  marginTop: 6,
+                  outline: 'none',
+                  color: '#924DAC',
+                  fontWeight: 500,
+                  background: '#faf8fd',
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  color: '#924DAC',
+                  fontSize: '18px',
+                  padding: '4px',
+                }}
+              >
+                {showConfirmPassword ? (
+                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
+                    <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
+                    <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
+                  </svg>
+                ) : (
+                  <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
+                    <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
+                    <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
+                  </svg>
+                )}
+              </button>
+            </div>
+            {errors.confirmPassword && (
+              <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.confirmPassword}</div>
+            )}
+          </div>
+
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 12 }}>
+            <div style={{ display: 'flex', alignItems: 'center' }}>
+              <input 
+                type="checkbox" 
+                name="agreeToTerms"
+                checked={formData.agreeToTerms} 
+                onChange={handleChange} 
+                style={{ marginRight: 8 }} 
+              />
+            </div>
+            <span style={{ fontSize: 13, color: '#666', textAlign: 'center', marginTop: 4, lineHeight: 1.5, maxWidth: 260 }}>
+              Are you agree to <a href="#" style={{ color: '#924DAC', textDecoration: 'underline' }}>Sayonara Terms of Condition</a> and <a href="#" style={{ color: '#924DAC', textDecoration: 'underline' }}>Privacy Policy</a>.
+            </span>
+            {errors.agreeToTerms && (
+              <div style={{ color: 'red', fontSize: 12, marginTop: 4 }}>{errors.agreeToTerms}</div>
+            )}
+          </div>
+
+          <button 
+            type="submit" 
+            className="sayonara-btn" 
+            style={{ 
+              width: '100%', 
+              marginTop: 8, 
+              fontSize: 18,
+              opacity: isLoading ? 0.6 : 1,
+              cursor: isLoading ? 'not-allowed' : 'pointer'
+            }} 
+            disabled={isLoading}
+          >
+            {isLoading ? 'SIGNING UP...' : 'SIGN UP'}
+          </button>
+        </form>
+
+        <div style={{ marginTop: 20, textAlign: 'center', fontSize: 14, color: '#666' }}>
+          Already have an account? <Link href="/login" style={{ color: '#924DAC', textDecoration: 'underline' }}>Sign In</Link>
         </div>
-      </main>
+      </div>
     </div>
   );
 } 

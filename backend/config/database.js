@@ -17,15 +17,28 @@ if (process.env.DATABASE_URL) {
     logging: false
   });
 } else {
-  // For development without database setup - mock Sequelize
-  console.log('Warning: Running without database connection for development');
+  // Development - use simple in-memory storage
+  console.log('Using in-memory storage for development');
+  
+  // Create a simple in-memory database simulation
+  const inMemoryDB = {
+    users: new Map(),
+    items: new Map(),
+    bids: new Map(),
+    nextUserId: 1,
+    nextItemId: 1,
+    nextBidId: 1
+  };
+
+  // Mock Sequelize instance
   sequelize = {
     authenticate: () => Promise.resolve(),
-    define: () => ({}),
     sync: () => Promise.resolve(),
     models: {},
     transaction: () => Promise.resolve(),
-    close: () => Promise.resolve()
+    close: () => Promise.resolve(),
+    // Add our in-memory database
+    inMemoryDB
   };
 }
 
