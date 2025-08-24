@@ -1,0 +1,13 @@
+# Essential dependencies only
+selenium==4.15.2
+undetected-chromedriver==3.5.4
+flask==3.0.0
+
+# Basic NLP (lighter alternatives)
+nltk==3.8.1
+
+# Data processing
+pandas==2.1.3
+
+# Utility
+requests==2.31.0
