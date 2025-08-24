@@ -5,8 +5,40 @@ import Link from "next/link";
 import Image from "next/image";
 import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
 
+
 export default function LoginPage() {
   const [tab, setTab] = useState<'login' | 'signup'>('login');
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+
+  useEffect(() => {
+    // Initialize Google Sign-In when component mounts
+    initGoogleSignIn().catch(error => {
+      console.error('Failed to initialize Google Sign-In:', error);
+      setErrorMsg('Failed to initialize Google Sign-In. Please refresh the page.');
+    });
+  }, []);
+
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    
+    try {
+      // Check if Google Sign-In is ready
+      if (!isGoogleSignInReady()) {
+        // Try to initialize if not ready
+        await initGoogleSignIn();
+      }
+      
+      // Trigger the sign-in
+      await triggerGoogleSignIn();
+    } catch (error: unknown) {
+      console.error('Google Sign-In failed:', error);
+      setErrorMsg(error instanceof Error ? error.message : 'Google Sign-In failed. Please try again.');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   useEffect(() => {
     // Initialize Google Sign-In when component mounts
@@ -92,6 +124,8 @@ export default function LoginPage() {
             Sign Up
           </button>
         </div>
+        {/* Error Message */}
+        {errorMsg && <div style={{ color: 'red', textAlign: 'center', marginBottom: 10, fontSize: 14 }}>{errorMsg}</div>}
         {/* Form */}
         {tab === 'login' ? (
           <form>
@@ -160,8 +194,9 @@ export default function LoginPage() {
                 color: '#444', 
                 border: '2px solid #924DAC' 
               }}
-            >
+            
               <Image src="/google.svg" alt="Google" width={22} height={22} /> Login with Google
+
             </button>
             
             <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
@@ -218,6 +253,8 @@ export default function LoginPage() {
               type="button" 
               className="sayonara-btn" 
               onClick={handleGoogleSignIn}
+
+
               style={{ 
                 width: '100%', 
                 marginBottom: 10, 
@@ -231,6 +268,7 @@ export default function LoginPage() {
               }}
             >
               <Image src="/google.svg" alt="Google" width={22} height={22} /> Sign up with Google
+
             </button>
             
             <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>

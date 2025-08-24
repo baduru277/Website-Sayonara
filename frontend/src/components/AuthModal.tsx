@@ -5,6 +5,7 @@ import Image from "next/image";
 import apiService from '@/services/api';
 import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
 
+
 export default function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [step, setStep] = useState("login-signup");
   const [tab, setTab] = useState<'login' | 'signup'>('login');
@@ -29,6 +30,11 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
       }, 1000); // Wait for Google API to load
 
       return () => clearTimeout(timer);
+
+      initGoogleSignIn().catch(error => {
+        console.error('Failed to initialize Google Sign-In:', error);
+        setErrorMsg('Failed to initialize Google Sign-In. Please refresh the page.');
+      });
     }
   }, [open]);
 
@@ -46,6 +52,26 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
           setErrorMsg('Google Sign-In failed. Please try again.');
         });
       }
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    
+    try {
+      // Check if Google Sign-In is ready
+      if (!isGoogleSignInReady()) {
+        // Try to initialize if not ready
+        await initGoogleSignIn();
+      }
+      
+      // Trigger the sign-in
+      await triggerGoogleSignIn();
+      onClose(); // Close modal after successful sign-in
+    } catch (error: unknown) {
+      console.error('Google Sign-In failed:', error);
+      setErrorMsg(error instanceof Error ? error.message : 'Google Sign-In failed. Please try again.');
+    } finally {
+      setLoading(false);
+
     }
   };
 
@@ -242,6 +268,8 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                     type="button" 
                     className="sayonara-btn" 
                     onClick={handleGoogleSignIn}
+                    disabled={loading}
+
                     style={{ 
                       width: '100%', 
                       marginBottom: 10, 
@@ -255,6 +283,14 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                     }}
                   >
                     <Image src="/google.svg" alt="Google" width={22} height={22} /> Login with Google
+
+                      border: '2px solid #924DAC',
+                      opacity: loading ? 0.6 : 1,
+                      cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <Image src="/google.svg" alt="Google" width={22} height={22} /> 
+                    {loading ? 'Signing in...' : 'Login with Go
                   </button>
                   
                   <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
@@ -317,6 +353,9 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                     type="button" 
                     className="sayonara-btn" 
                     onClick={handleGoogleSignIn}
+
+                    disabled={loading}
+
                     style={{ 
                       width: '100%', 
                       marginBottom: 10, 
@@ -330,6 +369,13 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                     }}
                   >
                     <Image src="/google.svg" alt="Google" width={22} height={22} /> Sign up with Google
+                      border: '2px solid #924DAC',
+                      opacity: loading ? 0.6 : 1,
+                      cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <Image src="/google.svg" alt="Google" width={22} height={22} /> 
+                    {loading ? 'Signing up...' : 'Sign up with Google'}
                   </button>
                   
                   <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
