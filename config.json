@@ -1,0 +1,19 @@
+{
+    "chromedriver_path": "/usr/bin/chromedriver",
+    "url": "https://threezero.datamyne.com/system/jsp/login.jsp",
+    "username": "",
+    "password": "",
+    "download_wait_time": 80,
+    "refresh_wait_time": 50,
+    "implicit_wait": 5,
+    "explicit_wait": 10,
+    "nlp_settings": {
+        "confidence_threshold": 0.3,
+        "enable_sentiment_analysis": true,
+        "enable_intent_classification": true
+    },
+    "logging": {
+        "level": "INFO",
+        "file": "scraper.log"
+    }
+}
