@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import apiService from '@/services/api';
-import { initGoogleSignIn, triggerGoogleSignIn, isGoogleSignInReady, GoogleUser } from "@/utils/googleAuth";
+import { initGoogleSignIn, triggerGoogleSignIn, isGoogleSignInReady } from "@/utils/googleAuth";
 
 export default function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [step, setStep] = useState("login-signup");
@@ -47,9 +47,9 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
       // Trigger the sign-in
       await triggerGoogleSignIn();
       onClose(); // Close modal after successful sign-in
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Google Sign-In failed:', error);
-      setErrorMsg(error.message || 'Google Sign-In failed. Please try again.');
+      setErrorMsg(error instanceof Error ? error.message : 'Google Sign-In failed. Please try again.');
     } finally {
       setLoading(false);
     }

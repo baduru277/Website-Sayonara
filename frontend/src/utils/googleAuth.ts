@@ -57,7 +57,7 @@ export interface GoogleUser {
 const GOOGLE_CLIENT_ID = '380078509373-814un77hbu18p9s6s8tqeit1t18lfnk1.apps.googleusercontent.com';
 
 // Debug logging
-const debug = (message: string, data?: any) => {
+const debug = (message: string, data?: unknown) => {
   console.log(`[GoogleAuth] ${message}`, data || '');
 };
 

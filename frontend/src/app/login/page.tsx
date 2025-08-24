@@ -3,7 +3,7 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { initGoogleSignIn, triggerGoogleSignIn, isGoogleSignInReady, signOut, GoogleUser } from "@/utils/googleAuth";
+import { initGoogleSignIn, triggerGoogleSignIn, isGoogleSignInReady, signOut } from "@/utils/googleAuth";
 
 export default function LoginPage() {
   const [tab, setTab] = useState<'login' | 'signup'>('login');
@@ -31,9 +31,9 @@ export default function LoginPage() {
       
       // Trigger the sign-in
       await triggerGoogleSignIn();
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error('Google Sign-In failed:', error);
-      setErrorMsg(error.message || 'Google Sign-In failed. Please try again.');
+      setErrorMsg(error instanceof Error ? error.message : 'Google Sign-In failed. Please try again.');
     } finally {
       setLoading(false);
     }
