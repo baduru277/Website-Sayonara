@@ -3,7 +3,8 @@
 import React, { useState, useEffect } from "react";
 import Link from "next/link";
 import Image from "next/image";
-import { initGoogleSignIn, triggerGoogleSignIn, isGoogleSignInReady, signOut } from "@/utils/googleAuth";
+import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
+
 
 export default function LoginPage() {
   const [tab, setTab] = useState<'login' | 'signup'>('login');
@@ -36,6 +37,28 @@ export default function LoginPage() {
       setErrorMsg(error instanceof Error ? error.message : 'Google Sign-In failed. Please try again.');
     } finally {
       setLoading(false);
+    }
+  };
+
+  useEffect(() => {
+    // Initialize Google Sign-In when component mounts
+    const timer = setTimeout(() => {
+      initGoogleSignIn();
+    }, 1000); // Wait for Google API to load
+
+    return () => clearTimeout(timer);
+  }, []);
+
+  const handleGoogleSignIn = () => {
+    if (typeof window !== 'undefined' && window.gapi) {
+      const auth2 = window.gapi.auth2.getAuthInstance();
+      if (auth2) {
+        auth2.signIn().then((googleUser: any) => {
+          onSignIn(googleUser);
+        }).catch((error: any) => {
+          console.error('Google Sign-In failed:', error);
+        });
+      }
     }
   };
 
@@ -160,7 +183,6 @@ export default function LoginPage() {
               type="button" 
               className="sayonara-btn" 
               onClick={handleGoogleSignIn}
-              disabled={loading}
               style={{ 
                 width: '100%', 
                 marginBottom: 10, 
@@ -170,13 +192,11 @@ export default function LoginPage() {
                 gap: 10, 
                 background: '#fff', 
                 color: '#444', 
-                border: '2px solid #924DAC',
-                opacity: loading ? 0.6 : 1,
-                cursor: loading ? 'not-allowed' : 'pointer'
+                border: '2px solid #924DAC' 
               }}
-            >
-              <Image src="/google.svg" alt="Google" width={22} height={22} /> 
-              {loading ? 'Signing in...' : 'Login with Google'}
+            
+              <Image src="/google.svg" alt="Google" width={22} height={22} /> Login with Google
+
             </button>
             
             <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
@@ -233,7 +253,8 @@ export default function LoginPage() {
               type="button" 
               className="sayonara-btn" 
               onClick={handleGoogleSignIn}
-              disabled={loading}
+
+
               style={{ 
                 width: '100%', 
                 marginBottom: 10, 
@@ -243,13 +264,11 @@ export default function LoginPage() {
                 gap: 10, 
                 background: '#fff', 
                 color: '#444', 
-                border: '2px solid #924DAC',
-                opacity: loading ? 0.6 : 1,
-                cursor: loading ? 'not-allowed' : 'pointer'
+                border: '2px solid #924DAC' 
               }}
             >
-              <Image src="/google.svg" alt="Google" width={22} height={22} /> 
-              {loading ? 'Signing up...' : 'Sign up with Google'}
+              <Image src="/google.svg" alt="Google" width={22} height={22} /> Sign up with Google
+
             </button>
             
             <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
