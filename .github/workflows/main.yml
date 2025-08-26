@@ -1,0 +1,16 @@
+name: Build and deploy to Hostinger
+on:
+  push:
+    branches: [ main ]
+jobs:
+  build-deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+      - run: npm ci
+      - run: npm run build
+      - name: Trigger Hostinger deploy
+        run: curl -fsS "${{ secrets.HOSTINGER_WEBHOOK_URL }}"
