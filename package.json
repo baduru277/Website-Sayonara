@@ -1,7 +1,26 @@
 {
+  "name": "sayonara-platform",
+  "version": "1.0.0",
+  "private": true,
+  "scripts": {
+    "dev": "concurrently \"npm run dev:backend\" \"npm run dev:frontend\"",
+    "dev:backend": "cd backend && npm run dev",
+    "dev:frontend": "cd frontend && npm run dev",
+    "build": "npm run build:frontend && npm run build:backend",
+    "build:frontend": "cd frontend && npm install && npm run build",
+    "build:backend": "cd backend && npm install",
+    "start": "concurrently \"npm run start:backend\" \"npm run start:frontend\"",
+    "start:backend": "cd backend && npm start",
+    "start:frontend": "cd frontend && npm start",
+    "setup:hostinger": "cd backend && node hostinger-setup.js",
+    "install:all": "npm install && cd frontend && npm install && cd ../backend && npm install"
+  },
   "dependencies": {
     "clsx": "^2.1.1",
     "nodemailer": "^7.0.5",
     "react-icons": "^5.5.0"
+  },
+  "devDependencies": {
+    "concurrently": "^8.2.2"
   }
 }

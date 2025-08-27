@@ -1,5 +1,11 @@
 // Google Sign-In utility functions
 
+declare global {
+  interface Window {
+    gapi: any;
+    onSignIn: (googleUser: any) => void;
+    signOut: () => void;
+=======
 interface GoogleAPI {
   load: (api: string, callback: () => void) => void;
   auth2: {
@@ -53,11 +59,20 @@ export interface GoogleUser {
   };
 }
 
+// Initialize Google Sign-In
+export const initGoogleSignIn = () => {
+  if (typeof window !== 'undefined' && window.gapi) {
+    window.gapi.load('auth2', () => {
+      window.gapi.auth2.init({
+        client_id: '380078509373-814un77hbu18p9s6s8tqeit1t18lfnk1.apps.googleusercontent.com'
+      });
+    });
+  }
 // Client ID
 const GOOGLE_CLIENT_ID = '380078509373-814un77hbu18p9s6s8tqeit1t18lfnk1.apps.googleusercontent.com';
 
 // Debug logging
-const debug = (message: string, data?: any) => {
+const debug = (message: string, data?: unknown) => {
   console.log(`[GoogleAuth] ${message}`, data || '');
 };
 
@@ -132,11 +147,22 @@ export const onSignIn = (googleUser: GoogleUser) => {
   localStorage.setItem('googleUser', JSON.stringify(userInfo));
   localStorage.setItem('isLoggedIn', 'true');
   
+
   debug('User info stored, reloading page');
   // Reload page to update UI
   window.location.reload();
 };
 
+// Sign out function
+export const signOut = () => {
+  if (typeof window !== 'undefined' && window.gapi) {
+    const auth2 = window.gapi.auth2.getAuthInstance();
+    auth2.signOut().then(() => {
+      console.log('User signed out.');
+      localStorage.removeItem('googleUser');
+      localStorage.removeItem('isLoggedIn');
+      window.location.reload();
+    });
 // Enhanced sign-in function with better error handling
 export const triggerGoogleSignIn = (): Promise<GoogleUser> => {
   return new Promise((resolve, reject) => {
@@ -191,6 +217,7 @@ export const signOut = () => {
 
 // Render Google Sign-In button programmatically
 export const renderGoogleButton = (elementId: string, theme: 'dark' | 'light' = 'light') => {
+
   debug(`Rendering Google button for element: ${elementId}`);
   if (typeof window !== 'undefined' && window.gapi) {
     window.gapi.load('signin2', () => {
@@ -201,6 +228,13 @@ export const renderGoogleButton = (elementId: string, theme: 'dark' | 'light' = 
         'longtitle': true,
         'theme': theme,
         'onsuccess': onSignIn,
+        'onfailure': (error: any) => console.error('Google Sign-In failed:', error)
+      });
+    });
+  }
+};
+
+
         'onfailure': (error: Error) => {
           debug('Google Sign-In button failed', error);
           console.error('Google Sign-In failed:', error);

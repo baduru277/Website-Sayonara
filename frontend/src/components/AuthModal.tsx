@@ -1,50 +1,98 @@
 "use client";
 
-import React, { useState } from "react";
+import React, { useState, useEffect } from "react";
 import Image from "next/image";
 import apiService from '@/services/api';
+import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
+
 
 export default function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
+  const [step, setStep] = useState("login-signup");
   const [tab, setTab] = useState<'login' | 'signup'>('login');
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
-  const [firstName, setFirstName] = useState("");
-  const [lastName, setLastName] = useState("");
+  const [name, setName] = useState("");
+  const [dob, setDob] = useState("");
+  const [gender, setGender] = useState("");
+  const [contact, setContact] = useState("");
+  const [location, setLocation] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
+  const [terms, setTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
-  const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [showPassword, setShowPassword] = useState(false);
-  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+
+  useEffect(() => {
+    if (open) {
+      // Initialize Google Sign-In when modal opens
+      const timer = setTimeout(() => {
+        initGoogleSignIn();
+      }, 1000); // Wait for Google API to load
+
+      return () => clearTimeout(timer);
+
+      initGoogleSignIn().catch(error => {
+        console.error('Failed to initialize Google Sign-In:', error);
+        setErrorMsg('Failed to initialize Google Sign-In. Please refresh the page.');
+      });
+    }
+  }, [open]);
 
   if (!open) return null;
+
+  const handleGoogleSignIn = () => {
+    if (typeof window !== 'undefined' && window.gapi) {
+      const auth2 = window.gapi.auth2.getAuthInstance();
+      if (auth2) {
+        auth2.signIn().then((googleUser: any) => {
+          onSignIn(googleUser);
+          onClose(); // Close modal after successful sign-in
+        }).catch((error: any) => {
+          console.error('Google Sign-In failed:', error);
+          setErrorMsg('Google Sign-In failed. Please try again.');
+        });
+      }
+  const handleGoogleSignIn = async () => {
+    setLoading(true);
+    setErrorMsg(null);
+    
+    try {
+      // Check if Google Sign-In is ready
+      if (!isGoogleSignInReady()) {
+        // Try to initialize if not ready
+        await initGoogleSignIn();
+      }
+      
+      // Trigger the sign-in
+      await triggerGoogleSignIn();
+      onClose(); // Close modal after successful sign-in
+    } catch (error: unknown) {
+      console.error('Google Sign-In failed:', error);
+      setErrorMsg(error instanceof Error ? error.message : 'Google Sign-In failed. Please try again.');
+    } finally {
+      setLoading(false);
+
+    }
+  };
 
   // Login handler
   async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
-    setSuccessMsg(null);
-    
     try {
       const res = await apiService.login({ email, password });
       if (res.token) {
         localStorage.setItem('isLoggedIn', 'true');
-        setSuccessMsg('Login successful! Redirecting...');
-        
-        // Trigger a custom event to notify the header about the login
-        window.dispatchEvent(new CustomEvent('authStateChanged', { 
-          detail: { isLoggedIn: true, userData: res.user } 
-        }));
-        
-        setTimeout(() => {
-          onClose();
-          // Don't reload the page, let the header update naturally
-        }, 1500);
+        setLoading(false);
+        onClose();
+        window.location.reload(); // To update header state
       } else {
         setErrorMsg(res.error || res.message || 'Login failed.');
+        setLoading(false);
       }
     } catch (err: unknown) {
+      // Try to extract backend error message
       let errorMessage = 'Login failed.';
       
       if (err instanceof Error) {
@@ -57,7 +105,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
       }
       
       setErrorMsg(errorMessage);
-    } finally {
       setLoading(false);
     }
   }
@@ -67,32 +114,19 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
-    setSuccessMsg(null);
-    
     try {
-      const userData = {
-        name: `${firstName} ${lastName}`,
-        firstName,
-        lastName,
-        email,
-        password
-      };
-      
-      const res = await apiService.register(userData);
+      const res = await apiService.register({ name, email, password });
       if (res.token || res.user) {
-        setSuccessMsg('Registration successful! You can now login.');
-        setTab('login');
-        // Clear form
-        setFirstName('');
-        setLastName('');
-        setEmail('');
-        setPassword('');
-        setConfirmPassword('');
+        // Optionally, auto-login or go to verify-email step
+        setLoading(false);
+        setStep('verify-email');
       } else {
-        setErrorMsg(res.error || res.message || 'Registration failed.');
+        setErrorMsg(res.error || res.message || 'Signup failed.');
+        setLoading(false);
       }
     } catch (err: unknown) {
-      let errorMessage = 'Registration failed.';
+      // Try to extract backend error message
+      let errorMessage = 'Signup failed.';
       
       if (err instanceof Error) {
         errorMessage = err.message;
@@ -104,40 +138,9 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
       }
       
       setErrorMsg(errorMessage);
-    } finally {
       setLoading(false);
     }
   }
-
-  const validateForm = () => {
-    if (tab === 'signup') {
-      if (!firstName.trim()) return 'First name is required';
-      if (!lastName.trim()) return 'Last name is required';
-      if (!email.trim()) return 'Email is required';
-      if (!email.includes('@')) return 'Please enter a valid email';
-      if (password.length < 6) return 'Password must be at least 6 characters';
-      if (password !== confirmPassword) return 'Passwords do not match';
-    } else {
-      if (!email.trim()) return 'Email is required';
-      if (!password) return 'Password is required';
-    }
-    return null;
-  };
-
-  const handleSubmit = (e: React.FormEvent) => {
-    e.preventDefault();
-    const validationError = validateForm();
-    if (validationError) {
-      setErrorMsg(validationError);
-      return;
-    }
-    
-    if (tab === 'login') {
-      handleLogin(e);
-    } else {
-      handleSignup(e);
-    }
-  };
 
   return (
     <>
@@ -183,203 +186,446 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
           position: 'relative',
         }}>
           <button onClick={onClose} style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', fontSize: 22, color: '#924DAC', cursor: 'pointer' }}>&times;</button>
-          
-          <div style={{ display: 'flex', borderBottom: '2px solid #f3eaff', marginBottom: 28 }}>
-            <button
-              className={tab === 'login' ? 'sayonara-btn' : ''}
-              style={{
-                flex: 1,
-                background: 'none',
-                border: 'none',
-                borderBottom: tab === 'login' ? '3px solid #924DAC' : '3px solid transparent',
-                color: tab === 'login' ? '#924DAC' : '#888',
-                fontWeight: 700,
-                fontSize: 18,
-                padding: '8px 0',
-                cursor: 'pointer',
-                borderRadius: 0,
-                outline: 'none',
-                transition: 'color 0.2s, border 0.2s',
-              }}
-              onClick={() => {
-                setTab('login');
-                setErrorMsg(null);
-                setSuccessMsg(null);
-              }}
-            >
-              Log In
-            </button>
-            <button
-              className={tab === 'signup' ? 'sayonara-btn' : ''}
-              style={{
-                flex: 1,
-                background: 'none',
-                border: 'none',
-                borderBottom: tab === 'signup' ? '3px solid #924DAC' : '3px solid transparent',
-                color: tab === 'signup' ? '#924DAC' : '#888',
-                fontWeight: 700,
-                fontSize: 18,
-                padding: '8px 0',
-                cursor: 'pointer',
-                borderRadius: 0,
-                outline: 'none',
-                transition: 'color 0.2s, border 0.2s',
-              }}
-              onClick={() => {
-                setTab('signup');
-                setErrorMsg(null);
-                setSuccessMsg(null);
-              }}
-            >
-              Sign Up
-            </button>
-          </div>
-
-          {errorMsg && <div style={{ color: 'red', textAlign: 'center', marginBottom: 10, fontSize: 14 }}>{errorMsg}</div>}
-          {successMsg && <div style={{ color: 'green', textAlign: 'center', marginBottom: 10, fontSize: 14 }}>{successMsg}</div>}
-
-          <form onSubmit={handleSubmit}>
-            {tab === 'signup' && (
-              <>
-                <div style={{ marginBottom: 18 }}>
-                  <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>First Name</label>
-                  <input
-                    type="text"
-                    placeholder="First name"
-                    value={firstName}
-                    onChange={(e) => setFirstName(e.target.value)}
-                  />
-                </div>
-                <div style={{ marginBottom: 18 }}>
-                  <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Last Name</label>
-                  <input
-                    type="text"
-                    placeholder="Last name"
-                    value={lastName}
-                    onChange={(e) => setLastName(e.target.value)}
-                  />
-                </div>
-              </>
-            )}
-
-            <div style={{ marginBottom: 18 }}>
-              <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Email Address</label>
-              <input
-                type="email"
-                placeholder="Enter your email"
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
-              />
-            </div>
-
-            <div style={{ marginBottom: 18 }}>
-              <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Password</label>
-              <div style={{ position: 'relative' }}>
-                <input
-                  type={showPassword ? 'text' : 'password'}
-                  placeholder={tab === 'login' ? 'Enter your password' : 'Create a password'}
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  style={{
-                    paddingRight: '45px',
-                  }}
-                />
+          {/* Step 1: Login/Sign Up */}
+          {step === "login-signup" && (
+            <>
+              <div style={{ display: 'flex', borderBottom: '2px solid #f3eaff', marginBottom: 28 }}>
                 <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  className={tab === 'login' ? 'sayonara-btn' : ''}
                   style={{
-                    position: 'absolute',
-                    right: '12px',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
+                    flex: 1,
                     background: 'none',
                     border: 'none',
+                    borderBottom: tab === 'login' ? '3px solid #924DAC' : '3px solid transparent',
+                    color: tab === 'login' ? '#924DAC' : '#888',
+                    fontWeight: 700,
+                    fontSize: 18,
+                    padding: '8px 0',
                     cursor: 'pointer',
-                    color: '#924DAC',
-                    fontSize: '18px',
-                    padding: '4px',
+                    borderRadius: 0,
+                    outline: 'none',
+                    transition: 'color 0.2s, border 0.2s',
                   }}
+                  onClick={() => setTab('login')}
                 >
-                  {showPassword ? (
-                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                      <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
-                      <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
-                      <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
-                    </svg>
-                  ) : (
-                    <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                      <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
-                      <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
-                    </svg>
-                  )}
+                  Log In
+                </button>
+                <button
+                  className={tab === 'signup' ? 'sayonara-btn' : ''}
+                  style={{
+                    flex: 1,
+                    background: 'none',
+                    border: 'none',
+                    borderBottom: tab === 'signup' ? '3px solid #924DAC' : '3px solid transparent',
+                    color: tab === 'signup' ? '#924DAC' : '#888',
+                    fontWeight: 700,
+                    fontSize: 18,
+                    padding: '8px 0',
+                    cursor: 'pointer',
+                    borderRadius: 0,
+                    outline: 'none',
+                    transition: 'color 0.2s, border 0.2s',
+                  }}
+                  onClick={() => setTab('signup')}
+                >
+                  Sign Up
                 </button>
               </div>
-            </div>
+              {errorMsg && <div style={{ color: 'red', textAlign: 'center', marginBottom: 10 }}>{errorMsg}</div>}
+              {tab === 'login' ? (
+                <form onSubmit={handleLogin}>
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Email Address</label>
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ marginBottom: 8 }}>
+                    <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Password</label>
+                    <input
+                      type="password"
+                      placeholder="Enter your password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                    />
+                    <div style={{ textAlign: 'right', marginTop: 4 }}>
+                      <button type="button" style={{ color: '#924DAC', fontSize: 13, textDecoration: 'underline', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setStep('forgot-password')}>
+                        Forgot Password?
+                      </button>
+                    </div>
+                  </div>
+                  <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 18, fontSize: 18 }} disabled={loading}>
+                    {loading ? 'Signing In...' : 'SIGN IN'}
+                  </button>
+                  <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
+                  
+                  {/* Google Sign-In Button */}
+                  <div className="g-signin2" data-onsuccess="onSignIn" style={{ marginBottom: 10 }}></div>
+                  <button 
+                    type="button" 
+                    className="sayonara-btn" 
+                    onClick={handleGoogleSignIn}
+                    disabled={loading}
 
-            {tab === 'signup' && (
-              <div style={{ marginBottom: 18 }}>
-                <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Confirm Password</label>
-                <div style={{ position: 'relative' }}>
-                  <input
-                    type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="Confirm your password"
-                    value={confirmPassword}
-                    onChange={(e) => setConfirmPassword(e.target.value)}
-                    style={{
-                      paddingRight: '45px',
-                    }}
-                  />
-                  <button
-                    type="button"
-                    onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    style={{
-                      position: 'absolute',
-                      right: '12px',
-                      top: '50%',
-                      transform: 'translateY(-50%)',
-                      background: 'none',
-                      border: 'none',
-                      cursor: 'pointer',
-                      color: '#924DAC',
-                      fontSize: '18px',
-                      padding: '4px',
+                    style={{ 
+                      width: '100%', 
+                      marginBottom: 10, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: 10, 
+                      background: '#fff', 
+                      color: '#444', 
+                      border: '2px solid #924DAC' 
                     }}
                   >
-                    {showConfirmPassword ? (
-                      <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M13.359 11.238C15.06 9.72 16 8 16 8s-3-5.5-8-5.5a7.028 7.028 0 0 0-2.79.588l.77.771A5.944 5.944 0 0 1 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.134 13.134 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755-.165.165-.337.328-.517.486l.708.709z"/>
-                        <path d="M11.297 9.176a3.5 3.5 0 0 0-4.474-4.474l.823.823a2.5 2.5 0 0 1 2.829 2.829l.822.822zm-2.943 1.299.822.822a3.5 3.5 0 0 1-4.474-4.474l.823.823a2.5 2.5 0 0 0 2.829 2.829z"/>
-                        <path d="M3.35 5.47c-.18.16-.353.322-.518.487A13.134 13.134 0 0 0 1.172 8l.195.288c.335.48.83 1.12 1.465 1.755C4.121 11.332 5.881 12.5 8 12.5c.716 0 1.39-.133 2.02-.36l.77.772A7.029 7.029 0 0 1 8 13.5C3 13.5 0 8 0 8s.939-1.721 2.641-3.238l.708.709zm10.296 8.884-12-12 .708-.708 12 12-.708.708z"/>
-                      </svg>
-                    ) : (
-                      <svg width="20" height="20" fill="currentColor" viewBox="0 0 16 16">
-                        <path d="M16 8s-3-5.5-8-5.5S0 8 0 8s3 5.5 8 5.5S16 8 16 8zM1.173 8a13.133 13.133 0 0 1 1.66-2.043C4.12 4.668 5.88 3.5 8 3.5c2.12 0 3.879 1.168 5.168 2.457A13.133 13.133 0 0 1 14.828 8c-.058.087-.122.183-.195.288-.335.48-.83 1.12-1.465 1.755C11.879 11.332 10.119 12.5 8 12.5c-2.12 0-3.879-1.168-5.168-2.457A13.134 13.134 0 0 1 1.172 8z"/>
-                        <path d="M8 5.5a2.5 2.5 0 1 0 0 5 2.5 2.5 0 0 0 0-5zM4.5 8a3.5 3.5 0 1 1 7 0 3.5 3.5 0 0 1-7 0z"/>
-                      </svg>
-                    )}
+                    <Image src="/google.svg" alt="Google" width={22} height={22} /> Login with Google
+
+                      border: '2px solid #924DAC',
+                      opacity: loading ? 0.6 : 1,
+                      cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <Image src="/google.svg" alt="Google" width={22} height={22} /> 
+                    {loading ? 'Signing in...' : 'Login with Go
+                  </button>
+                  
+                  <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
+                    <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Login with Apple
+                  </button>
+                </form>
+              ) : (
+                <form onSubmit={handleSignup}>
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Name</label>
+                    <input
+                      type="text"
+                      placeholder="Enter your name"
+                      value={name}
+                      onChange={e => setName(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Email Address</label>
+                    <input
+                      type="email"
+                      placeholder="Enter your email"
+                      value={email}
+                      onChange={e => setEmail(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Password</label>
+                    <input
+                      type="password"
+                      placeholder="Create a password"
+                      value={password}
+                      onChange={e => setPassword(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ marginBottom: 18 }}>
+                    <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Confirm Password</label>
+                    <input
+                      type="password"
+                      placeholder="Confirm your password"
+                      value={confirmPassword}
+                      onChange={e => setConfirmPassword(e.target.value)}
+                    />
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 12 }}>
+                    <div style={{ display: 'flex', alignItems: 'center' }}>
+                      <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} style={{ marginRight: 8 }} />
+                    </div>
+                    <span style={{ fontSize: 13, color: '#666', textAlign: 'center', marginTop: 4, lineHeight: 1.5, maxWidth: 260 }}>
+                      Are you agree to <a href="#" style={{ color: '#924DAC', textDecoration: 'underline' }}>Sayonara Terms of Condition</a> and <a href="#" style={{ color: '#924DAC', textDecoration: 'underline' }}>Privacy Policy</a>.
+                    </span>
+                  </div>
+                  <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }} disabled={loading}>
+                    {loading ? 'Signing Up...' : 'SIGN UP'}
+                  </button>
+                  <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
+                  
+                  {/* Google Sign-Up Button */}
+                  <button 
+                    type="button" 
+                    className="sayonara-btn" 
+                    onClick={handleGoogleSignIn}
+
+                    disabled={loading}
+
+                    style={{ 
+                      width: '100%', 
+                      marginBottom: 10, 
+                      display: 'flex', 
+                      alignItems: 'center', 
+                      justifyContent: 'center', 
+                      gap: 10, 
+                      background: '#fff', 
+                      color: '#444', 
+                      border: '2px solid #924DAC' 
+                    }}
+                  >
+                    <Image src="/google.svg" alt="Google" width={22} height={22} /> Sign up with Google
+                      border: '2px solid #924DAC',
+                      opacity: loading ? 0.6 : 1,
+                      cursor: loading ? 'not-allowed' : 'pointer'
+                    }}
+                  >
+                    <Image src="/google.svg" alt="Google" width={22} height={22} /> 
+                    {loading ? 'Signing up...' : 'Sign up with Google'}
+                  </button>
+                  
+                  <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
+                    <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Sign up with Apple
+                  </button>
+                </form>
+              )}
+            </>
+          )}
+          {/* Step 2: Forgot Password */}
+          {step === "forgot-password" && (
+            <form onSubmit={e => { e.preventDefault(); setStep('reset-password'); }}>
+              <h3 style={{ fontWeight: 700, fontSize: 20, color: '#222', marginBottom: 10 }}>Forget Password</h3>
+              <p style={{ color: '#666', fontSize: 15, marginBottom: 18 }}>Enter your registered email to receive a password reset link</p>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Email Address</label>
+                <input
+                  type="email"
+                  placeholder="Enter your email"
+                  value={email}
+                  onChange={e => setEmail(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '2px solid #f3eaff',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    marginTop: 6,
+                    outline: 'none',
+                    color: '#924DAC',
+                    fontWeight: 500,
+                    background: '#faf8fd',
+                  }}
+                />
+              </div>
+              <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }}>
+                SEND CODE
+              </button>
+              <div style={{ marginTop: 16, fontSize: 14, color: '#666' }}>
+                Already have account? <button type="button" style={{ color: '#924DAC', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => setStep('login-signup')}>Sign In</button><br />
+                Don&apos;t have account? <button type="button" style={{ color: '#924DAC', background: 'none', border: 'none', textDecoration: 'underline', cursor: 'pointer' }} onClick={() => { setTab('signup'); setStep('login-signup'); }}>Sign Up</button>
+              </div>
+              <div style={{ marginTop: 10, fontSize: 13, color: '#888' }}>
+                You may contact <a href="#" style={{ color: '#924DAC', textDecoration: 'underline' }}>Customer Service</a> for help restoring access to your account.
+              </div>
+            </form>
+          )}
+          {/* Step 3: Reset Password */}
+          {step === "reset-password" && (
+            <form onSubmit={e => { e.preventDefault(); setStep('login-signup'); }}>
+              <h3 style={{ fontWeight: 700, fontSize: 20, color: '#222', marginBottom: 10 }}>Reset Password</h3>
+              <p style={{ color: '#666', fontSize: 15, marginBottom: 18 }}>Set a new password to access your account</p>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Password</label>
+                <input
+                  type="password"
+                  placeholder="8+ characters"
+                  value={password}
+                  onChange={e => setPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '2px solid #f3eaff',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    marginTop: 6,
+                    outline: 'none',
+                    color: '#924DAC',
+                    fontWeight: 500,
+                    background: '#faf8fd',
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Confirm Password</label>
+                <input
+                  type="password"
+                  placeholder="Confirm password"
+                  value={confirmPassword}
+                  onChange={e => setConfirmPassword(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '2px solid #f3eaff',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    marginTop: 6,
+                    outline: 'none',
+                    color: '#924DAC',
+                    fontWeight: 500,
+                    background: '#faf8fd',
+                  }}
+                />
+              </div>
+              <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }}>
+                RESET PASSWORD
+              </button>
+            </form>
+          )}
+          {/* Step 4: Email Verification */}
+          {step === "verify-email" && (
+            <form onSubmit={e => { e.preventDefault(); setStep('basic-info'); }}>
+              <h3 style={{ fontWeight: 700, fontSize: 20, color: '#222', marginBottom: 10 }}>Verify Your Email Address</h3>
+              <p style={{ color: '#666', fontSize: 15, marginBottom: 18 }}>
+                We&apos;ve sent a verification to <span style={{ color: '#924DAC', fontWeight: 600 }}>{email || 'your email'}</span> to verify your email address and activate your account.
+              </p>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Verification Code</label>
+                <input
+                  type="text"
+                  placeholder="Enter code"
+                  value={verificationCode}
+                  onChange={e => setVerificationCode(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '2px solid #f3eaff',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    marginTop: 6,
+                    outline: 'none',
+                    color: '#924DAC',
+                    fontWeight: 500,
+                    background: '#faf8fd',
+                  }}
+                />
+                <div style={{ textAlign: 'right', marginTop: 4 }}>
+                  <button type="button" style={{ color: '#924DAC', fontSize: 13, textDecoration: 'underline', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => alert('Code resent!')}>
+                    Resend Code
                   </button>
                 </div>
               </div>
-            )}
-
-            <button 
-              type="submit" 
-              className="sayonara-btn" 
-              style={{ 
-                width: '100%', 
-                marginTop: 8, 
-                fontSize: 18,
-                opacity: loading ? 0.6 : 1,
-                cursor: loading ? 'not-allowed' : 'pointer'
-              }} 
-              disabled={loading}
-            >
-              {loading 
-                ? (tab === 'login' ? 'SIGNING IN...' : 'SIGNING UP...') 
-                : (tab === 'login' ? 'SIGN IN' : 'SIGN UP')
-              }
-            </button>
-          </form>
+              <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }}>
+                VERIFY ME
+              </button>
+            </form>
+          )}
+          {/* Step 5: Basic Info */}
+          {step === "basic-info" && (
+            <form onSubmit={e => { e.preventDefault(); onClose(); }}>
+              <h3 style={{ fontWeight: 700, fontSize: 20, color: '#222', marginBottom: 10 }}>Basic Information</h3>
+              <p style={{ color: '#666', fontSize: 15, marginBottom: 18 }}>Let&apos;s Start with the Basics info</p>
+              <div style={{ marginBottom: 14 }}>
+                <input
+                  type="text"
+                  placeholder="Full Name"
+                  value={name}
+                  onChange={e => setName(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '2px solid #f3eaff',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    marginTop: 0,
+                    outline: 'none',
+                    color: '#924DAC',
+                    fontWeight: 500,
+                    background: '#faf8fd',
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <input
+                  type="date"
+                  placeholder="Date of Birth"
+                  value={dob}
+                  onChange={e => setDob(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '2px solid #f3eaff',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    marginTop: 0,
+                    outline: 'none',
+                    color: '#924DAC',
+                    fontWeight: 500,
+                    background: '#faf8fd',
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <select
+                  value={gender}
+                  onChange={e => setGender(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '2px solid #f3eaff',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    marginTop: 0,
+                    outline: 'none',
+                    color: '#924DAC',
+                    fontWeight: 500,
+                    background: '#faf8fd',
+                  }}
+                >
+                  <option value="">Gender</option>
+                  <option value="male">Male</option>
+                  <option value="female">Female</option>
+                  <option value="other">Other</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: 14 }}>
+                <input
+                  type="text"
+                  placeholder="Contact Number"
+                  value={contact}
+                  onChange={e => setContact(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '2px solid #f3eaff',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    marginTop: 0,
+                    outline: 'none',
+                    color: '#924DAC',
+                    fontWeight: 500,
+                    background: '#faf8fd',
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <input
+                  type="text"
+                  placeholder="Location"
+                  value={location}
+                  onChange={e => setLocation(e.target.value)}
+                  style={{
+                    width: '100%',
+                    padding: '12px 14px',
+                    border: '2px solid #f3eaff',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    marginTop: 0,
+                    outline: 'none',
+                    color: '#924DAC',
+                    fontWeight: 500,
+                    background: '#faf8fd',
+                  }}
+                />
+              </div>
+              <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }}>
+                SIGN IN
+              </button>
+            </form>
+          )}
         </div>
       </div>
     </>
