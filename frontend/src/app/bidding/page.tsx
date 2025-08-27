@@ -513,18 +513,15 @@ export default function BiddingPage() {
         {/* Product Grid */}
         <div className="mt-8">
           <h3 className="text-lg font-semibold text-gray-900 mb-6">All Available Auctions</h3>
-          <ProductGrid
-            items={biddingItems.map(item => ({
-              ...item,
-              type: 'bidding' as const,
-              isPrime: true,
-              deliveryDate: 'Monday 11 August',
-              limitedTimeDeal: item.totalBids > 10
-            }))}
-            onItemClick={(selectedItem) => {
-              setSelectedItem(selectedItem as any);
-            }}
-          />
+         <ProductGrid
+          items={biddingItems.map(item => ({
+            ...item,
+            type: 'bidding' as const,
+            isPrime: true,
+            tags: [],   // 👈 add this
+          }))}
+        />
+
         </div>
       </div>
     </div>

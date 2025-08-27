@@ -187,8 +187,13 @@ export default function Header() {
                                 gap: 12,
                                 transition: 'background-color 0.2s ease'
                               }}
-                              onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-                              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                            onMouseEnter={(e) => {
+                             (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
+                              }}
+                            onMouseLeave={(e) => {
+                             (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                              }}
+
                               onClick={() => setShowDropdown(false)}
                               >
                                 <span style={{ fontSize: 16 }}>📊</span>
@@ -209,8 +214,13 @@ export default function Header() {
                                 gap: 12,
                                 transition: 'background-color 0.2s ease'
                               }}
-                              onMouseEnter={(e) => e.target.style.backgroundColor = '#f3f4f6'}
-                              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                            onMouseEnter={(e) => {
+                                (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
+                            }}
+                            onMouseLeave={(e) => {
+                             (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                               }}
+
                               onClick={() => setShowDropdown(false)}
                               >
                                 <span style={{ fontSize: 16 }}>💬</span>
@@ -232,8 +242,13 @@ export default function Header() {
                                 gap: 12,
                                 transition: 'background-color 0.2s ease'
                               }}
-                              onMouseEnter={(e) => e.target.style.backgroundColor = '#fef2f2'}
-                              onMouseLeave={(e) => e.target.style.backgroundColor = 'transparent'}
+                              onMouseEnter={(e) => {
+  (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
+}}
+onMouseLeave={(e) => {
+  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+}}
+
                               >
                               <span style={{ fontSize: 16 }}>🚪</span>
                               Logout

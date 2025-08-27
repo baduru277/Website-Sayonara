@@ -105,10 +105,15 @@ export default function AddItemPage() {
   // Step 1 handlers
   const maxTitle = 60;
   const maxDesc = 1200;
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
+  const handleChange = (
+  e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+) => {
+  const { name, value } = e.target;
+  setFormData((prev) => ({
+    ...prev,
+    [name]: value,
+  }));
+};
 
   // Step 2 handlers
   const handleCategorySelect = (cat: string) => {

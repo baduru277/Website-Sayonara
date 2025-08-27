@@ -28,26 +28,26 @@ export default function DashboardPage() {
   } | null>(null);
   const router = useRouter();
 
-  useEffect(() => {
-    const fetchUserProfile = async () => {
-      try {
-        console.log('Fetching user profile...');
-        const user = await apiService.getCurrentUser();
-        console.log('User profile received:', user);
-        setUserProfile(user);
-      } catch (error) {
-        console.error('Failed to fetch user profile:', error);
-        // If token is invalid, redirect to login
+useEffect(() => {
+  const fetchUserProfile = async () => {
+    try {
+      const user = await apiService.getCurrentUser();
+      console.log('User profile received:', user);
+      setUserProfile(user);
+    } catch (error: unknown) {
+      console.error('Failed to fetch user profile:', error);
+      if (error instanceof Error) {
         if (error.message.includes('Invalid token') || error.message.includes('401')) {
           router.push('/');
         }
-      } finally {
-        setLoading(false);
       }
-    };
+    } finally {
+      setLoading(false);
+    }
+  };
 
-    fetchUserProfile();
-  }, [router]);
+  fetchUserProfile();
+}, [router]);
 
   // Helper functions
   const getUserDisplayName = () => {
@@ -71,12 +71,13 @@ export default function DashboardPage() {
     if (!userProfile) return 'U';
     
     const displayName = getUserDisplayName();
-    return displayName
-      .split(' ')
-      .map(word => word.charAt(0))
-      .join('')
-      .toUpperCase()
-      .slice(0, 2);
+   return displayName
+  .split(' ')
+  .map((word: string) => word.charAt(0))  // ✅ word is string
+  .join('')
+  .toUpperCase()
+  .slice(0, 2);
+
   };
 
   // Handle logout
