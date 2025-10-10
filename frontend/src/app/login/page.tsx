@@ -2,8 +2,16 @@
 
 import React, { useState, useEffect } from "react";
 
+// Define types for Google Auth
+interface GoogleUser {
+  email: string;
+  id?: string;
+  name?: string;
+  imageUrl?: string;
+}
+
 // Mock Google Auth utilities for demonstration
-const initGoogleSignIn = async () => {
+const initGoogleSignIn = async (): Promise<boolean> => {
   return new Promise((resolve) => {
     setTimeout(() => {
       console.log('Google Sign-In initialized');
@@ -12,21 +20,21 @@ const initGoogleSignIn = async () => {
   });
 };
 
-const onSignIn = (googleUser) => {
+const onSignIn = (googleUser: GoogleUser): void => {
   console.log('User signed in:', googleUser);
   alert('Successfully signed in with Google!');
 };
 
-const signOut = () => {
+const signOut = (): void => {
   console.log('User signed out');
   alert('Signed out successfully!');
 };
 
 export default function LoginPage() {
-  const [tab, setTab] = useState('login');
-  const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState(null);
-  const [showPassword, setShowPassword] = useState(false);
+  const [tab, setTab] = useState<'login' | 'signup'>('login');
+  const [loading, setLoading] = useState<boolean>(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState<boolean>(false);
 
   useEffect(() => {
     // Initialize Google Sign-In when component mounts
@@ -40,7 +48,7 @@ export default function LoginPage() {
     return () => clearTimeout(timer);
   }, []);
 
-  const handleGoogleSignIn = async () => {
+  const handleGoogleSignIn = async (): Promise<void> => {
     setLoading(true);
     setErrorMsg(null);
     
@@ -56,7 +64,7 @@ export default function LoginPage() {
     }
   };
 
-  const handleSubmit = (e) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
     alert(`${tab === 'login' ? 'Login' : 'Sign up'} form submitted!`);
   };
@@ -138,7 +146,7 @@ export default function LoginPage() {
         )}
         
         {/* Form */}
-        <div>
+        <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 18 }}>
             <label style={{ fontWeight: 600, color: '#444', fontSize: 15, display: 'block' }}>
               Email Address
@@ -229,7 +237,7 @@ export default function LoginPage() {
             )}
           </div>
           <button 
-            onClick={handleSubmit}
+            type="submit"
             style={{ 
               width: '100%', 
               marginTop: 18, 
@@ -253,6 +261,7 @@ export default function LoginPage() {
           </div>
           
           <button 
+            type="button"
             onClick={handleGoogleSignIn}
             disabled={loading}
             style={{ 
@@ -284,6 +293,7 @@ export default function LoginPage() {
           </button>
           
           <button 
+            type="button"
             onClick={() => alert('Apple sign-in clicked')}
             style={{ 
               width: '100%', 
@@ -308,7 +318,7 @@ export default function LoginPage() {
             </svg>
             {tab === 'login' ? 'Login with Apple' : 'Sign up with Apple'}
           </button>
-        </div>
+        </form>
       </div>
       
       <div style={{ marginTop: 20 }}>
