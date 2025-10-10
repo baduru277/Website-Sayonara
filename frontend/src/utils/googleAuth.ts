@@ -5,7 +5,7 @@ declare global {
     gapi: any;
     onSignIn: (googleUser: any) => void;
     signOut: () => void;
-=======
+
 interface GoogleAPI {
   load: (api: string, callback: () => void) => void;
   auth2: {
