@@ -2,68 +2,11 @@
 
 import React, { useState } from "react";
 
-// ---------- Type Definitions ----------
-interface GoogleUser {
-  email: string;
-  id?: string;
-  name?: string;
-  imageUrl?: string;
-}
-
-// ---------- Mock Google Sign-In ----------
-// Uncomment when ready to use Google Sign-In
-// const initGoogleSignIn = async (): Promise<boolean> => {
-//   return new Promise((resolve) => {
-//     setTimeout(() => {
-//       console.log("✅ Google Sign-In initialized");
-//       resolve(true);
-//     }, 1000);
-//   });
-// };
-
-// const onSignIn = (googleUser: GoogleUser): void => {
-//   console.log("👤 User signed in:", googleUser);
-//   alert(`Welcome ${googleUser.email}! Successfully signed in with Google.`);
-// };
-
-// const signOut = (): void => {
-//   console.log("🚪 User signed out");
-//   alert("Signed out successfully!");
-// };
-
 // ---------- Main Component ----------
 export default function LoginPage(): JSX.Element {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
-  const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-
-  // Initialize Google Auth mock
-  // useEffect(() => {
-  //   const timer = setTimeout(() => {
-  //     initGoogleSignIn().catch((err) => {
-  //       console.error("Failed to initialize Google Sign-In:", err);
-  //       setErrorMsg("Failed to initialize Google Sign-In. Please refresh.");
-  //     });
-  //   }, 1000);
-
-  //   return () => clearTimeout(timer);
-  // }, []);
-
-  // const handleGoogleSignIn = async (): Promise<void> => {
-  //   setLoading(true);
-  //   setErrorMsg(null);
-
-  //   try {
-  //     await new Promise((resolve) => setTimeout(resolve, 1500));
-  //     onSignIn({ email: "user@example.com" });
-  //   } catch (err) {
-  //     console.error("Google Sign-In failed:", err);
-  //     setErrorMsg("Google Sign-In failed. Please try again.");
-  //   } finally {
-  //     setLoading(false);
-  //   }
-  // };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
@@ -122,24 +65,8 @@ export default function LoginPage(): JSX.Element {
           ))}
         </div>
 
-        {/* Error */}
-        {errorMsg && (
-          <div
-            style={{
-              color: "red",
-              background: "#fee",
-              padding: "8px",
-              borderRadius: 4,
-              marginBottom: 10,
-              textAlign: "center",
-            }}
-          >
-            {errorMsg}
-          </div>
-        )}
-
         {/* Form */}
-        <div>
+        <form onSubmit={handleSubmit}>
           <div style={{ marginBottom: 18 }}>
             <label
               style={{
@@ -221,10 +148,6 @@ export default function LoginPage(): JSX.Element {
           <button
             type="submit"
             disabled={loading}
-            onClick={(e) => {
-              e.preventDefault();
-              alert(`${tab === "login" ? "Login" : "Signup"} form submitted!`);
-            }}
             style={{
               width: "100%",
               marginTop: 18,
@@ -241,58 +164,7 @@ export default function LoginPage(): JSX.Element {
           >
             {tab === "login" ? "SIGN IN" : "SIGN UP"}
           </button>
-
-          {/* Uncomment when ready to use Google Sign-In
-          <div
-            style={{
-              textAlign: "center",
-              margin: "18px 0 10px",
-              color: "#aaa",
-              fontWeight: 500,
-            }}
-          >
-            or
-          </div>
-
-          <button
-            type="button"
-            onClick={handleGoogleSignIn}
-            disabled={loading}
-            style={{
-              width: "100%",
-              border: "2px solid #924DAC",
-              borderRadius: 8,
-              padding: "12px",
-              background: "#fff",
-              color: "#444",
-              fontWeight: 600,
-              cursor: loading ? "not-allowed" : "pointer",
-              opacity: loading ? 0.6 : 1,
-            }}
-          >
-            {loading ? "Loading..." : "Continue with Google"}
-          </button>
-          */}
-        </div>
-
-        {/* Uncomment when ready to use Sign Out
-        <div style={{ marginTop: 20, textAlign: "center" }}>
-          <a
-            href="#"
-            onClick={(e) => {
-              e.preventDefault();
-              signOut();
-            }}
-            style={{
-              color: "#924DAC",
-              textDecoration: "underline",
-              fontWeight: 500,
-            }}
-          >
-            Sign out
-          </a>
-        </div>
-        */}
+        </form>
       </div>
     </div>
   );
