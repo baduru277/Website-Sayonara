@@ -1,9 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import apiService from '@/services/api';
-import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
+// import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
 
 export default function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [step, setStep] = useState("login-signup");
@@ -22,46 +22,48 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      // Initialize Google Sign-In when modal opens
-      const timer = setTimeout(() => {
-        initGoogleSignIn().catch(error => {
-          console.error('Failed to initialize Google Sign-In:', error);
-          setErrorMsg('Failed to initialize Google Sign-In. Please refresh the page.');
-        });
-      }, 1000);
+  // Commented out Google Sign-In initialization
+  // useEffect(() => {
+  //   if (open) {
+  //     // Initialize Google Sign-In when modal opens
+  //     const timer = setTimeout(() => {
+  //       initGoogleSignIn().catch(error => {
+  //         console.error('Failed to initialize Google Sign-In:', error);
+  //         setErrorMsg('Failed to initialize Google Sign-In. Please refresh the page.');
+  //       });
+  //     }, 1000);
 
-      return () => clearTimeout(timer);
-    }
-  }, [open]);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [open]);
 
   if (!open) return null;
 
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setErrorMsg(null);
+  // Commented out Google Sign-In handler
+  // const handleGoogleSignIn = async () => {
+  //   setLoading(true);
+  //   setErrorMsg(null);
 
-    try {
-      if (typeof window !== 'undefined' && window.gapi) {
-        const auth2 = window.gapi.auth2.getAuthInstance();
-        if (auth2) {
-          const googleUser = await auth2.signIn();
-          onSignIn(googleUser);
-          onClose(); // Close modal after successful sign-in
-        } else {
-          throw new Error('Google Auth not initialized');
-        }
-      } else {
-        throw new Error('Google API not loaded');
-      }
-    } catch (error: unknown) {
-      console.error('Google Sign-In failed:', error);
-      setErrorMsg(error instanceof Error ? error.message : 'Google Sign-In failed. Please try again.');
-    } finally {
-      setLoading(false);
-    }
-  };
+  //   try {
+  //     if (typeof window !== 'undefined' && window.gapi) {
+  //       const auth2 = window.gapi.auth2.getAuthInstance();
+  //       if (auth2) {
+  //         const googleUser = await auth2.signIn();
+  //         onSignIn(googleUser);
+  //         onClose(); // Close modal after successful sign-in
+  //       } else {
+  //         throw new Error('Google Auth not initialized');
+  //       }
+  //     } else {
+  //       throw new Error('Google API not loaded');
+  //     }
+  //   } catch (error: unknown) {
+  //     console.error('Google Sign-In failed:', error);
+  //     setErrorMsg(error instanceof Error ? error.message : 'Google Sign-In failed. Please try again.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // Login handler
   async function handleLogin(e: React.FormEvent) {
@@ -280,6 +282,8 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 18, fontSize: 18 }} disabled={loading}>
                     {loading ? 'Signing In...' : 'SIGN IN'}
                   </button>
+
+                  {/* Commented out Google & Apple Sign-In buttons
                   <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
 
                   <button
@@ -308,6 +312,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
                     <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Login with Apple
                   </button>
+                  */}
                 </form>
               ) : (
                 <form onSubmit={handleSignup}>
@@ -393,6 +398,8 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }} disabled={loading}>
                     {loading ? 'Signing Up...' : 'SIGN UP'}
                   </button>
+
+                  {/* Commented out Google & Apple Sign-In buttons
                   <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
 
                   <button
@@ -421,6 +428,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
                     <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Sign up with Apple
                   </button>
+                  */}
                 </form>
               )}
             </>
