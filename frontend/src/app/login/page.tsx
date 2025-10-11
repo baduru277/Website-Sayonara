@@ -20,7 +20,7 @@ const initGoogleSignIn = async (): Promise<boolean> => {
   });
 };
 
-const onSignIn = (googleUser: any): void => {
+const onSignIn = (googleUser: GoogleUser): void => {
   console.log("👤 User signed in:", googleUser);
   alert(`Welcome ${googleUser.email}! Successfully signed in with Google.`);
 };
