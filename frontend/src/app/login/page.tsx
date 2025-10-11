@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 // ---------- Type Definitions ----------
 interface GoogleUser {
@@ -11,24 +11,25 @@ interface GoogleUser {
 }
 
 // ---------- Mock Google Sign-In ----------
-const initGoogleSignIn = async (): Promise<boolean> => {
-  return new Promise((resolve) => {
-    setTimeout(() => {
-      console.log("✅ Google Sign-In initialized");
-      resolve(true);
-    }, 1000);
-  });
-};
+// Uncomment when ready to use Google Sign-In
+// const initGoogleSignIn = async (): Promise<boolean> => {
+//   return new Promise((resolve) => {
+//     setTimeout(() => {
+//       console.log("✅ Google Sign-In initialized");
+//       resolve(true);
+//     }, 1000);
+//   });
+// };
 
-const onSignIn = (googleUser: GoogleUser): void => {
-  console.log("👤 User signed in:", googleUser);
-  alert(`Welcome ${googleUser.email}! Successfully signed in with Google.`);
-};
+// const onSignIn = (googleUser: GoogleUser): void => {
+//   console.log("👤 User signed in:", googleUser);
+//   alert(`Welcome ${googleUser.email}! Successfully signed in with Google.`);
+// };
 
-const signOut = (): void => {
-  console.log("🚪 User signed out");
-  alert("Signed out successfully!");
-};
+// const signOut = (): void => {
+//   console.log("🚪 User signed out");
+//   alert("Signed out successfully!");
+// };
 
 // ---------- Main Component ----------
 export default function LoginPage(): JSX.Element {
@@ -38,31 +39,31 @@ export default function LoginPage(): JSX.Element {
   const [showPassword, setShowPassword] = useState(false);
 
   // Initialize Google Auth mock
-  useEffect(() => {
-    const timer = setTimeout(() => {
-      initGoogleSignIn().catch((err) => {
-        console.error("Failed to initialize Google Sign-In:", err);
-        setErrorMsg("Failed to initialize Google Sign-In. Please refresh.");
-      });
-    }, 1000);
+  // useEffect(() => {
+  //   const timer = setTimeout(() => {
+  //     initGoogleSignIn().catch((err) => {
+  //       console.error("Failed to initialize Google Sign-In:", err);
+  //       setErrorMsg("Failed to initialize Google Sign-In. Please refresh.");
+  //     });
+  //   }, 1000);
 
-    return () => clearTimeout(timer);
-  }, []);
+  //   return () => clearTimeout(timer);
+  // }, []);
 
-  const handleGoogleSignIn = async (): Promise<void> => {
-    setLoading(true);
-    setErrorMsg(null);
+  // const handleGoogleSignIn = async (): Promise<void> => {
+  //   setLoading(true);
+  //   setErrorMsg(null);
 
-    try {
-      await new Promise((resolve) => setTimeout(resolve, 1500));
-      onSignIn({ email: "user@example.com" });
-    } catch (err) {
-      console.error("Google Sign-In failed:", err);
-      setErrorMsg("Google Sign-In failed. Please try again.");
-    } finally {
-      setLoading(false);
-    }
-  };
+  //   try {
+  //     await new Promise((resolve) => setTimeout(resolve, 1500));
+  //     onSignIn({ email: "user@example.com" });
+  //   } catch (err) {
+  //     console.error("Google Sign-In failed:", err);
+  //     setErrorMsg("Google Sign-In failed. Please try again.");
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
@@ -138,7 +139,7 @@ export default function LoginPage(): JSX.Element {
         )}
 
         {/* Form */}
-        <form onSubmit={handleSubmit}>
+        <div>
           <div style={{ marginBottom: 18 }}>
             <label
               style={{
@@ -220,6 +221,10 @@ export default function LoginPage(): JSX.Element {
           <button
             type="submit"
             disabled={loading}
+            onClick={(e) => {
+              e.preventDefault();
+              alert(`${tab === "login" ? "Login" : "Signup"} form submitted!`);
+            }}
             style={{
               width: "100%",
               marginTop: 18,
@@ -237,6 +242,7 @@ export default function LoginPage(): JSX.Element {
             {tab === "login" ? "SIGN IN" : "SIGN UP"}
           </button>
 
+          {/* Uncomment when ready to use Google Sign-In
           <div
             style={{
               textAlign: "center",
@@ -266,8 +272,10 @@ export default function LoginPage(): JSX.Element {
           >
             {loading ? "Loading..." : "Continue with Google"}
           </button>
-        </form>
+          */}
+        </div>
 
+        {/* Uncomment when ready to use Sign Out
         <div style={{ marginTop: 20, textAlign: "center" }}>
           <a
             href="#"
@@ -284,6 +292,7 @@ export default function LoginPage(): JSX.Element {
             Sign out
           </a>
         </div>
+        */}
       </div>
     </div>
   );
