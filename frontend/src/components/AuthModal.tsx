@@ -575,3 +575,5 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
     </>
   );
 }
+}
+
