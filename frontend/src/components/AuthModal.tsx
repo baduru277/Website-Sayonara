@@ -1,10 +1,9 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 import Image from "next/image";
 import apiService from '@/services/api';
-import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
-
+// import { initGoogleSignIn, onSignIn, signOut } from "@/utils/googleAuth";
 
 export default function AuthModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const [step, setStep] = useState("login-signup");
@@ -21,59 +20,50 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
   const [terms, setTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
-  useEffect(() => {
-    if (open) {
-      // Initialize Google Sign-In when modal opens
-      const timer = setTimeout(() => {
-        initGoogleSignIn();
-      }, 1000); // Wait for Google API to load
+  // Commented out Google Sign-In initialization
+  // useEffect(() => {
+  //   if (open) {
+  //     // Initialize Google Sign-In when modal opens
+  //     const timer = setTimeout(() => {
+  //       initGoogleSignIn().catch(error => {
+  //         console.error('Failed to initialize Google Sign-In:', error);
+  //         setErrorMsg('Failed to initialize Google Sign-In. Please refresh the page.');
+  //       });
+  //     }, 1000);
 
-      return () => clearTimeout(timer);
-
-      initGoogleSignIn().catch(error => {
-        console.error('Failed to initialize Google Sign-In:', error);
-        setErrorMsg('Failed to initialize Google Sign-In. Please refresh the page.');
-      });
-    }
-  }, [open]);
+  //     return () => clearTimeout(timer);
+  //   }
+  // }, [open]);
 
   if (!open) return null;
 
-  const handleGoogleSignIn = () => {
-    if (typeof window !== 'undefined' && window.gapi) {
-      const auth2 = window.gapi.auth2.getAuthInstance();
-      if (auth2) {
-        auth2.signIn().then((googleUser: any) => {
-          onSignIn(googleUser);
-          onClose(); // Close modal after successful sign-in
-        }).catch((error: any) => {
-          console.error('Google Sign-In failed:', error);
-          setErrorMsg('Google Sign-In failed. Please try again.');
-        });
-      }
-  const handleGoogleSignIn = async () => {
-    setLoading(true);
-    setErrorMsg(null);
-    
-    try {
-      // Check if Google Sign-In is ready
-      if (!isGoogleSignInReady()) {
-        // Try to initialize if not ready
-        await initGoogleSignIn();
-      }
-      
-      // Trigger the sign-in
-      await triggerGoogleSignIn();
-      onClose(); // Close modal after successful sign-in
-    } catch (error: unknown) {
-      console.error('Google Sign-In failed:', error);
-      setErrorMsg(error instanceof Error ? error.message : 'Google Sign-In failed. Please try again.');
-    } finally {
-      setLoading(false);
+  // Commented out Google Sign-In handler
+  // const handleGoogleSignIn = async () => {
+  //   setLoading(true);
+  //   setErrorMsg(null);
 
-    }
-  };
+  //   try {
+  //     if (typeof window !== 'undefined' && window.gapi) {
+  //       const auth2 = window.gapi.auth2.getAuthInstance();
+  //       if (auth2) {
+  //         const googleUser = await auth2.signIn();
+  //         onSignIn(googleUser);
+  //         onClose(); // Close modal after successful sign-in
+  //       } else {
+  //         throw new Error('Google Auth not initialized');
+  //       }
+  //     } else {
+  //       throw new Error('Google API not loaded');
+  //     }
+  //   } catch (error: unknown) {
+  //     console.error('Google Sign-In failed:', error);
+  //     setErrorMsg(error instanceof Error ? error.message : 'Google Sign-In failed. Please try again.');
+  //   } finally {
+  //     setLoading(false);
+  //   }
+  // };
 
   // Login handler
   async function handleLogin(e: React.FormEvent) {
@@ -92,9 +82,8 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         setLoading(false);
       }
     } catch (err: unknown) {
-      // Try to extract backend error message
       let errorMessage = 'Login failed.';
-      
+
       if (err instanceof Error) {
         errorMessage = err.message;
       } else if (err && typeof err === 'object' && 'response' in err) {
@@ -103,7 +92,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
           errorMessage = axiosError.response.data.error;
         }
       }
-      
+
       setErrorMsg(errorMessage);
       setLoading(false);
     }
@@ -117,7 +106,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
     try {
       const res = await apiService.register({ name, email, password });
       if (res.token || res.user) {
-        // Optionally, auto-login or go to verify-email step
         setLoading(false);
         setStep('verify-email');
       } else {
@@ -125,9 +113,8 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         setLoading(false);
       }
     } catch (err: unknown) {
-      // Try to extract backend error message
       let errorMessage = 'Signup failed.';
-      
+
       if (err instanceof Error) {
         errorMessage = err.message;
       } else if (err && typeof err === 'object' && 'response' in err) {
@@ -136,7 +123,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
           errorMessage = axiosError.response.data.error;
         }
       }
-      
+
       setErrorMsg(errorMessage);
       setLoading(false);
     }
@@ -186,12 +173,12 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
           position: 'relative',
         }}>
           <button onClick={onClose} style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', fontSize: 22, color: '#924DAC', cursor: 'pointer' }}>&times;</button>
+
           {/* Step 1: Login/Sign Up */}
           {step === "login-signup" && (
             <>
               <div style={{ display: 'flex', borderBottom: '2px solid #f3eaff', marginBottom: 28 }}>
                 <button
-                  className={tab === 'login' ? 'sayonara-btn' : ''}
                   style={{
                     flex: 1,
                     background: 'none',
@@ -211,7 +198,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   Log In
                 </button>
                 <button
-                  className={tab === 'signup' ? 'sayonara-btn' : ''}
                   style={{
                     flex: 1,
                     background: 'none',
@@ -232,6 +218,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                 </button>
               </div>
               {errorMsg && <div style={{ color: 'red', textAlign: 'center', marginBottom: 10 }}>{errorMsg}</div>}
+
               {tab === 'login' ? (
                 <form onSubmit={handleLogin}>
                   <div style={{ marginBottom: 18 }}>
@@ -245,12 +232,47 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   </div>
                   <div style={{ marginBottom: 8 }}>
                     <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Password</label>
-                    <input
-                      type="password"
-                      placeholder="Enter your password"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Enter your password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        style={{ paddingRight: '44px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: 12,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 4,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#924DAC',
+                          marginTop: -7
+                        }}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                          </svg>
+                        ) : (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                     <div style={{ textAlign: 'right', marginTop: 4 }}>
                       <button type="button" style={{ color: '#924DAC', fontSize: 13, textDecoration: 'underline', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => setStep('forgot-password')}>
                         Forgot Password?
@@ -260,42 +282,37 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 18, fontSize: 18 }} disabled={loading}>
                     {loading ? 'Signing In...' : 'SIGN IN'}
                   </button>
+
+                  {/* Commented out Google & Apple Sign-In buttons
                   <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
-                  
-                  {/* Google Sign-In Button */}
-                  <div className="g-signin2" data-onsuccess="onSignIn" style={{ marginBottom: 10 }}></div>
-                  <button 
-                    type="button" 
-                    className="sayonara-btn" 
+
+                  <button
+                    type="button"
+                    className="sayonara-btn"
                     onClick={handleGoogleSignIn}
                     disabled={loading}
-
-                    style={{ 
-                      width: '100%', 
-                      marginBottom: 10, 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      gap: 10, 
-                      background: '#fff', 
-                      color: '#444', 
-                      border: '2px solid #924DAC' 
-                    }}
-                  >
-                    <Image src="/google.svg" alt="Google" width={22} height={22} /> Login with Google
-
+                    style={{
+                      width: '100%',
+                      marginBottom: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 10,
+                      background: '#fff',
+                      color: '#444',
                       border: '2px solid #924DAC',
                       opacity: loading ? 0.6 : 1,
                       cursor: loading ? 'not-allowed' : 'pointer'
                     }}
                   >
-                    <Image src="/google.svg" alt="Google" width={22} height={22} /> 
-                    {loading ? 'Signing in...' : 'Login with Go
+                    <Image src="/google.svg" alt="Google" width={22} height={22} />
+                    {loading ? 'Signing in...' : 'Login with Google'}
                   </button>
-                  
+
                   <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
                     <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Login with Apple
                   </button>
+                  */}
                 </form>
               ) : (
                 <form onSubmit={handleSignup}>
@@ -319,12 +336,47 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   </div>
                   <div style={{ marginBottom: 18 }}>
                     <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Password</label>
-                    <input
-                      type="password"
-                      placeholder="Create a password"
-                      value={password}
-                      onChange={e => setPassword(e.target.value)}
-                    />
+                    <div style={{ position: 'relative' }}>
+                      <input
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="Create a password"
+                        value={password}
+                        onChange={e => setPassword(e.target.value)}
+                        style={{ paddingRight: '44px' }}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        style={{
+                          position: 'absolute',
+                          right: 12,
+                          top: '50%',
+                          transform: 'translateY(-50%)',
+                          background: 'none',
+                          border: 'none',
+                          cursor: 'pointer',
+                          padding: 4,
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#924DAC',
+                          marginTop: -7
+                        }}
+                        aria-label={showPassword ? 'Hide password' : 'Show password'}
+                      >
+                        {showPassword ? (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
+                            <line x1="1" y1="1" x2="23" y2="23"></line>
+                          </svg>
+                        ) : (
+                          <svg width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                            <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
+                            <circle cx="12" cy="12" r="3"></circle>
+                          </svg>
+                        )}
+                      </button>
+                    </div>
                   </div>
                   <div style={{ marginBottom: 18 }}>
                     <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Confirm Password</label>
@@ -346,45 +398,42 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }} disabled={loading}>
                     {loading ? 'Signing Up...' : 'SIGN UP'}
                   </button>
+
+                  {/* Commented out Google & Apple Sign-In buttons
                   <div style={{ textAlign: 'center', margin: '18px 0 10px', color: '#aaa', fontWeight: 500 }}>or</div>
-                  
-                  {/* Google Sign-Up Button */}
-                  <button 
-                    type="button" 
-                    className="sayonara-btn" 
+
+                  <button
+                    type="button"
+                    className="sayonara-btn"
                     onClick={handleGoogleSignIn}
-
                     disabled={loading}
-
-                    style={{ 
-                      width: '100%', 
-                      marginBottom: 10, 
-                      display: 'flex', 
-                      alignItems: 'center', 
-                      justifyContent: 'center', 
-                      gap: 10, 
-                      background: '#fff', 
-                      color: '#444', 
-                      border: '2px solid #924DAC' 
-                    }}
-                  >
-                    <Image src="/google.svg" alt="Google" width={22} height={22} /> Sign up with Google
+                    style={{
+                      width: '100%',
+                      marginBottom: 10,
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      gap: 10,
+                      background: '#fff',
+                      color: '#444',
                       border: '2px solid #924DAC',
                       opacity: loading ? 0.6 : 1,
                       cursor: loading ? 'not-allowed' : 'pointer'
                     }}
                   >
-                    <Image src="/google.svg" alt="Google" width={22} height={22} /> 
+                    <Image src="/google.svg" alt="Google" width={22} height={22} />
                     {loading ? 'Signing up...' : 'Sign up with Google'}
                   </button>
-                  
+
                   <button type="button" className="sayonara-btn" style={{ width: '100%', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 10, background: '#fff', color: '#444', border: '2px solid #924DAC' }}>
                     <Image src="/apple.svg" alt="Apple" width={22} height={22} /> Sign up with Apple
                   </button>
+                  */}
                 </form>
               )}
             </>
           )}
+
           {/* Step 2: Forgot Password */}
           {step === "forgot-password" && (
             <form onSubmit={e => { e.preventDefault(); setStep('reset-password'); }}>
@@ -397,18 +446,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   placeholder="Enter your email"
                   value={email}
                   onChange={e => setEmail(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '2px solid #f3eaff',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    marginTop: 6,
-                    outline: 'none',
-                    color: '#924DAC',
-                    fontWeight: 500,
-                    background: '#faf8fd',
-                  }}
                 />
               </div>
               <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }}>
@@ -423,6 +460,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
               </div>
             </form>
           )}
+
           {/* Step 3: Reset Password */}
           {step === "reset-password" && (
             <form onSubmit={e => { e.preventDefault(); setStep('login-signup'); }}>
@@ -435,18 +473,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   placeholder="8+ characters"
                   value={password}
                   onChange={e => setPassword(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '2px solid #f3eaff',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    marginTop: 6,
-                    outline: 'none',
-                    color: '#924DAC',
-                    fontWeight: 500,
-                    background: '#faf8fd',
-                  }}
                 />
               </div>
               <div style={{ marginBottom: 18 }}>
@@ -456,18 +482,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   placeholder="Confirm password"
                   value={confirmPassword}
                   onChange={e => setConfirmPassword(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '2px solid #f3eaff',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    marginTop: 6,
-                    outline: 'none',
-                    color: '#924DAC',
-                    fontWeight: 500,
-                    background: '#faf8fd',
-                  }}
                 />
               </div>
               <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }}>
@@ -475,6 +489,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
               </button>
             </form>
           )}
+
           {/* Step 4: Email Verification */}
           {step === "verify-email" && (
             <form onSubmit={e => { e.preventDefault(); setStep('basic-info'); }}>
@@ -489,18 +504,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   placeholder="Enter code"
                   value={verificationCode}
                   onChange={e => setVerificationCode(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '2px solid #f3eaff',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    marginTop: 6,
-                    outline: 'none',
-                    color: '#924DAC',
-                    fontWeight: 500,
-                    background: '#faf8fd',
-                  }}
                 />
                 <div style={{ textAlign: 'right', marginTop: 4 }}>
                   <button type="button" style={{ color: '#924DAC', fontSize: 13, textDecoration: 'underline', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => alert('Code resent!')}>
@@ -513,6 +516,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
               </button>
             </form>
           )}
+
           {/* Step 5: Basic Info */}
           {step === "basic-info" && (
             <form onSubmit={e => { e.preventDefault(); onClose(); }}>
@@ -524,18 +528,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   placeholder="Full Name"
                   value={name}
                   onChange={e => setName(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '2px solid #f3eaff',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    marginTop: 0,
-                    outline: 'none',
-                    color: '#924DAC',
-                    fontWeight: 500,
-                    background: '#faf8fd',
-                  }}
                 />
               </div>
               <div style={{ marginBottom: 14 }}>
@@ -544,36 +536,12 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   placeholder="Date of Birth"
                   value={dob}
                   onChange={e => setDob(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '2px solid #f3eaff',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    marginTop: 0,
-                    outline: 'none',
-                    color: '#924DAC',
-                    fontWeight: 500,
-                    background: '#faf8fd',
-                  }}
                 />
               </div>
               <div style={{ marginBottom: 14 }}>
                 <select
                   value={gender}
                   onChange={e => setGender(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '2px solid #f3eaff',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    marginTop: 0,
-                    outline: 'none',
-                    color: '#924DAC',
-                    fontWeight: 500,
-                    background: '#faf8fd',
-                  }}
                 >
                   <option value="">Gender</option>
                   <option value="male">Male</option>
@@ -587,18 +555,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   placeholder="Contact Number"
                   value={contact}
                   onChange={e => setContact(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '2px solid #f3eaff',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    marginTop: 0,
-                    outline: 'none',
-                    color: '#924DAC',
-                    fontWeight: 500,
-                    background: '#faf8fd',
-                  }}
                 />
               </div>
               <div style={{ marginBottom: 18 }}>
@@ -607,18 +563,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   placeholder="Location"
                   value={location}
                   onChange={e => setLocation(e.target.value)}
-                  style={{
-                    width: '100%',
-                    padding: '12px 14px',
-                    border: '2px solid #f3eaff',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    marginTop: 0,
-                    outline: 'none',
-                    color: '#924DAC',
-                    fontWeight: 500,
-                    background: '#faf8fd',
-                  }}
                 />
               </div>
               <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }}>
@@ -630,4 +574,4 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
       </div>
     </>
   );
-} 
+}
