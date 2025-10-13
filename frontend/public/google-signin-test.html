@@ -1,201 +1,201 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Google Sign-In Test</title>
-    <meta name="google-signin-client_id" content="380078509373-814un77hbu18p9s6s8tqeit1t18lfnk1.apps.googleusercontent.com">
-    <script src="https://apis.google.com/js/platform.js" async defer></script>
-    <style>
-        body {
-            font-family: Arial, sans-serif;
-            max-width: 600px;
-            margin: 50px auto;
-            padding: 20px;
-            text-align: center;
-        }
-        .container {
-            background: #f9f9f9;
-            padding: 30px;
-            border-radius: 10px;
-            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
-        }
-        .user-info {
-            background: #fff;
-            padding: 20px;
-            border-radius: 8px;
-            margin: 20px 0;
-            text-align: left;
-        }
-        .sign-out-btn {
-            background: #db4437;
-            color: white;
-            border: none;
-            padding: 10px 20px;
-            border-radius: 5px;
-            cursor: pointer;
-            margin: 10px;
-        }
-        .sign-out-btn:hover {
-            background: #c23321;
-        }
-    </style>
-</head>
-<body>
-    <div class="container">
-        <h1>Google Sign-In Test Page</h1>
-        <p>This page tests the Google Sign-In integration for Sayonara platform.</p>
-        
-        <!-- Google Sign-In Button (Auto-rendered) -->
-        <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>
-        
-        <!-- Manual Sign-In Button -->
-        <br><br>
-        <button onclick="manualSignIn()" style="padding: 10px 20px; background: #4285f4; color: white; border: none; border-radius: 5px; cursor: pointer;">
-            Manual Sign In
-        </button>
-        
-        <!-- User Info Display -->
-        <div id="user-info" class="user-info" style="display: none;">
-            <h3>User Information:</h3>
-            <p><strong>ID:</strong> <span id="user-id"></span></p>
-            <p><strong>Name:</strong> <span id="user-name"></span></p>
-            <p><strong>Email:</strong> <span id="user-email"></span></p>
-            <p><strong>Image:</strong> <img id="user-image" style="width: 50px; height: 50px; border-radius: 50%;"></p>
-        </div>
-        
-        <!-- Sign Out Button -->
-        <button id="sign-out-btn" class="sign-out-btn" onclick="signOut()" style="display: none;">
-            Sign Out
-        </button>
-        
-        <!-- Status Messages -->
-        <div id="status" style="margin-top: 20px; padding: 10px; border-radius: 5px;"></div>
-    </div>
+<!--<!DOCTYPE html>-->
+<!--<html lang="en">-->
+<!--<head>-->
+<!--    <meta charset="UTF-8">-->
+<!--    <meta name="viewport" content="width=device-width, initial-scale=1.0">-->
+<!--    <title>Google Sign-In Test</title>-->
+<!--    <meta name="google-signin-client_id" content="380078509373-814un77hbu18p9s6s8tqeit1t18lfnk1.apps.googleusercontent.com">-->
+<!--    <script src="https://apis.google.com/js/platform.js" async defer></script>-->
+<!--    <style>-->
+<!--        body {-->
+<!--            font-family: Arial, sans-serif;-->
+<!--            max-width: 600px;-->
+<!--            margin: 50px auto;-->
+<!--            padding: 20px;-->
+<!--            text-align: center;-->
+<!--        }-->
+<!--        .container {-->
+<!--            background: #f9f9f9;-->
+<!--            padding: 30px;-->
+<!--            border-radius: 10px;-->
+<!--            box-shadow: 0 2px 10px rgba(0,0,0,0.1);-->
+<!--        }-->
+<!--        .user-info {-->
+<!--            background: #fff;-->
+<!--            padding: 20px;-->
+<!--            border-radius: 8px;-->
+<!--            margin: 20px 0;-->
+<!--            text-align: left;-->
+<!--        }-->
+<!--        .sign-out-btn {-->
+<!--            background: #db4437;-->
+<!--            color: white;-->
+<!--            border: none;-->
+<!--            padding: 10px 20px;-->
+<!--            border-radius: 5px;-->
+<!--            cursor: pointer;-->
+<!--            margin: 10px;-->
+<!--        }-->
+<!--        .sign-out-btn:hover {-->
+<!--            background: #c23321;-->
+<!--        }-->
+<!--    </style>-->
+<!--</head>-->
+<!--<body>-->
+<!--    <div class="container">-->
+<!--        <h1>Google Sign-In Test Page</h1>-->
+<!--        <p>This page tests the Google Sign-In integration for Sayonara platform.</p>-->
+<!--        -->
+<!--        &lt;!&ndash; Google Sign-In Button (Auto-rendered) &ndash;&gt;-->
+<!--        <div class="g-signin2" data-onsuccess="onSignIn" data-theme="dark"></div>-->
+<!--        -->
+<!--        &lt;!&ndash; Manual Sign-In Button &ndash;&gt;-->
+<!--        <br><br>-->
+<!--        <button onclick="manualSignIn()" style="padding: 10px 20px; background: #4285f4; color: white; border: none; border-radius: 5px; cursor: pointer;">-->
+<!--            Manual Sign In-->
+<!--        </button>-->
+<!--        -->
+<!--        &lt;!&ndash; User Info Display &ndash;&gt;-->
+<!--        <div id="user-info" class="user-info" style="display: none;">-->
+<!--            <h3>User Information:</h3>-->
+<!--            <p><strong>ID:</strong> <span id="user-id"></span></p>-->
+<!--            <p><strong>Name:</strong> <span id="user-name"></span></p>-->
+<!--            <p><strong>Email:</strong> <span id="user-email"></span></p>-->
+<!--            <p><strong>Image:</strong> <img id="user-image" style="width: 50px; height: 50px; border-radius: 50%;"></p>-->
+<!--        </div>-->
+<!--        -->
+<!--        &lt;!&ndash; Sign Out Button &ndash;&gt;-->
+<!--        <button id="sign-out-btn" class="sign-out-btn" onclick="signOut()" style="display: none;">-->
+<!--            Sign Out-->
+<!--        </button>-->
+<!--        -->
+<!--        &lt;!&ndash; Status Messages &ndash;&gt;-->
+<!--        <div id="status" style="margin-top: 20px; padding: 10px; border-radius: 5px;"></div>-->
+<!--    </div>-->
 
-    <script>
-        // Initialize Google Sign-In
-        function initGoogleSignIn() {
-            gapi.load('auth2', function() {
-                gapi.auth2.init({
-                    client_id: '380078509373-814un77hbu18p9s6s8tqeit1t18lfnk1.apps.googleusercontent.com'
-                }).then(function() {
-                    console.log('Google Sign-In initialized successfully');
-                    showStatus('Google Sign-In initialized successfully', 'success');
-                }).catch(function(error) {
-                    console.error('Error initializing Google Sign-In:', error);
-                    showStatus('Error initializing Google Sign-In: ' + error.error, 'error');
-                });
-            });
-        }
+<!--    <script>-->
+<!--        // Initialize Google Sign-In-->
+<!--        function initGoogleSignIn() {-->
+<!--            gapi.load('auth2', function() {-->
+<!--                gapi.auth2.init({-->
+<!--                    client_id: '380078509373-814un77hbu18p9s6s8tqeit1t18lfnk1.apps.googleusercontent.com'-->
+<!--                }).then(function() {-->
+<!--                    console.log('Google Sign-In initialized successfully');-->
+<!--                    showStatus('Google Sign-In initialized successfully', 'success');-->
+<!--                }).catch(function(error) {-->
+<!--                    console.error('Error initializing Google Sign-In:', error);-->
+<!--                    showStatus('Error initializing Google Sign-In: ' + error.error, 'error');-->
+<!--                });-->
+<!--            });-->
+<!--        }-->
 
-        // Handle successful Google Sign-In
-        function onSignIn(googleUser) {
-            const profile = googleUser.getBasicProfile();
-            const authResponse = googleUser.getAuthResponse();
-            
-            console.log('ID: ' + profile.getId());
-            console.log('Name: ' + profile.getName());
-            console.log('Image URL: ' + profile.getImageUrl());
-            console.log('Email: ' + profile.getEmail());
-            console.log('ID Token: ' + authResponse.id_token);
-            
-            // Display user information
-            document.getElementById('user-id').textContent = profile.getId();
-            document.getElementById('user-name').textContent = profile.getName();
-            document.getElementById('user-email').textContent = profile.getEmail();
-            document.getElementById('user-image').src = profile.getImageUrl();
-            
-            document.getElementById('user-info').style.display = 'block';
-            document.getElementById('sign-out-btn').style.display = 'inline-block';
-            
-            showStatus('Successfully signed in as ' + profile.getName(), 'success');
-            
-            // Store user information
-            const userInfo = {
-                id: profile.getId(),
-                name: profile.getName(),
-                email: profile.getEmail(),
-                imageUrl: profile.getImageUrl(),
-                idToken: authResponse.id_token
-            };
-            
-            localStorage.setItem('googleUser', JSON.stringify(userInfo));
-            localStorage.setItem('isLoggedIn', 'true');
-        }
+<!--        // Handle successful Google Sign-In-->
+<!--        function onSignIn(googleUser) {-->
+<!--            const profile = googleUser.getBasicProfile();-->
+<!--            const authResponse = googleUser.getAuthResponse();-->
+<!--            -->
+<!--            console.log('ID: ' + profile.getId());-->
+<!--            console.log('Name: ' + profile.getName());-->
+<!--            console.log('Image URL: ' + profile.getImageUrl());-->
+<!--            console.log('Email: ' + profile.getEmail());-->
+<!--            console.log('ID Token: ' + authResponse.id_token);-->
+<!--            -->
+<!--            // Display user information-->
+<!--            document.getElementById('user-id').textContent = profile.getId();-->
+<!--            document.getElementById('user-name').textContent = profile.getName();-->
+<!--            document.getElementById('user-email').textContent = profile.getEmail();-->
+<!--            document.getElementById('user-image').src = profile.getImageUrl();-->
+<!--            -->
+<!--            document.getElementById('user-info').style.display = 'block';-->
+<!--            document.getElementById('sign-out-btn').style.display = 'inline-block';-->
+<!--            -->
+<!--            showStatus('Successfully signed in as ' + profile.getName(), 'success');-->
+<!--            -->
+<!--            // Store user information-->
+<!--            const userInfo = {-->
+<!--                id: profile.getId(),-->
+<!--                name: profile.getName(),-->
+<!--                email: profile.getEmail(),-->
+<!--                imageUrl: profile.getImageUrl(),-->
+<!--                idToken: authResponse.id_token-->
+<!--            };-->
+<!--            -->
+<!--            localStorage.setItem('googleUser', JSON.stringify(userInfo));-->
+<!--            localStorage.setItem('isLoggedIn', 'true');-->
+<!--        }-->
 
-        // Manual sign-in function
-        function manualSignIn() {
-            const auth2 = gapi.auth2.getAuthInstance();
-            if (auth2) {
-                auth2.signIn().then(function(googleUser) {
-                    onSignIn(googleUser);
-                }).catch(function(error) {
-                    console.error('Google Sign-In failed:', error);
-                    showStatus('Google Sign-In failed: ' + error.error, 'error');
-                });
-            } else {
-                showStatus('Google Sign-In not initialized', 'error');
-            }
-        }
+<!--        // Manual sign-in function-->
+<!--        function manualSignIn() {-->
+<!--            const auth2 = gapi.auth2.getAuthInstance();-->
+<!--            if (auth2) {-->
+<!--                auth2.signIn().then(function(googleUser) {-->
+<!--                    onSignIn(googleUser);-->
+<!--                }).catch(function(error) {-->
+<!--                    console.error('Google Sign-In failed:', error);-->
+<!--                    showStatus('Google Sign-In failed: ' + error.error, 'error');-->
+<!--                });-->
+<!--            } else {-->
+<!--                showStatus('Google Sign-In not initialized', 'error');-->
+<!--            }-->
+<!--        }-->
 
-        // Sign out function
-        function signOut() {
-            const auth2 = gapi.auth2.getAuthInstance();
-            auth2.signOut().then(function () {
-                console.log('User signed out.');
-                
-                // Hide user info
-                document.getElementById('user-info').style.display = 'none';
-                document.getElementById('sign-out-btn').style.display = 'none';
-                
-                // Clear stored data
-                localStorage.removeItem('googleUser');
-                localStorage.removeItem('isLoggedIn');
-                
-                showStatus('Successfully signed out', 'success');
-            }).catch(function(error) {
-                console.error('Sign out failed:', error);
-                showStatus('Sign out failed: ' + error.error, 'error');
-            });
-        }
+<!--        // Sign out function-->
+<!--        function signOut() {-->
+<!--            const auth2 = gapi.auth2.getAuthInstance();-->
+<!--            auth2.signOut().then(function () {-->
+<!--                console.log('User signed out.');-->
+<!--                -->
+<!--                // Hide user info-->
+<!--                document.getElementById('user-info').style.display = 'none';-->
+<!--                document.getElementById('sign-out-btn').style.display = 'none';-->
+<!--                -->
+<!--                // Clear stored data-->
+<!--                localStorage.removeItem('googleUser');-->
+<!--                localStorage.removeItem('isLoggedIn');-->
+<!--                -->
+<!--                showStatus('Successfully signed out', 'success');-->
+<!--            }).catch(function(error) {-->
+<!--                console.error('Sign out failed:', error);-->
+<!--                showStatus('Sign out failed: ' + error.error, 'error');-->
+<!--            });-->
+<!--        }-->
 
-        // Show status messages
-        function showStatus(message, type) {
-            const statusDiv = document.getElementById('status');
-            statusDiv.textContent = message;
-            statusDiv.style.backgroundColor = type === 'success' ? '#d4edda' : '#f8d7da';
-            statusDiv.style.color = type === 'success' ? '#155724' : '#721c24';
-            statusDiv.style.border = '1px solid ' + (type === 'success' ? '#c3e6cb' : '#f5c6cb');
-            
-            // Clear status after 5 seconds
-            setTimeout(() => {
-                statusDiv.textContent = '';
-                statusDiv.style.backgroundColor = '';
-                statusDiv.style.color = '';
-                statusDiv.style.border = '';
-            }, 5000);
-        }
+<!--        // Show status messages-->
+<!--        function showStatus(message, type) {-->
+<!--            const statusDiv = document.getElementById('status');-->
+<!--            statusDiv.textContent = message;-->
+<!--            statusDiv.style.backgroundColor = type === 'success' ? '#d4edda' : '#f8d7da';-->
+<!--            statusDiv.style.color = type === 'success' ? '#155724' : '#721c24';-->
+<!--            statusDiv.style.border = '1px solid ' + (type === 'success' ? '#c3e6cb' : '#f5c6cb');-->
+<!--            -->
+<!--            // Clear status after 5 seconds-->
+<!--            setTimeout(() => {-->
+<!--                statusDiv.textContent = '';-->
+<!--                statusDiv.style.backgroundColor = '';-->
+<!--                statusDiv.style.color = '';-->
+<!--                statusDiv.style.border = '';-->
+<!--            }, 5000);-->
+<!--        }-->
 
-        // Initialize when page loads
-        window.onload = function() {
-            setTimeout(initGoogleSignIn, 1000); // Wait for Google API to load
-            
-            // Check if user is already signed in
-            const storedUser = localStorage.getItem('googleUser');
-            if (storedUser) {
-                const userInfo = JSON.parse(storedUser);
-                document.getElementById('user-id').textContent = userInfo.id;
-                document.getElementById('user-name').textContent = userInfo.name;
-                document.getElementById('user-email').textContent = userInfo.email;
-                document.getElementById('user-image').src = userInfo.imageUrl;
-                
-                document.getElementById('user-info').style.display = 'block';
-                document.getElementById('sign-out-btn').style.display = 'inline-block';
-                
-                showStatus('Welcome back, ' + userInfo.name + '!', 'success');
-            }
-        };
-    </script>
-</body>
-</html>
+<!--        // Initialize when page loads-->
+<!--        window.onload = function() {-->
+<!--            setTimeout(initGoogleSignIn, 1000); // Wait for Google API to load-->
+<!--            -->
+<!--            // Check if user is already signed in-->
+<!--            const storedUser = localStorage.getItem('googleUser');-->
+<!--            if (storedUser) {-->
+<!--                const userInfo = JSON.parse(storedUser);-->
+<!--                document.getElementById('user-id').textContent = userInfo.id;-->
+<!--                document.getElementById('user-name').textContent = userInfo.name;-->
+<!--                document.getElementById('user-email').textContent = userInfo.email;-->
+<!--                document.getElementById('user-image').src = userInfo.imageUrl;-->
+<!--                -->
+<!--                document.getElementById('user-info').style.display = 'block';-->
+<!--                document.getElementById('sign-out-btn').style.display = 'inline-block';-->
+<!--                -->
+<!--                showStatus('Welcome back, ' + userInfo.name + '!', 'success');-->
+<!--            }-->
+<!--        };-->
+<!--    </script>-->
+<!--</body>-->
+<!--</html>-->
