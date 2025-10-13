@@ -2,42 +2,12 @@
 
 import React, { useState } from "react";
 
-// ---------- Type Definitions ----------
-interface GoogleUser {
-  email: string;
-  id?: string;
-  name?: string;
-  imageUrl?: string;
-}
-
 // ---------- Main Component ----------
 export default function LoginPage(): JSX.Element {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-
-  // ---------- Google Sign-In (commented) ----------
-  /*
-  const initGoogleSignIn = async (): Promise<boolean> => {
-    return new Promise((resolve) => {
-      setTimeout(() => {
-        console.log("✅ Google Sign-In initialized");
-        resolve(true);
-      }, 1000);
-    });
-  };
-
-  const onSignIn = (googleUser: GoogleUser): void => {
-    console.log("👤 User signed in:", googleUser);
-    alert(`Welcome ${googleUser.email}! Successfully signed in with Google.`);
-  };
-
-  const signOut = (): void => {
-    console.log("🚪 User signed out");
-    alert("Signed out successfully!");
-  };
-  */
 
   const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
     e.preventDefault();
@@ -211,13 +181,60 @@ export default function LoginPage(): JSX.Element {
           </button>
         </form>
 
-        {/* Google Sign-In Buttons (commented)
+        {/*
+        ========================================
+        GOOGLE SIGN-IN CODE (COMMENTED OUT)
+        ========================================
+
+        // Google User Type
+        interface GoogleUser {
+          email: string;
+          id?: string;
+          name?: string;
+          imageUrl?: string;
+        }
+
+        // Google Sign-In Functions
+        const initGoogleSignIn = async (): Promise<boolean> => {
+          return new Promise((resolve) => {
+            setTimeout(() => {
+              console.log("✅ Google Sign-In initialized");
+              resolve(true);
+            }, 1000);
+          });
+        };
+
+        const onSignIn = (googleUser: GoogleUser): void => {
+          console.log("👤 User signed in:", googleUser);
+          alert(`Welcome ${googleUser.email}! Successfully signed in with Google.`);
+        };
+
+        const signOut = (): void => {
+          console.log("🚪 User signed out");
+          alert("Signed out successfully!");
+        };
+
+        // Google Sign-In UI
         <div style={{ textAlign: "center", marginTop: 18, color: "#aaa", fontWeight: 500 }}>
           or
         </div>
-        <button type="button" disabled={loading} style={{ width: "100%", marginTop: 10 }}>
+        <button
+          type="button"
+          disabled={loading}
+          style={{
+            width: "100%",
+            marginTop: 10,
+            background: "#fff",
+            border: "2px solid #ddd",
+            padding: "12px",
+            borderRadius: 8,
+            cursor: "pointer"
+          }}
+        >
           Continue with Google
         </button>
+
+        ========================================
         */}
       </div>
     </div>
