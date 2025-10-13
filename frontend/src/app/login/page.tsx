@@ -2,14 +2,13 @@
 
 import React, { useState } from "react";
 
-// ---------- Main Component ----------
-export default function LoginPage(): JSX.Element {
+const LoginPage: React.FC = () => {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>): void => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
     alert(`${tab === "login" ? "Login" : "Signup"} form submitted!`);
   };
@@ -66,7 +65,7 @@ export default function LoginPage(): JSX.Element {
           ))}
         </div>
 
-        {/* Error */}
+        {/* Error Message */}
         {errorMsg && (
           <div
             style={{
@@ -127,7 +126,9 @@ export default function LoginPage(): JSX.Element {
             <div style={{ position: "relative" }}>
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder={tab === "login" ? "Enter your password" : "Create a password"}
+                placeholder={
+                  tab === "login" ? "Enter your password" : "Create a password"
+                }
                 required
                 style={{
                   width: "100%",
@@ -183,4 +184,6 @@ export default function LoginPage(): JSX.Element {
       </div>
     </div>
   );
-}
+};
+
+export default LoginPage;
