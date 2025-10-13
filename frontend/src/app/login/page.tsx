@@ -180,62 +180,6 @@ export default function LoginPage(): JSX.Element {
             {tab === "login" ? "SIGN IN" : "SIGN UP"}
           </button>
         </form>
-
-        {/*
-        ========================================
-        GOOGLE SIGN-IN CODE (COMMENTED OUT)
-        ========================================
-
-        // Google User Type
-        interface GoogleUser {
-          email: string;
-          id?: string;
-          name?: string;
-          imageUrl?: string;
-        }
-
-        // Google Sign-In Functions
-        const initGoogleSignIn = async (): Promise<boolean> => {
-          return new Promise((resolve) => {
-            setTimeout(() => {
-              console.log("✅ Google Sign-In initialized");
-              resolve(true);
-            }, 1000);
-          });
-        };
-
-        const onSignIn = (googleUser: GoogleUser): void => {
-          console.log("👤 User signed in:", googleUser);
-          alert(`Welcome ${googleUser.email}! Successfully signed in with Google.`);
-        };
-
-        const signOut = (): void => {
-          console.log("🚪 User signed out");
-          alert("Signed out successfully!");
-        };
-
-        // Google Sign-In UI
-        <div style={{ textAlign: "center", marginTop: 18, color: "#aaa", fontWeight: 500 }}>
-          or
-        </div>
-        <button
-          type="button"
-          disabled={loading}
-          style={{
-            width: "100%",
-            marginTop: 10,
-            background: "#fff",
-            border: "2px solid #ddd",
-            padding: "12px",
-            borderRadius: 8,
-            cursor: "pointer"
-          }}
-        >
-          Continue with Google
-        </button>
-
-        ========================================
-        */}
       </div>
     </div>
   );
