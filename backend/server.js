@@ -6,7 +6,11 @@ const app = express();
 const port = process.env.PORT || 4000;
 
 // Middlewares
-app.use(cors());
+app.use(cors({
+  origin: process.env.FRONTEND_URL || '*', // allow your frontend domain or all
+  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  credentials: true
+}));
 app.use(express.json());
 
 // Routes
@@ -30,7 +34,7 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`✅ Backend running on port ${port}`);
+// Start server on all IPv4 addresses (0.0.0.0) and log IPv6 as well
+app.listen(port, '0.0.0.0', () => {
+  console.log(`✅ Backend running on port ${port} (accessible via 0.0.0.0)`);
 });
