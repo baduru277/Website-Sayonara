@@ -44,7 +44,7 @@ A modern, Amazon-like marketplace platform for item exchange, bidding, and direc
    ```bash
    cd backend
    npm install
-   cp env.example .env
+   cp .env.local .env
    # Edit .env with your database credentials
    npm run dev
    ```
