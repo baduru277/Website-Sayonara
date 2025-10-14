@@ -1,5 +1,48 @@
 const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://31.97.73.226:4000/api';
 
+// Ensure errors are logged with useful, serializable details (Next.js can hide non-enumerables)
+function serializeErrorForLogging(originalError) {
+  try {
+    if (!originalError) {
+      return { message: 'Unknown error' };
+    }
+    // Handle native Error instances
+    if (originalError instanceof Error) {
+      const base = {
+        name: originalError.name,
+        message: originalError.message,
+        stack: originalError.stack,
+      };
+      // Optional cause (may not be supported in all runtimes)
+      const cause = originalError.cause;
+      if (cause) {
+        // Avoid deep/circular structures
+        base.cause = typeof cause === 'object' && cause !== null
+          ? Object.fromEntries(Object.entries(cause).slice(0, 10))
+          : String(cause);
+      }
+      return base;
+    }
+    // Handle plain objects
+    if (typeof originalError === 'object') {
+      const shallowCopy = {};
+      Object.keys(originalError).slice(0, 10).forEach((key) => {
+        const value = originalError[key];
+        shallowCopy[key] = typeof value === 'object' && value !== null ? '[object]' : value;
+      });
+      // Provide a fallback message if none exists
+      if (!('message' in shallowCopy)) {
+        shallowCopy.message = 'Non-Error thrown';
+      }
+      return shallowCopy;
+    }
+    // Primitives
+    return { message: String(originalError) };
+  } catch (e) {
+    return { message: 'Failed to serialize error', detail: String(e) };
+  }
+}
+
 class ApiService {
   constructor() {
     this.baseURL = API_BASE_URL;
@@ -35,6 +78,7 @@ class ApiService {
     const config = {
       headers: {
         'Content-Type': 'application/json',
+        'Accept': 'application/json',
         ...(token && { Authorization: `Bearer ${token}` }),
         ...options.headers,
       },
@@ -49,17 +93,44 @@ class ApiService {
       console.log('Response headers:', response.headers);
       
       if (!response.ok) {
-        let errorData = {};
+        // Read the raw body first to allow flexible parsing and better diagnostics
+        let rawErrorBody = '';
         try {
-          errorData = await response.json();
-        } catch (parseError) {
-          console.log('Could not parse error response as JSON');
+          rawErrorBody = await response.text();
+        } catch {
+          // ignore
+        }
+
+        let errorData = {};
+        if (rawErrorBody) {
+          try {
+            errorData = JSON.parse(rawErrorBody);
+          } catch {
+            errorData = { error: rawErrorBody };
+          }
+        } else {
           errorData = { error: `HTTP ${response.status}: ${response.statusText}` };
         }
-        
+
         const errorMessage = errorData.error || errorData.message || `HTTP error! status: ${response.status}`;
-        console.error('API error response:', errorData);
-        throw new Error(errorMessage);
+        console.error('API error response:', {
+          url,
+          method: config.method || 'GET',
+          status: response.status,
+          statusText: response.statusText,
+          body: errorData,
+        });
+
+        const apiError = new Error(errorMessage);
+        apiError.name = 'ApiError';
+        apiError.cause = {
+          url,
+          method: config.method || 'GET',
+          status: response.status,
+          statusText: response.statusText,
+          body: errorData,
+        };
+        throw apiError;
       }
 
       let data;
@@ -73,12 +144,17 @@ class ApiService {
       console.log('API response:', data);
       return data;
     } catch (error) {
-      console.error('API request failed:', {
+      // Log a fully-serializable error object so dev overlays don't collapse it to {}
+      const serialized = serializeErrorForLogging(error);
+      const logPayload = {
         url,
-        error: error.message,
-        stack: error.stack
-      });
-      
+        method: config.method || 'GET',
+        error: serialized,
+      };
+      // Log both as object and as JSON string for environments that hide non-enumerables
+      console.error('API request failed:', logPayload);
+      console.error('API request failed (stringified):', JSON.stringify(logPayload));
+
       // Provide more helpful error messages
       if (error.name === 'TypeError' && error.message.includes('Failed to fetch')) {
         throw new Error('Unable to connect to server. Please check if the backend is running.');
