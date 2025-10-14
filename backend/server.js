@@ -1,6 +1,7 @@
 const express = require('express');
 const cors = require('cors');
 require('dotenv').config();
+const sequelize = require('./config/database');
 
 const app = express();
 const port = process.env.PORT || 4000;
@@ -30,7 +31,19 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Start server
-app.listen(port, () => {
-  console.log(`✅ Backend running on port ${port}`);
-});
+// Start server after ensuring database is ready
+(async () => {
+  try {
+    // Ensure DB connection and create/update tables
+    await sequelize.authenticate();
+    await sequelize.sync({ alter: true });
+    console.log('✅ Database synchronized');
+
+    app.listen(port, () => {
+      console.log(`✅ Backend running on port ${port}`);
+    });
+  } catch (err) {
+    console.error('❌ Failed to initialize database or start server:', err);
+    process.exit(1);
+  }
+})();
