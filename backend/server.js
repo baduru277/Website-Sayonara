@@ -15,10 +15,20 @@ const authRouter = require('./routes/auth');
 const itemsRouter = require('./routes/items');
 const usersRouter = require('./routes/users');
 
-app.use('/', indexRouter);
-app.use('/auth', authRouter);
-app.use('/items', itemsRouter);
-app.use('/users', usersRouter);
+// Unified API prefix so frontend can call `${BASE_URL}/api/*`
+app.use('/api', indexRouter);
+app.use('/api/auth', authRouter);
+app.use('/api/items', itemsRouter);
+app.use('/api/users', usersRouter);
+
+// Top-level health endpoint for platform probes
+app.get('/health', (req, res) => {
+  res.json({
+    status: 'OK',
+    timestamp: new Date().toISOString(),
+    environment: process.env.NODE_ENV || 'development',
+  });
+});
 
 // Start server
 app.listen(port, () => {
