@@ -1,9 +1,13 @@
 var express = require('express');
 var router = express.Router();
 
-/* GET home page. */
-router.get('/', function(req, res, next) {
-  res.render('index', { title: 'Sayonara API' });
+/* API root */
+router.get('/', function(req, res) {
+  res.status(200).json({
+    status: 'OK',
+    message: 'Sayonara API root',
+    timestamp: new Date().toISOString()
+  });
 });
 
 /* Health check endpoint for Render */
