@@ -35,4 +35,4 @@ services:
     staticPublishPath: frontend/.next
     envVars:
       - key: NEXT_PUBLIC_API_URL
-        value: https://sayonara-backend.onrender.com 
+        value: http://31.97.73.226:4000/api
