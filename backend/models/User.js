@@ -1,109 +1,73 @@
-const { DataTypes } = require('sequelize');
-const sequelize = require('../config/database');
-const bcrypt = require('bcryptjs');
+const { Sequelize, DataTypes } = require('sequelize');
+const sequelize = require('../database'); // adjust path to your sequelize instance
 
 const User = sequelize.define('User', {
-  id: {
-    type: DataTypes.UUID,
-    defaultValue: DataTypes.UUIDV4,
-    primaryKey: true
-  },
   name: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: false,
-    unique: true,
-    validate: {
-      len: [3, 30]
-    }
   },
   email: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: false,
     unique: true,
-    validate: {
-      isEmail: true
-    }
   },
   password: {
-    type: DataTypes.STRING,
+    type: DataTypes.TEXT,
     allowNull: false,
-    validate: {
-      len: [6, 100]
-    }
   },
   avatar: {
-    type: DataTypes.STRING,
-    allowNull: true
+    type: DataTypes.TEXT,
+    allowNull: true,
   },
   phone: {
-    type: DataTypes.STRING,
-    allowNull: true
+    type: DataTypes.TEXT,
+    allowNull: true,
   },
   location: {
-    type: DataTypes.STRING,
-    allowNull: true
+    type: DataTypes.TEXT,
+    allowNull: true,
   },
   bio: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
   },
   isVerified: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0, // 0 = false, 1 = true
   },
   rating: {
-    type: DataTypes.DECIMAL(3, 2),
-    defaultValue: 0.00
+    type: DataTypes.REAL,
+    allowNull: false,
+    defaultValue: 0.0,
   },
   totalReviews: {
     type: DataTypes.INTEGER,
-    defaultValue: 0
+    allowNull: false,
+    defaultValue: 0,
   },
   isPrime: {
-    type: DataTypes.BOOLEAN,
-    defaultValue: false
+    type: DataTypes.INTEGER,
+    allowNull: false,
+    defaultValue: 0,
   },
   lastActive: {
     type: DataTypes.DATE,
-    defaultValue: DataTypes.NOW
+    allowNull: true,
   },
   otpCode: {
-    type: DataTypes.STRING,
-    allowNull: true
+    type: DataTypes.TEXT,
+    allowNull: true,
   },
   otpExpires: {
     type: DataTypes.DATE,
-    allowNull: true
-  }
+    allowNull: true,
+  },
 }, {
-  hooks: {
-    beforeCreate: async (user) => {
-      if (user.email) {
-        user.email = user.email.toLowerCase();
-      }
-      if (user.password) {
-        user.password = await bcrypt.hash(user.password, 12);
-      }
-    },
-    beforeUpdate: async (user) => {
-      if (user.changed('email') && user.email) {
-        user.email = user.email.toLowerCase();
-      }
-      if (user.changed('password')) {
-        user.password = await bcrypt.hash(user.password, 12);
-      }
-    }
-  }
+  tableName: 'Users',
+  timestamps: true,
+  createdAt: 'created_at',
+  updatedAt: 'updated_at',
 });
 
-User.prototype.comparePassword = async function(candidatePassword) {
-  return await bcrypt.compare(candidatePassword, this.password);
-};
-
-User.prototype.toJSON = function() {
-  const values = Object.assign({}, this.get());
-  delete values.password;
-  return values;
-};
-
-module.exports = User; 
+module.exports = User;
