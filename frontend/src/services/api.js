@@ -17,7 +17,6 @@ class ApiService {
     this.baseURL = API_BASE_URL;
   }
 
-  // Auth token helpers
   getAuthToken() {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('token');
@@ -29,7 +28,6 @@ class ApiService {
     if (typeof window !== 'undefined') localStorage.removeItem('token');
   }
 
-  // Generic API request
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getAuthToken();
@@ -75,7 +73,13 @@ class ApiService {
     const query = new URLSearchParams(params).toString();
     return this.request(`/items?${query}`);
   }
+
+  // Existing method
   getItem(id) { return this.request(`/items/${id}`); }
+
+  // New method (fixes TypeScript error)
+  getItemById(id) { return this.request(`/items/${id}`); }
+
   createItem(itemData) { return this.request('/items', { method: 'POST', body: JSON.stringify(itemData) }); }
   updateItem(id, itemData) { return this.request(`/items/${id}`, { method: 'PUT', body: JSON.stringify(itemData) }); }
   deleteItem(id) { return this.request(`/items/${id}`, { method: 'DELETE' }); }
