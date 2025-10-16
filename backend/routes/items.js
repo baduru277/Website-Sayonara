@@ -5,23 +5,18 @@ const { auth, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Test route to verify server is working
+// Test route
 router.get('/test', (req, res) => {
   res.json({ message: 'Items API is working!' });
 });
 
-// Temporary GET route to clear all items (easier to access) - MUST BE BEFORE /:id route
+// Clear all items (GET)
 router.get('/clear', async (req, res) => {
   try {
-    console.log('Clear route accessed');
-    // Clear all items from the mock database
     if (Item.mockItems) {
       Item.mockItems = [];
-      console.log('Cleared mockItems');
     } else {
-      // If mockItems doesn't exist, try to clear the database
       await Item.destroy({ where: {} });
-      console.log('Cleared database items');
     }
     res.json({ message: 'All items cleared successfully' });
   } catch (error) {
@@ -30,18 +25,13 @@ router.get('/clear', async (req, res) => {
   }
 });
 
-// Temporary route to clear all items
+// Clear all items (DELETE)
 router.delete('/clear', async (req, res) => {
   try {
-    console.log('Clear DELETE route accessed');
-    // Clear all items from the mock database
     if (Item.mockItems) {
       Item.mockItems = [];
-      console.log('Cleared mockItems');
     } else {
-      // If mockItems doesn't exist, try to clear the database
       await Item.destroy({ where: {} });
-      console.log('Cleared database items');
     }
     res.json({ message: 'All items cleared successfully' });
   } catch (error) {
@@ -50,7 +40,7 @@ router.delete('/clear', async (req, res) => {
   }
 });
 
-// Get all items with filtering
+// Get all items with filters
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const {
@@ -69,27 +59,10 @@ router.get('/', optionalAuth, async (req, res) => {
     const offset = (page - 1) * limit;
     const where = { isActive: true };
 
-    // Type filter
-    if (type) {
-      where.type = type;
-    }
-
-    // Category filter
-    if (category && category !== 'All') {
-      where.category = category;
-    }
-
-    // Priority filter
-    if (priority && priority !== 'All') {
-      where.priority = priority;
-    }
-
-    // Condition filter
-    if (condition && condition !== 'All') {
-      where.condition = condition;
-    }
-
-    // Search filter
+    if (type) where.type = type;
+    if (category && category !== 'All') where.category = category;
+    if (priority && priority !== 'All') where.priority = priority;
+    if (condition && condition !== 'All') where.condition = condition;
     if (search) {
       where[Op.or] = [
         { title: { [Op.iLike]: `%${search}%` } },
@@ -97,8 +70,6 @@ router.get('/', optionalAuth, async (req, res) => {
         { lookingFor: { [Op.iLike]: `%${search}%` } }
       ];
     }
-
-    // Tags filter
     if (tags) {
       const tagArray = tags.split(',');
       where.tags = { [Op.overlap]: tagArray };
@@ -130,7 +101,7 @@ router.get('/', optionalAuth, async (req, res) => {
   }
 });
 
-// Get item by ID
+// Get single item by ID
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
     const item = await Item.findByPk(req.params.id, {
@@ -156,11 +127,8 @@ router.get('/:id', optionalAuth, async (req, res) => {
       ]
     });
 
-    if (!item) {
-      return res.status(404).json({ error: 'Item not found' });
-    }
+    if (!item) return res.status(404).json({ error: 'Item not found' });
 
-    // Increment views
     await item.increment('views');
 
     res.json({ item });
@@ -195,18 +163,12 @@ router.post('/', auth, async (req, res) => {
       fastShipping
     } = req.body;
 
-    // Validate required fields based on type
-    if (type === 'exchange' && !lookingFor) {
+    if (type === 'exchange' && !lookingFor)
       return res.status(400).json({ error: 'Looking for field is required for exchange items' });
-    }
-
-    if (type === 'bidding' && (!startingBid || !auctionEndDate)) {
+    if (type === 'bidding' && (!startingBid || !auctionEndDate))
       return res.status(400).json({ error: 'Starting bid and auction end date are required for bidding items' });
-    }
-
-    if (type === 'resell' && !price) {
+    if (type === 'resell' && !price)
       return res.status(400).json({ error: 'Price is required for resell items' });
-    }
 
     const item = await Item.create({
       title,
@@ -243,10 +205,7 @@ router.post('/', auth, async (req, res) => {
       ]
     });
 
-    res.status(201).json({
-      message: 'Item created successfully',
-      item: createdItem
-    });
+    res.status(201).json({ message: 'Item created successfully', item: createdItem });
   } catch (error) {
     console.error('Create item error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -257,21 +216,11 @@ router.post('/', auth, async (req, res) => {
 router.put('/:id', auth, async (req, res) => {
   try {
     const item = await Item.findByPk(req.params.id);
-
-    if (!item) {
-      return res.status(404).json({ error: 'Item not found' });
-    }
-
-    if (item.userId !== req.user.id) {
-      return res.status(403).json({ error: 'Not authorized' });
-    }
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    if (item.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
 
     await item.update(req.body);
-
-    res.json({
-      message: 'Item updated successfully',
-      item
-    });
+    res.json({ message: 'Item updated successfully', item });
   } catch (error) {
     console.error('Update item error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -282,17 +231,10 @@ router.put('/:id', auth, async (req, res) => {
 router.delete('/:id', auth, async (req, res) => {
   try {
     const item = await Item.findByPk(req.params.id);
-
-    if (!item) {
-      return res.status(404).json({ error: 'Item not found' });
-    }
-
-    if (item.userId !== req.user.id) {
-      return res.status(403).json({ error: 'Not authorized' });
-    }
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    if (item.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
 
     await item.update({ isActive: false });
-
     res.json({ message: 'Item deleted successfully' });
   } catch (error) {
     console.error('Delete item error:', error);
@@ -305,55 +247,18 @@ router.post('/:id/bid', auth, async (req, res) => {
   try {
     const { amount } = req.body;
     const item = await Item.findByPk(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    if (item.type !== 'bidding') return res.status(400).json({ error: 'This item is not available for bidding' });
+    if (item.userId === req.user.id) return res.status(400).json({ error: 'You cannot bid on your own item' });
+    if (new Date() > new Date(item.auctionEndDate)) return res.status(400).json({ error: 'Auction has ended' });
+    if (amount <= item.currentBid) return res.status(400).json({ error: 'Bid must be higher than current bid' });
 
-    if (!item) {
-      return res.status(404).json({ error: 'Item not found' });
-    }
+    await Bid.create({ amount, userId: req.user.id, itemId: item.id });
+    await item.update({ currentBid: amount, totalBids: item.totalBids + 1 });
+    await Bid.update({ isWinning: false }, { where: { itemId: item.id } });
+    await Bid.update({ isWinning: true }, { where: { itemId: item.id, amount } });
 
-    if (item.type !== 'bidding') {
-      return res.status(400).json({ error: 'This item is not available for bidding' });
-    }
-
-    if (item.userId === req.user.id) {
-      return res.status(400).json({ error: 'You cannot bid on your own item' });
-    }
-
-    if (new Date() > new Date(item.auctionEndDate)) {
-      return res.status(400).json({ error: 'Auction has ended' });
-    }
-
-    if (amount <= item.currentBid) {
-      return res.status(400).json({ error: 'Bid must be higher than current bid' });
-    }
-
-    // Create bid
-    await Bid.create({
-      amount,
-      userId: req.user.id,
-      itemId: item.id
-    });
-
-    // Update item
-    await item.update({
-      currentBid: amount,
-      totalBids: item.totalBids + 1
-    });
-
-    // Update winning bid status
-    await Bid.update(
-      { isWinning: false },
-      { where: { itemId: item.id } }
-    );
-
-    await Bid.update(
-      { isWinning: true },
-      { where: { itemId: item.id, amount } }
-    );
-
-    res.json({
-      message: 'Bid placed successfully',
-      currentBid: amount
-    });
+    res.json({ message: 'Bid placed successfully', currentBid: amount });
   } catch (error) {
     console.error('Place bid error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -366,16 +271,11 @@ router.get('/featured/items', async (req, res) => {
     const items = await Item.findAll({
       where: { isFeatured: true, isActive: true },
       include: [
-        {
-          model: User,
-          as: 'seller',
-          attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime']
-        }
+        { model: User, as: 'seller', attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime'] }
       ],
       order: [['createdAt', 'DESC']],
       limit: 12
     });
-
     res.json({ items });
   } catch (error) {
     console.error('Get featured items error:', error);
@@ -395,7 +295,6 @@ router.get('/categories/list', async (req, res) => {
       group: ['category'],
       order: [[require('sequelize').fn('COUNT', require('sequelize').col('id')), 'DESC']]
     });
-
     res.json({ categories });
   } catch (error) {
     console.error('Get categories error:', error);
@@ -403,4 +302,4 @@ router.get('/categories/list', async (req, res) => {
   }
 });
 
-module.exports = router; 
+module.exports = router;
