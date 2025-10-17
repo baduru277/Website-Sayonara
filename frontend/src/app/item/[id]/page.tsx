@@ -74,9 +74,8 @@ function getTimeLeft(endDate: string) {
 export default async function ItemDetailPage({ params }: ItemPageProps) {
   const itemId = params.id;
 
-  // Fetch item data server-side
-  const item = await apiService.getItemById(itemId);
-
+  // Server-side fetch
+  const item: Item | null = await apiService.getItemById(itemId);
   if (!item) notFound();
 
   const platformNote =
@@ -111,11 +110,30 @@ export default async function ItemDetailPage({ params }: ItemPageProps) {
               </div>
             )}
           </div>
+          {/* Thumbnail Carousel */}
+          {item.images && item.images.length > 1 && (
+            <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
+              {item.images.map((img, idx) => (
+                <div
+                  key={img}
+                  style={{
+                    position: 'relative',
+                    width: 56,
+                    height: 56,
+                    borderRadius: 6,
+                    border: idx === 0 ? '2px solid #924DAC' : '1.5px solid #000',
+                    overflow: 'hidden',
+                  }}
+                >
+                  <Image src={img} alt={`thumb${idx}`} fill style={{ objectFit: 'cover' }} />
+                </div>
+              ))}
+            </div>
+          )}
         </div>
 
         {/* Product Info */}
         <div style={{ flex: 2, minWidth: 320 }}>
-          {/* Platform Note */}
           <div
             style={{
               background: '#f7f7fa',
@@ -130,17 +148,15 @@ export default async function ItemDetailPage({ params }: ItemPageProps) {
             {platformNote}
           </div>
 
-          {/* Product Title */}
           <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: '#333' }}>{item.title}</div>
 
-          {/* SKU, Category, Location */}
           <div style={{ color: '#666', fontSize: 15, marginBottom: 4 }}>
             SKU: <b>{item.id.slice(0, 8).toUpperCase()}</b> &nbsp; Category: <b>{item.category}</b>
           </div>
           <div style={{ color: '#388e3c', fontWeight: 600, marginBottom: 4 }}>Availability: In Stock</div>
           <div style={{ color: '#888', fontSize: 15, marginBottom: 4 }}>Location: <b>{item.location}</b></div>
 
-          {/* Pricing Section */}
+          {/* Pricing */}
           <div style={{ margin: '16px 0' }}>
             {item.type === 'resell' && item.price && (
               <div style={{ fontSize: 24, fontWeight: 700, color: '#924DAC' }}>
@@ -173,11 +189,61 @@ export default async function ItemDetailPage({ params }: ItemPageProps) {
               <div style={{ fontSize: 18, fontWeight: 600, color: '#924DAC' }}>Looking for: {item.lookingFor}</div>
             )}
           </div>
+
+          {/* Item Details */}
+          <div style={{ background: '#f9f9f9', borderRadius: 8, padding: 16, marginBottom: 18 }}>
+            <div style={{ fontWeight: 600, marginBottom: 8, color: '#333' }}>Item Details</div>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 14 }}>
+              <div>
+                <span style={{ color: '#666' }}>Condition:</span> <span style={{ fontWeight: 600, marginLeft: 8 }}>{item.condition}</span>
+              </div>
+              {item.warrantyStatus && (
+                <div>
+                  <span style={{ color: '#666' }}>Warranty:</span> <span style={{ fontWeight: 600, marginLeft: 8 }}>{item.warrantyStatus}</span>
+                </div>
+              )}
+              {item.usageHistory && (
+                <div>
+                  <span style={{ color: '#666' }}>Usage:</span> <span style={{ fontWeight: 600, marginLeft: 8 }}>{item.usageHistory}</span>
+                </div>
+              )}
+              {item.originalBox && (
+                <div>
+                  <span style={{ color: '#666' }}>Box/Accessories:</span> <span style={{ fontWeight: 600, marginLeft: 8 }}>{item.originalBox}</span>
+                </div>
+              )}
+              {item.shipping && (
+                <div>
+                  <span style={{ color: '#666' }}>Shipping:</span> <span style={{ fontWeight: 600, marginLeft: 8 }}>{item.shipping}</span>
+                </div>
+              )}
+            </div>
+          </div>
+
+          {/* Damage Information */}
+          {item.damageInfo && (
+            <div style={{ background: '#fff3cd', border: '1px solid #ffeaa7', borderRadius: 8, padding: 12, marginBottom: 18 }}>
+              <div style={{ fontWeight: 600, marginBottom: 4, color: '#856404' }}>Damage Information:</div>
+              <div style={{ fontSize: 14, color: '#856404' }}>{item.damageInfo}</div>
+            </div>
+          )}
+
+          {/* Seller Info */}
+          {item.user && (
+            <div style={{ background: '#f9f9f9', borderRadius: 8, padding: 16, marginBottom: 18 }}>
+              <div style={{ fontWeight: 600, marginBottom: 8, color: '#333' }}>Seller Information</div>
+              <div style={{ fontSize: 14, color: '#666' }}>
+                <div>Name: {item.user.firstName} {item.user.lastName}</div>
+                <div>Member since: {new Date(item.createdAt).toLocaleDateString()}</div>
+                <div>Location: {item.location}</div>
+              </div>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Tabs and ItemComparison could be added here similarly */}
-      {/* ... */}
+      {/* Tabs Section, Item Comparison, and other UI can go here */}
+      {/* Use your previous client-side logic for interactive tabs and ItemComparison */}
     </div>
   );
 }
