@@ -1,3 +1,4 @@
+// src/app/item/[id]/page.tsx
 import { notFound } from 'next/navigation';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -35,22 +36,27 @@ interface Item {
     email: string;
   };
   warrantyStatus?: string;
-  itemCondition?: string;
-  damageInfo?: string;
   usageHistory?: string;
   originalBox?: string;
+  damageInfo?: string;
 }
 
-// Helper functions
-const formatPrice = (price: number) =>
-  new Intl.NumberFormat('en-IN', {
+type PageProps = {
+  params: {
+    id: string;
+  };
+};
+
+function formatPrice(price: number) {
+  return new Intl.NumberFormat('en-IN', {
     style: 'currency',
     currency: 'INR',
     minimumFractionDigits: 0,
     maximumFractionDigits: 0,
   }).format(price);
+}
 
-const getTimeLeft = (endDate: string) => {
+function getTimeLeft(endDate: string) {
   const now = new Date().getTime();
   const end = new Date(endDate).getTime();
   const diff = end - now;
@@ -64,93 +70,55 @@ const getTimeLeft = (endDate: string) => {
   if (days > 0) return `${days}d ${hours}h left`;
   if (hours > 0) return `${hours}h ${minutes}m left`;
   return `${minutes}m left`;
-};
+}
 
-// Server component for item page
-export default async function ItemDetailPage({ params }: { params: { id: string } }) {
-  const itemId = params.id;
+export default async function ItemDetailPage({ params }: PageProps) {
+  const { id } = params;
 
-  // Fetch item data from API
   let item: Item | null = null;
-  try {
-    item = await apiService.getItemById(itemId);
-  } catch (err) {
-    console.error('Item fetch error:', err);
-    notFound(); // Throw 404 if item not found
-  }
 
-  if (!item) {
+  try {
+    item = await apiService.getItemById(id);
+  } catch (err) {
+    console.error('Error fetching item:', err);
     notFound();
   }
+
+  if (!item) notFound();
 
   const platformNote =
     'Note: This platform allows you to bid, exchange, or resell used products. Connect with other users to find great deals, swap items, or get the best price for your pre-owned goods.';
 
   return (
-    <div style={{ background: '#fafafd', minHeight: '100vh', padding: '32px 0' }}>
-      <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 40, flexWrap: 'wrap' }}>
+    <div style={{ background: '#fafafd', minHeight: 'calc(100vh - 120px)', padding: '32px 0' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         {/* Image Gallery */}
         <div style={{ flex: 1, minWidth: 320 }}>
-          <div
-            style={{
-              background: '#fff',
-              borderRadius: 12,
-              boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
-              padding: 18,
-              marginBottom: 18,
-              position: 'relative',
-              height: 400,
-            }}
-          >
+          <div style={{ background: '#fff', borderRadius: 12, boxShadow: '0 2px 8px rgba(0,0,0,0.07)', padding: 18, marginBottom: 18, position: 'relative', height: 400 }}>
             {item.images && item.images.length > 0 ? (
-              <Image
-                src={item.images[0] || '/api/placeholder/400/400'}
-                alt="main"
-                fill
-                style={{ borderRadius: 8, objectFit: 'contain' }}
-              />
+              <Image src={item.images[0]} alt="main" fill style={{ borderRadius: 8, objectFit: 'contain' }} />
             ) : (
-              <div
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  height: '100%',
-                  color: '#999',
-                }}
-              >
-                No image available
-              </div>
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>No image available</div>
             )}
           </div>
         </div>
 
         {/* Product Info */}
         <div style={{ flex: 2, minWidth: 320 }}>
-          {/* Platform Note */}
-          <div
-            style={{
-              background: '#f7f7fa',
-              borderLeft: '4px solid #924DAC',
-              borderRadius: 8,
-              padding: '10px 18px',
-              color: '#555',
-              marginBottom: 18,
-              fontSize: 15,
-            }}
-          >
+          <div style={{ background: '#f7f7fa', borderLeft: '4px solid #924DAC', borderRadius: 8, padding: '10px 18px', color: '#555', marginBottom: 18, fontSize: 15 }}>
             {platformNote}
           </div>
 
-          <h1 style={{ fontSize: 24, fontWeight: 700, marginBottom: 8, color: '#333' }}>{item.title}</h1>
+          <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: '#333' }}>{item.title}</h1>
 
           <div style={{ color: '#666', fontSize: 15, marginBottom: 4 }}>
             SKU: <b>{item.id.slice(0, 8).toUpperCase()}</b> &nbsp; Category: <b>{item.category}</b>
           </div>
           <div style={{ color: '#388e3c', fontWeight: 600, marginBottom: 4 }}>Availability: In Stock</div>
-          <div style={{ color: '#888', fontSize: 15, marginBottom: 4 }}>Location: <b>{item.location}</b></div>
+          <div style={{ color: '#888', fontSize: 15, marginBottom: 4 }}>
+            Location: <b>{item.location}</b>
+          </div>
 
-          {/* Pricing Section */}
           <div style={{ margin: '16px 0' }}>
             {item.type === 'resell' && item.price && (
               <div style={{ fontSize: 24, fontWeight: 700, color: '#924DAC' }}>
@@ -169,24 +137,16 @@ export default async function ItemDetailPage({ params }: { params: { id: string 
                 )}
               </div>
             )}
+
             {item.type === 'bidding' && item.startingBid && (
               <div>
-                <div style={{ fontSize: 20, fontWeight: 700, color: '#924DAC', marginBottom: 4 }}>
-                  Starting Bid: {formatPrice(item.startingBid)}
-                </div>
-                {item.currentBid && (
-                  <div style={{ fontSize: 16, color: '#666', marginBottom: 4 }}>
-                    Current Bid: {formatPrice(item.currentBid)}
-                  </div>
-                )}
-                {item.auctionEndDate && (
-                  <div style={{ fontSize: 14, color: '#e74c3c', fontWeight: 600 }}>
-                    ⏰ {getTimeLeft(item.auctionEndDate)}
-                  </div>
-                )}
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#924DAC', marginBottom: 4 }}>Starting Bid: {formatPrice(item.startingBid)}</div>
+                {item.currentBid && <div style={{ fontSize: 16, color: '#666', marginBottom: 4 }}>Current Bid: {formatPrice(item.currentBid)}</div>}
+                {item.auctionEndDate && <div style={{ fontSize: 14, color: '#e74c3c', fontWeight: 600 }}>⏰ {getTimeLeft(item.auctionEndDate)}</div>}
                 {item.totalBids && <div style={{ fontSize: 14, color: '#666' }}>{item.totalBids} bids placed</div>}
               </div>
             )}
+
             {item.type === 'exchange' && item.lookingFor && (
               <div style={{ fontSize: 18, fontWeight: 600, color: '#924DAC' }}>Looking for: {item.lookingFor}</div>
             )}
@@ -194,7 +154,7 @@ export default async function ItemDetailPage({ params }: { params: { id: string 
 
           {/* Item Details */}
           <div style={{ background: '#f9f9f9', borderRadius: 8, padding: 16, marginBottom: 18 }}>
-            <div style={{ fontWeight: 600, marginBottom: 8, color: '#333' }}>Item Details</div>
+            <h3 style={{ fontWeight: 600, marginBottom: 8, color: '#333' }}>Item Details</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: 12, fontSize: 14 }}>
               <div>
                 <span style={{ color: '#666' }}>Condition:</span>
@@ -226,10 +186,54 @@ export default async function ItemDetailPage({ params }: { params: { id: string 
               )}
             </div>
           </div>
+
+          {item.damageInfo && (
+            <div style={{ background: '#fff3cd', border: '1px solid #ffeaa7', borderRadius: 8, padding: 12, marginBottom: 18 }}>
+              <strong style={{ color: '#856404' }}>Damage Information:</strong>
+              <p style={{ color: '#856404', margin: 0 }}>{item.damageInfo}</p>
+            </div>
+          )}
         </div>
       </div>
 
-      {/* Tabs and Item Comparison can be converted to client components if needed */}
+      {/* Item Comparison */}
+      <div className="mt-8">
+        <ItemComparison
+          currentItem={{
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            image: item.images[0] || '',
+            images: item.images,
+            category: item.category,
+            condition: item.condition,
+            price: item.price,
+            originalPrice: item.originalPrice,
+            discount: item.discount,
+            currentBid: item.currentBid,
+            startingBid: item.startingBid,
+            buyNowPrice: item.buyNowPrice,
+            timeLeft: item.auctionEndDate ? getTimeLeft(item.auctionEndDate) : undefined,
+            totalBids: item.totalBids,
+            location: item.location,
+            postedDate: new Date(item.createdAt).toLocaleDateString(),
+            userRating: 4.8,
+            userReviews: 127,
+            isVerified: true,
+            priority: 'high',
+            tags: item.tags,
+            type: item.type,
+            lookingFor: item.lookingFor,
+            exchangeType: 'negotiable',
+            preferredCategories: ['Electronics', 'Computers'],
+            itemValue: item.price || 0,
+            shipping: item.shipping,
+            fastShipping: item.fastShipping
+          }}
+          recommendations={[]}
+          onItemSelect={(selectedItem) => (window.location.href = `/item/${selectedItem.id}`)}
+        />
+      </div>
     </div>
   );
 }
