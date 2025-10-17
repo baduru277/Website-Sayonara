@@ -4,33 +4,60 @@ import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
 import ItemComparison from '../../../components/ItemComparison';
+import '../../../components/Header.css';
+import type { Item } from '../../../types/item';
 
-interface ItemClientProps {
-  item: any; // Use the same Item type from page.tsx or export it
+interface Props {
+  item: Item;
 }
 
-export default function ItemDetailClient({ item }: ItemClientProps) {
+export default function ItemDetailClient({ item }: Props) {
   const [mainImg, setMainImg] = useState(0);
   const [tab, setTab] = useState('description');
 
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(price);
+  const platformNote =
+    'Note: This platform allows you to bid, exchange, or resell used products. Connect with other users to find great deals, swap items, or get the best price for your pre-owned goods.';
 
-  const getTimeLeft = (endDate: string) => {
+  function formatPrice(price: number) {
+    return new Intl.NumberFormat('en-IN', {
+      style: 'currency',
+      currency: 'INR',
+      minimumFractionDigits: 0,
+      maximumFractionDigits: 0,
+    }).format(price);
+  }
+
+  function getTimeLeft(endDate: string) {
     const now = new Date().getTime();
     const end = new Date(endDate).getTime();
     const diff = end - now;
+
     if (diff <= 0) return 'Auction ended';
+
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
     if (days > 0) return `${days}d ${hours}h left`;
     if (hours > 0) return `${hours}h ${minutes}m left`;
     return `${minutes}m left`;
+  }
+
+  const handleChatWithSeller = () => {
+    window.location.href = `/messages?seller=${item.user?.email}`;
   };
 
-  const platformNote =
-    'Note: This platform allows you to bid, exchange, or resell used products. Connect with other users to find great deals, swap items, or get the best price for your pre-owned goods.';
+  const handleBidNow = () => {
+    window.location.href = `/bidding?item=${item.id}`;
+  };
+
+  const handleBarter = () => {
+    window.location.href = `/exchange?item=${item.id}`;
+  };
+
+  const handleBuyNow = () => {
+    alert('Buy now functionality coming soon!');
+  };
 
   return (
     <div style={{ background: '#fafafd', minHeight: 'calc(100vh - 120px)', padding: '32px 0' }}>
@@ -48,18 +75,23 @@ export default function ItemDetailClient({ item }: ItemClientProps) {
               height: 400,
             }}
           >
-            {item.images?.length ? (
-              <Image src={item.images[mainImg]} alt="main" fill style={{ borderRadius: 8, objectFit: 'contain' }} />
+            {item.images && item.images.length > 0 ? (
+              <Image
+                src={item.images[mainImg] || '/api/placeholder/400/400'}
+                alt="main"
+                fill
+                style={{ borderRadius: 8, objectFit: 'contain' }}
+              />
             ) : (
               <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>
                 No image available
               </div>
             )}
           </div>
-          {/* Thumbnails */}
-          {item.images?.length > 1 && (
+
+          {item.images && item.images.length > 1 && (
             <div style={{ display: 'flex', gap: 8, justifyContent: 'center', flexWrap: 'wrap' }}>
-              {item.images.map((img: string, idx: number) => (
+              {item.images.map((img, idx) => (
                 <div
                   key={img}
                   style={{
@@ -80,7 +112,7 @@ export default function ItemDetailClient({ item }: ItemClientProps) {
           )}
         </div>
 
-        {/* Product Info */}
+        {/* Product Info & Actions */}
         <div style={{ flex: 2, minWidth: 320 }}>
           <div
             style={{
@@ -98,80 +130,71 @@ export default function ItemDetailClient({ item }: ItemClientProps) {
 
           <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: '#333' }}>{item.title}</div>
 
-          {/* Pricing / Bidding / Exchange */}
-          {/* ...Reuse your previous JSX with formatPrice() and getTimeLeft()... */}
+          <div style={{ color: '#666', fontSize: 15, marginBottom: 4 }}>
+            SKU: <b>{item.id.slice(0, 8).toUpperCase()}</b> &nbsp; Category: <b>{item.category}</b>
+          </div>
+          <div style={{ color: '#388e3c', fontWeight: 600, marginBottom: 4 }}>Availability: In Stock</div>
+          <div style={{ color: '#888', fontSize: 15, marginBottom: 4 }}>Location: <b>{item.location}</b></div>
 
-          {/* Tabs */}
-          <div style={{ maxWidth: 900, marginTop: 32 }}>
-            <div style={{ display: 'flex', gap: 32, borderBottom: '2px solid #eee', marginBottom: 18 }}>
-              {['description', 'specification', 'reviews'].map((t) => (
-                <span
-                  key={t}
-                  style={{
-                    fontWeight: 600,
-                    color: tab === t ? '#924DAC' : '#888',
-                    borderBottom: tab === t ? '3px solid #924DAC' : 'none',
-                    paddingBottom: 8,
-                    cursor: 'pointer',
-                  }}
-                  onClick={() => setTab(t)}
-                >
-                  {t.toUpperCase()}
-                </span>
-              ))}
-            </div>
-            <div>
-              {tab === 'description' && <p>{item.description}</p>}
-              {tab === 'specification' && (
-                <div>
-                  <strong>Category:</strong> {item.category}
-                  <br />
-                  <strong>Condition:</strong> {item.condition}
+          {/* Pricing */}
+          <div style={{ margin: '16px 0' }}>
+            {item.type === 'resell' && item.price && (
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#924DAC' }}>
+                {formatPrice(item.price)}
+                {item.originalPrice && item.originalPrice > item.price && (
+                  <>
+                    <span style={{ color: '#888', fontSize: 18, textDecoration: 'line-through', marginLeft: 8 }}>
+                      {formatPrice(item.originalPrice)}
+                    </span>
+                    {item.discount && (
+                      <span style={{ color: '#2ecc40', fontWeight: 600, fontSize: 16, marginLeft: 8 }}>{item.discount}% OFF</span>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {item.type === 'bidding' && item.startingBid && (
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#924DAC', marginBottom: 4 }}>
+                  Starting Bid: {formatPrice(item.startingBid)}
                 </div>
-              )}
-              {tab === 'reviews' && <div>No reviews yet.</div>}
-            </div>
+                {item.currentBid && <div style={{ fontSize: 16, color: '#666', marginBottom: 4 }}>Current Bid: {formatPrice(item.currentBid)}</div>}
+                {item.auctionEndDate && <div style={{ fontSize: 14, color: '#e74c3c', fontWeight: 600 }}>⏰ {getTimeLeft(item.auctionEndDate)}</div>}
+                {item.totalBids && <div style={{ fontSize: 14, color: '#666' }}>{item.totalBids} bids placed</div>}
+              </div>
+            )}
+
+            {item.type === 'exchange' && item.lookingFor && (
+              <div style={{ fontSize: 18, fontWeight: 600, color: '#924DAC' }}>Looking for: {item.lookingFor}</div>
+            )}
           </div>
 
-          {/* Item Comparison */}
-          <div className="mt-8">
-            <ItemComparison
-              currentItem={{
-                id: item.id,
-                title: item.title,
-                description: item.description,
-                image: item.images[0] || '',
-                images: item.images,
-                category: item.category,
-                condition: item.condition,
-                price: item.price,
-                originalPrice: item.originalPrice,
-                discount: item.discount,
-                currentBid: item.currentBid,
-                startingBid: item.startingBid,
-                buyNowPrice: item.buyNowPrice,
-                timeLeft: item.auctionEndDate ? getTimeLeft(item.auctionEndDate) : undefined,
-                totalBids: item.totalBids,
-                location: item.location,
-                postedDate: new Date(item.createdAt).toLocaleDateString(),
-                userRating: 4.8,
-                userReviews: 127,
-                isVerified: true,
-                priority: 'high',
-                tags: item.tags,
-                type: item.type,
-                lookingFor: item.lookingFor,
-                shipping: item.shipping,
-                fastShipping: item.fastShipping,
-              }}
-              recommendations={[]} // Add your recommendations here
-              onItemSelect={(selectedItem) => {
-                window.location.href = `/item/${selectedItem.id}`;
-              }}
-            />
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+            <button onClick={handleChatWithSeller} className="sayonara-btn" style={{ minWidth: 140, background: '#924DAC', color: '#fff' }}>
+              💬 Chat with Seller
+            </button>
+            {item.type === 'bidding' && (
+              <button onClick={handleBidNow} className="sayonara-btn" style={{ minWidth: 140 }}>
+                🎯 Bid Now
+              </button>
+            )}
+            {item.type === 'exchange' && (
+              <button onClick={handleBarter} className="sayonara-btn" style={{ minWidth: 140 }}>
+                🔄 Barter
+              </button>
+            )}
+            {item.type === 'resell' && item.buyNowPrice && (
+              <button onClick={handleBuyNow} className="sayonara-btn" style={{ minWidth: 140, background: '#2ecc40', color: '#fff' }}>
+                💳 Buy Now
+              </button>
+            )}
           </div>
         </div>
       </div>
+
+      {/* TODO: Tabs Section, ItemComparison */}
     </div>
   );
 }
