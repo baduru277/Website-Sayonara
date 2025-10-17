@@ -1,13 +1,9 @@
-// src/app/item/[id]/page.tsx
-'use client';
-
-import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
-import { notFound } from 'next/navigation';
-import '../../../components/Header.css';
 import apiService from '../../../services/api';
 import ItemComparison from '../../../components/ItemComparison';
+import '../../../components/Header.css';
+import { notFound } from 'next/navigation';
 
 interface Item {
   id: string;
@@ -40,214 +36,148 @@ interface Item {
     email: string;
   };
   warrantyStatus?: string;
+  itemCondition?: string;
+  damageInfo?: string;
   usageHistory?: string;
   originalBox?: string;
-  damageInfo?: string;
 }
 
-interface PageProps {
+interface ItemPageProps {
   params: { id: string };
 }
 
-export default function ItemDetailPage({ params }: PageProps) {
+function formatPrice(price: number) {
+  return new Intl.NumberFormat('en-IN', {
+    style: 'currency',
+    currency: 'INR',
+    minimumFractionDigits: 0,
+    maximumFractionDigits: 0,
+  }).format(price);
+}
+
+function getTimeLeft(endDate: string) {
+  const now = new Date().getTime();
+  const end = new Date(endDate).getTime();
+  const diff = end - now;
+
+  if (diff <= 0) return 'Auction ended';
+
+  const days = Math.floor(diff / (1000 * 60 * 60 * 24));
+  const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
+  const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
+
+  if (days > 0) return `${days}d ${hours}h left`;
+  if (hours > 0) return `${hours}h ${minutes}m left`;
+  return `${minutes}m left`;
+}
+
+export default async function ItemDetailPage({ params }: ItemPageProps) {
   const itemId = params.id;
-  const [item, setItem] = useState<Item | null>(null);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [mainImg, setMainImg] = useState(0);
-  const [tab, setTab] = useState('description');
-  const [isLoggedIn, setIsLoggedIn] = useState(false);
 
-  useEffect(() => {
-    // Check if user is logged in
-    const token = localStorage.getItem('token');
-    setIsLoggedIn(!!token);
+  // Fetch item data server-side
+  const item = await apiService.getItemById(itemId);
 
-    // Fetch item
-    const fetchItem = async () => {
-      try {
-        setLoading(true);
-        const itemData = await apiService.getItemById(itemId);
-        setItem(itemData);
-      } catch (err) {
-        console.error(err);
-        setError('Failed to load item details');
-      } finally {
-        setLoading(false);
-      }
-    };
+  if (!item) notFound();
 
-    fetchItem();
-  }, [itemId]);
-
-  const handleChatWithSeller = () => {
-    if (!isLoggedIn) return window.location.href = '/login';
-    window.location.href = `/messages?seller=${item?.user?.email}`;
-  };
-
-  const handleBidNow = () => {
-    if (!isLoggedIn) return window.location.href = '/login';
-    window.location.href = `/bidding?item=${itemId}`;
-  };
-
-  const handleBarter = () => {
-    if (!isLoggedIn) return window.location.href = '/login';
-    window.location.href = `/exchange?item=${itemId}`;
-  };
-
-  const handleBuyNow = () => {
-    if (!isLoggedIn) return window.location.href = '/login';
-    alert('Buy now functionality coming soon!');
-  };
-
-  const formatPrice = (price: number) =>
-    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(price);
-
-  const getTimeLeft = (endDate: string) => {
-    const now = new Date().getTime();
-    const end = new Date(endDate).getTime();
-    const diff = end - now;
-    if (diff <= 0) return 'Auction ended';
-    const days = Math.floor(diff / (1000 * 60 * 60 * 24));
-    const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
-    const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    if (days > 0) return `${days}d ${hours}h left`;
-    if (hours > 0) return `${hours}h ${minutes}m left`;
-    return `${minutes}m left`;
-  };
-
-  if (loading) {
-    return (
-      <div style={{ minHeight: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
-        Loading item details...
-      </div>
-    );
-  }
-
-  if (error || !item) {
-    return (
-      <div style={{ minHeight: '80vh', display: 'flex', justifyContent: 'center', alignItems: 'center', flexDirection: 'column' }}>
-        <div>{error || 'Item not found'}</div>
-        <Link href="/browse">← Back to Browse</Link>
-      </div>
-    );
-  }
+  const platformNote =
+    'Note: This platform allows you to bid, exchange, or resell used products. Connect with other users to find great deals, swap items, or get the best price for your pre-owned goods.';
 
   return (
-    <div style={{ padding: 32 }}>
-      <div style={{ display: 'flex', gap: 40, flexWrap: 'wrap' }}>
+    <div style={{ background: '#fafafd', minHeight: 'calc(100vh - 120px)', padding: '32px 0' }}>
+      <div style={{ maxWidth: 1200, margin: '0 auto', display: 'flex', gap: 40, flexWrap: 'wrap', alignItems: 'flex-start' }}>
         {/* Image Gallery */}
         <div style={{ flex: 1, minWidth: 320 }}>
-          <div style={{ position: 'relative', height: 400, background: '#fff', borderRadius: 12 }}>
-            {item.images && item.images.length ? (
-              <Image src={item.images[mainImg]} alt="main" fill style={{ objectFit: 'contain' }} />
-            ) : <div>No image available</div>}
-          </div>
-
-          {/* Thumbnails */}
-          <div style={{ display: 'flex', gap: 8, marginTop: 8 }}>
-            {item.images.map((img, idx) => (
-              <div key={idx} onClick={() => setMainImg(idx)} style={{ width: 56, height: 56, border: mainImg === idx ? '2px solid #924DAC' : '1px solid #ccc', cursor: 'pointer' }}>
-                <Image src={img} alt={`thumb-${idx}`} fill style={{ objectFit: 'cover' }} />
+          <div
+            style={{
+              background: '#fff',
+              borderRadius: 12,
+              boxShadow: '0 2px 8px rgba(0,0,0,0.07)',
+              padding: 18,
+              marginBottom: 18,
+              position: 'relative',
+              height: 400,
+            }}
+          >
+            {item.images && item.images.length > 0 ? (
+              <Image
+                src={item.images[0] || '/api/placeholder/400/400'}
+                alt="main"
+                fill
+                style={{ borderRadius: 8, objectFit: 'contain' }}
+              />
+            ) : (
+              <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%', color: '#999' }}>
+                No image available
               </div>
-            ))}
+            )}
           </div>
         </div>
 
-        {/* Info & Actions */}
+        {/* Product Info */}
         <div style={{ flex: 2, minWidth: 320 }}>
-          <h2>{item.title}</h2>
-          <div>Category: {item.category}</div>
-          <div>Condition: {item.condition}</div>
-          <div>Location: {item.location}</div>
+          {/* Platform Note */}
+          <div
+            style={{
+              background: '#f7f7fa',
+              borderLeft: '4px solid #924DAC',
+              borderRadius: 8,
+              padding: '10px 18px',
+              color: '#555',
+              marginBottom: 18,
+              fontSize: 15,
+            }}
+          >
+            {platformNote}
+          </div>
 
-          {/* Pricing */}
-          {item.type === 'resell' && item.price && <div>Price: {formatPrice(item.price)}</div>}
-          {item.type === 'bidding' && item.startingBid && (
-            <div>
-              <div>Starting Bid: {formatPrice(item.startingBid)}</div>
-              {item.currentBid && <div>Current Bid: {formatPrice(item.currentBid)}</div>}
-              {item.auctionEndDate && <div>⏰ {getTimeLeft(item.auctionEndDate)}</div>}
-            </div>
-          )}
-          {item.type === 'exchange' && item.lookingFor && <div>Looking for: {item.lookingFor}</div>}
+          {/* Product Title */}
+          <div style={{ fontSize: 22, fontWeight: 700, marginBottom: 8, color: '#333' }}>{item.title}</div>
 
-          {/* Actions */}
-          <div style={{ marginTop: 16, display: 'flex', gap: 12 }}>
-            <button onClick={handleChatWithSeller}>Chat with Seller</button>
-            {item.type === 'bidding' && <button onClick={handleBidNow}>Bid Now</button>}
-            {item.type === 'exchange' && <button onClick={handleBarter}>Barter</button>}
-            {item.type === 'resell' && item.buyNowPrice && <button onClick={handleBuyNow}>Buy Now</button>}
+          {/* SKU, Category, Location */}
+          <div style={{ color: '#666', fontSize: 15, marginBottom: 4 }}>
+            SKU: <b>{item.id.slice(0, 8).toUpperCase()}</b> &nbsp; Category: <b>{item.category}</b>
+          </div>
+          <div style={{ color: '#388e3c', fontWeight: 600, marginBottom: 4 }}>Availability: In Stock</div>
+          <div style={{ color: '#888', fontSize: 15, marginBottom: 4 }}>Location: <b>{item.location}</b></div>
+
+          {/* Pricing Section */}
+          <div style={{ margin: '16px 0' }}>
+            {item.type === 'resell' && item.price && (
+              <div style={{ fontSize: 24, fontWeight: 700, color: '#924DAC' }}>
+                {formatPrice(item.price)}
+                {item.originalPrice && item.originalPrice > item.price && (
+                  <>
+                    <span style={{ color: '#888', fontSize: 18, textDecoration: 'line-through', marginLeft: 8 }}>
+                      {formatPrice(item.originalPrice)}
+                    </span>
+                    {item.discount && (
+                      <span style={{ color: '#2ecc40', fontWeight: 600, fontSize: 16, marginLeft: 8 }}>{item.discount}% OFF</span>
+                    )}
+                  </>
+                )}
+              </div>
+            )}
+
+            {item.type === 'bidding' && item.startingBid && (
+              <div>
+                <div style={{ fontSize: 20, fontWeight: 700, color: '#924DAC', marginBottom: 4 }}>
+                  Starting Bid: {formatPrice(item.startingBid)}
+                </div>
+                {item.currentBid && <div style={{ fontSize: 16, color: '#666', marginBottom: 4 }}>Current Bid: {formatPrice(item.currentBid)}</div>}
+                {item.auctionEndDate && <div style={{ fontSize: 14, color: '#e74c3c', fontWeight: 600 }}>⏰ {getTimeLeft(item.auctionEndDate)}</div>}
+                {item.totalBids && <div style={{ fontSize: 14, color: '#666' }}>{item.totalBids} bids placed</div>}
+              </div>
+            )}
+
+            {item.type === 'exchange' && item.lookingFor && (
+              <div style={{ fontSize: 18, fontWeight: 600, color: '#924DAC' }}>Looking for: {item.lookingFor}</div>
+            )}
           </div>
         </div>
       </div>
 
-      {/* Tabs */}
-      <div style={{ marginTop: 32 }}>
-        <div style={{ display: 'flex', gap: 32 }}>
-          {['description', 'specification', 'reviews'].map((t) => (
-            <span
-              key={t}
-              style={{ cursor: 'pointer', fontWeight: tab === t ? 600 : 400, color: tab === t ? '#924DAC' : '#888' }}
-              onClick={() => setTab(t)}
-            >
-              {t.toUpperCase()}
-            </span>
-          ))}
-        </div>
-
-        <div style={{ marginTop: 16 }}>
-          {tab === 'description' && <p>{item.description}</p>}
-          {tab === 'specification' && (
-            <div>
-              <div>Category: {item.category}</div>
-              <div>Condition: {item.condition}</div>
-              <div>Location: {item.location}</div>
-              {item.warrantyStatus && <div>Warranty: {item.warrantyStatus}</div>}
-              {item.usageHistory && <div>Usage: {item.usageHistory}</div>}
-              {item.originalBox && <div>Original Box: {item.originalBox}</div>}
-              {item.shipping && <div>Shipping: {item.shipping}</div>}
-            </div>
-          )}
-          {tab === 'reviews' && <div>No reviews yet</div>}
-        </div>
-      </div>
-
-      {/* Item Comparison */}
-      <div style={{ marginTop: 32 }}>
-        <ItemComparison
-          currentItem={{
-            id: item.id,
-            title: item.title,
-            description: item.description,
-            image: item.images[0] || '',
-            images: item.images,
-            category: item.category,
-            condition: item.condition,
-            price: item.price,
-            originalPrice: item.originalPrice,
-            discount: item.discount,
-            currentBid: item.currentBid,
-            startingBid: item.startingBid,
-            buyNowPrice: item.buyNowPrice,
-            timeLeft: item.auctionEndDate ? getTimeLeft(item.auctionEndDate) : undefined,
-            totalBids: item.totalBids,
-            location: item.location,
-            postedDate: new Date(item.createdAt).toLocaleDateString(),
-            userRating: 4.8,
-            userReviews: 127,
-            isVerified: true,
-            priority: 'high',
-            tags: item.tags,
-            type: item.type,
-            lookingFor: item.lookingFor,
-            shipping: item.shipping,
-            fastShipping: item.fastShipping
-          }}
-          recommendations={[]} // Add real recommendations if available
-          onItemSelect={(selected) => window.location.href = `/item/${selected.id}`}
-        />
-      </div>
+      {/* Tabs and ItemComparison could be added here similarly */}
+      {/* ... */}
     </div>
   );
 }
