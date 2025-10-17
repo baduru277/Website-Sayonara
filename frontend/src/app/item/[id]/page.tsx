@@ -1,5 +1,3 @@
-'use client';
-
 import { useState } from 'react';
 import Image from 'next/image';
 import Link from 'next/link';
@@ -41,13 +39,6 @@ interface Item {
   damageInfo?: string;
 }
 
-interface PageProps {
-  params: {
-    id: string;
-  };
-  searchParams?: Record<string, string | string[]>;
-}
-
 function formatPrice(price: number) {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -73,13 +64,12 @@ function getTimeLeft(endDate: string) {
   return `${minutes}m left`;
 }
 
-export default function ItemDetailPage({ params }: PageProps) {
-  const [mainImg, setMainImg] = useState(0);
-  const [tab, setTab] = useState('description');
+export default async function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
+  const { id } = await params;
 
-  // TODO: Fetch item data using params.id
+  // TODO: Fetch item data using id
   const item: Item = {
-    id: params.id,
+    id: id,
     title: 'Sample Item',
     description: 'Sample description',
     category: 'Electronics',
@@ -91,6 +81,14 @@ export default function ItemDetailPage({ params }: PageProps) {
     views: 0,
     createdAt: new Date().toISOString(),
   };
+
+  return <ItemDetailClient item={item} />;
+}
+
+function ItemDetailClient({ item }: { item: Item }) {
+  'use client';
+  const [mainImg, setMainImg] = useState(0);
+  const [tab, setTab] = useState('description');
 
   const platformNote =
     'Note: This platform allows you to bid, exchange, or resell used products. Connect with other users to find great deals, swap items, or get the best price for your pre-owned goods.';
