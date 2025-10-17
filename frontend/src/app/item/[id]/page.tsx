@@ -1,7 +1,7 @@
+'use client';
+
 import { useState } from 'react';
 import Image from 'next/image';
-import Link from 'next/link';
-import ItemComparison from '../../../components/ItemComparison';
 
 interface Item {
   id: string;
@@ -39,6 +39,10 @@ interface Item {
   damageInfo?: string;
 }
 
+interface Props {
+  item: Item;
+}
+
 function formatPrice(price: number) {
   return new Intl.NumberFormat('en-IN', {
     style: 'currency',
@@ -64,29 +68,7 @@ function getTimeLeft(endDate: string) {
   return `${minutes}m left`;
 }
 
-export default async function ItemDetailPage({ params }: { params: Promise<{ id: string }> }) {
-  const { id } = await params;
-
-  // TODO: Fetch item data using id
-  const item: Item = {
-    id: id,
-    title: 'Sample Item',
-    description: 'Sample description',
-    category: 'Electronics',
-    condition: 'Like New',
-    type: 'resell',
-    images: [],
-    tags: [],
-    location: 'Mumbai',
-    views: 0,
-    createdAt: new Date().toISOString(),
-  };
-
-  return <ItemDetailClient item={item} />;
-}
-
-function ItemDetailClient({ item }: { item: Item }) {
-  'use client';
+export default function ItemDetailClient({ item }: Props) {
   const [mainImg, setMainImg] = useState(0);
   const [tab, setTab] = useState('description');
 
