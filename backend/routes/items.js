@@ -1,5 +1,5 @@
 const express = require('express');
-const { Op } = require('sequelize');
+const { Op, fn, col } = require('sequelize');
 const { Item, User, Bid } = require('../models');
 const { auth, optionalAuth } = require('../middleware/auth');
 
@@ -85,15 +85,15 @@ router.get('/', optionalAuth, async (req, res) => {
         }
       ],
       order: [[sortBy, order]],
-      limit: parseInt(limit),
-      offset: parseInt(offset)
+      limit: parseInt(limit) || 20,
+      offset: parseInt(offset) || 0
     });
 
     res.json({
       items: items.rows,
       total: items.count,
-      page: parseInt(page),
-      totalPages: Math.ceil(items.count / limit)
+      page: parseInt(page) || 1,
+      totalPages: Math.ceil(items.count / (limit || 20))
     });
   } catch (error) {
     console.error('Get items error:', error);
@@ -110,28 +110,30 @@ router.get('/:id', optionalAuth, async (req, res) => {
           model: User,
           as: 'seller',
           attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'location']
-        },
-        {
-          model: Bid,
-          as: 'bids',
-          include: [
-            {
-              model: User,
-              as: 'bidder',
-              attributes: ['id', 'name']
-            }
-          ],
-          order: [['amount', 'DESC']],
-          limit: 10
         }
       ]
     });
 
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
+    // Increment view count
     await item.increment('views');
 
-    res.json({ item });
+    // Get latest 10 bids for this item
+    const bids = await Bid.findAll({
+      where: { itemId: item.id },
+      include: [
+        {
+          model: User,
+          as: 'bidder',
+          attributes: ['id', 'name']
+        }
+      ],
+      order: [['amount', 'DESC']],
+      limit: 10
+    });
+
+    res.json({ item, bids });
   } catch (error) {
     console.error('Get item error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -254,7 +256,10 @@ router.post('/:id/bid', auth, async (req, res) => {
     if (amount <= item.currentBid) return res.status(400).json({ error: 'Bid must be higher than current bid' });
 
     await Bid.create({ amount, userId: req.user.id, itemId: item.id });
+
     await item.update({ currentBid: amount, totalBids: item.totalBids + 1 });
+
+    // Mark previous bids as not winning
     await Bid.update({ isWinning: false }, { where: { itemId: item.id } });
     await Bid.update({ isWinning: true }, { where: { itemId: item.id, amount } });
 
@@ -289,11 +294,11 @@ router.get('/categories/list', async (req, res) => {
     const categories = await Item.findAll({
       attributes: [
         'category',
-        [require('sequelize').fn('COUNT', require('sequelize').col('id')), 'count']
+        [fn('COUNT', col('id')), 'count']
       ],
       where: { isActive: true },
       group: ['category'],
-      order: [[require('sequelize').fn('COUNT', require('sequelize').col('id')), 'DESC']]
+      order: [[fn('COUNT', col('id')), 'DESC']]
     });
     res.json({ categories });
   } catch (error) {
