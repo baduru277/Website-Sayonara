@@ -132,5 +132,14 @@ const Item = sequelize.define('Item', {
     }
   ]
 });
+Item.associate = (models) => {
+  // Each Item belongs to one User, referenced as "seller"
+  Item.belongsTo(models.User, {
+    as: 'seller',            // alias name used in your include
+    foreignKey: 'userId',    // the FK in the Item table
+    onDelete: 'CASCADE'
+  });
+};
+
 
 module.exports = Item; 
