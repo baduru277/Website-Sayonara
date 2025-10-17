@@ -41,8 +41,11 @@ interface Item {
   damageInfo?: string;
 }
 
-interface Props {
-  item: Item;
+interface PageProps {
+  params: {
+    id: string;
+  };
+  searchParams?: Record<string, string | string[]>;
 }
 
 function formatPrice(price: number) {
@@ -70,9 +73,24 @@ function getTimeLeft(endDate: string) {
   return `${minutes}m left`;
 }
 
-export default function ItemDetailClient({ item }: Props) {
+export default function ItemDetailPage({ params }: PageProps) {
   const [mainImg, setMainImg] = useState(0);
   const [tab, setTab] = useState('description');
+
+  // TODO: Fetch item data using params.id
+  const item: Item = {
+    id: params.id,
+    title: 'Sample Item',
+    description: 'Sample description',
+    category: 'Electronics',
+    condition: 'Like New',
+    type: 'resell',
+    images: [],
+    tags: [],
+    location: 'Mumbai',
+    views: 0,
+    createdAt: new Date().toISOString(),
+  };
 
   const platformNote =
     'Note: This platform allows you to bid, exchange, or resell used products. Connect with other users to find great deals, swap items, or get the best price for your pre-owned goods.';
