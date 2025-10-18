@@ -1,89 +1,160 @@
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-const User = sequelize.define('User', {
+const Item = sequelize.define('Item', {
   id: {
     type: DataTypes.UUID,
     defaultValue: DataTypes.UUIDV4,
     primaryKey: true
   },
-  name: {
-    type: DataTypes.TEXT,
+  title: {
+    type: DataTypes.STRING,
     allowNull: false,
+    validate: {
+      len: [3, 200]
+    }
   },
-  email: {
+  description: {
     type: DataTypes.TEXT,
-    allowNull: false,
-    unique: true,
+    allowNull: false
   },
-  password: {
-    type: DataTypes.TEXT,
-    allowNull: false,
+  category: {
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  avatar: {
-    type: DataTypes.TEXT,
-    allowNull: true,
+  condition: {
+    type: DataTypes.ENUM('New', 'Like New', 'Excellent', 'Very Good', 'Good', 'Fair'),
+    allowNull: false
   },
-  phone: {
+  type: {
+    type: DataTypes.ENUM('exchange', 'bidding', 'resell'),
+    allowNull: false
+  },
+  priority: {
+    type: DataTypes.ENUM('high', 'medium', 'low'),
+    defaultValue: 'medium'
+  },
+  images: {
     type: DataTypes.TEXT,
-    allowNull: true,
+    defaultValue: '[]',
+    get() {
+      const value = this.getDataValue('images');
+      try {
+        return typeof value === 'string' ? JSON.parse(value) : value || [];
+      } catch {
+        return [];
+      }
+    },
+    set(value) {
+      this.setDataValue('images', JSON.stringify(value || []));
+    }
+  },
+  tags: {
+    type: DataTypes.TEXT,
+    defaultValue: '[]',
+    get() {
+      const value = this.getDataValue('tags');
+      try {
+        return typeof value === 'string' ? JSON.parse(value) : value || [];
+      } catch {
+        return [];
+      }
+    },
+    set(value) {
+      this.setDataValue('tags', JSON.stringify(value || []));
+    }
   },
   location: {
-    type: DataTypes.TEXT,
-    allowNull: true,
+    type: DataTypes.STRING,
+    allowNull: false
   },
-  bio: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-  isVerified: {
+  isActive: {
     type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
+    defaultValue: true
   },
-  rating: {
-    type: DataTypes.FLOAT,
-    allowNull: false,
-    defaultValue: 0.0,
+  isFeatured: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
   },
-  totalReviews: {
+  views: {
     type: DataTypes.INTEGER,
-    allowNull: false,
-    defaultValue: 0,
+    defaultValue: 0
+  },
+  lookingFor: {
+    type: DataTypes.TEXT,
+    allowNull: true
+  },
+  startingBid: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  currentBid: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  buyNowPrice: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  auctionEndDate: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  totalBids: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+  price: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  originalPrice: {
+    type: DataTypes.DECIMAL(10, 2),
+    allowNull: true
+  },
+  discount: {
+    type: DataTypes.INTEGER,
+    allowNull: true
+  },
+  stock: {
+    type: DataTypes.INTEGER,
+    defaultValue: 1
+  },
+  shipping: {
+    type: DataTypes.STRING,
+    allowNull: true
   },
   isPrime: {
     type: DataTypes.BOOLEAN,
-    allowNull: false,
-    defaultValue: false,
+    defaultValue: false
   },
-  lastActive: {
-    type: DataTypes.DATE,
-    allowNull: true,
-  },
-  otpCode: {
-    type: DataTypes.TEXT,
-    allowNull: true,
-  },
-  otpExpires: {
-    type: DataTypes.DATE,
-    allowNull: true,
-  },
+  fastShipping: {
+    type: DataTypes.BOOLEAN,
+    defaultValue: false
+  }
 }, {
-  timestamps: true,
+  indexes: [
+    { fields: ['type'] },
+    { fields: ['category'] },
+    { fields: ['priority'] },
+    { fields: ['isActive'] },
+    { fields: ['createdAt'] },
+    { fields: ['userId'] }
+  ]
 });
 
-User.associate = (models) => {
-  User.hasMany(models.Item, {
-    as: 'items',
+Item.associate = (models) => {
+  Item.belongsTo(models.User, {
+    as: 'seller',
     foreignKey: 'userId',
     onDelete: 'CASCADE'
   });
 
-  User.hasMany(models.Bid, {
+  Item.hasMany(models.Bid, {
     as: 'bids',
-    foreignKey: 'userId',
+    foreignKey: 'itemId',
     onDelete: 'CASCADE'
   });
 };
 
-module.exports = User;
+module.exports = Item;
