@@ -1,4 +1,4 @@
-const { Sequelize, DataTypes } = require('sequelize');
+const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
 const User = sequelize.define('User', {
@@ -37,12 +37,12 @@ const User = sequelize.define('User', {
     allowNull: true,
   },
   isVerified: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.BOOLEAN,
     allowNull: false,
-    defaultValue: 0,
+    defaultValue: false,
   },
   rating: {
-    type: DataTypes.REAL,
+    type: DataTypes.FLOAT,
     allowNull: false,
     defaultValue: 0.0,
   },
@@ -52,9 +52,9 @@ const User = sequelize.define('User', {
     defaultValue: 0,
   },
   isPrime: {
-    type: DataTypes.INTEGER,
+    type: DataTypes.BOOLEAN,
     allowNull: false,
-    defaultValue: 0,
+    defaultValue: false,
   },
   lastActive: {
     type: DataTypes.DATE,
@@ -69,10 +69,7 @@ const User = sequelize.define('User', {
     allowNull: true,
   },
 }, {
-  tableName: 'Users',
   timestamps: true,
-  createdAt: 'created_at',
-  updatedAt: 'updated_at',
 });
 
 User.associate = (models) => {
