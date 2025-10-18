@@ -58,12 +58,10 @@ const Item = sequelize.define('Item', {
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
-  // Exchange specific fields
   lookingFor: {
     type: DataTypes.TEXT,
     allowNull: true
   },
-  // Bidding specific fields
   startingBid: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
@@ -84,7 +82,6 @@ const Item = sequelize.define('Item', {
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
-  // Resell specific fields
   price: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
@@ -115,31 +112,27 @@ const Item = sequelize.define('Item', {
   }
 }, {
   indexes: [
-    {
-      fields: ['type']
-    },
-    {
-      fields: ['category']
-    },
-    {
-      fields: ['priority']
-    },
-    {
-      fields: ['isActive']
-    },
-    {
-      fields: ['createdAt']
-    }
+    { fields: ['type'] },
+    { fields: ['category'] },
+    { fields: ['priority'] },
+    { fields: ['isActive'] },
+    { fields: ['createdAt'] },
+    { fields: ['userId'] }
   ]
 });
+
 Item.associate = (models) => {
-  // Each Item belongs to one User, referenced as "seller"
   Item.belongsTo(models.User, {
-    as: 'seller',            // alias name used in your include
-    foreignKey: 'userId',    // the FK in the Item table
+    as: 'seller',
+    foreignKey: 'userId',
+    onDelete: 'CASCADE'
+  });
+
+  Item.hasMany(models.Bid, {
+    as: 'bids',
+    foreignKey: 'itemId',
     onDelete: 'CASCADE'
   });
 };
 
-
-module.exports = Item; 
+module.exports = Item;
