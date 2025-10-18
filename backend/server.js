@@ -1,5 +1,7 @@
 const express = require('express');
 const cors = require('cors');
+const fs = require('fs');
+const path = require('path');
 require('dotenv').config();
 
 const app = express();
@@ -41,8 +43,17 @@ app.get('/health', (req, res) => {
 // Initialize database and start server
 const startServer = async () => {
   try {
+    // Delete old database file for fresh start (development only)
+    if (process.env.NODE_ENV !== 'production') {
+      const dbPath = path.join(__dirname, 'database.sqlite');
+      if (fs.existsSync(dbPath)) {
+        fs.unlinkSync(dbPath);
+        console.log('🗑️  Cleaned up old database');
+      }
+    }
+
     // Sync database
-    await sequelize.sync({ alter: true });
+    await sequelize.sync({ force: false });
     console.log('✅ Database synchronized');
 
     // Start server
