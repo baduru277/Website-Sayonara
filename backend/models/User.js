@@ -1,7 +1,12 @@
 const { Sequelize, DataTypes } = require('sequelize');
-const sequelize = require('../config/database'); // adjust path to your sequelize instance
+const sequelize = require('../config/database');
 
 const User = sequelize.define('User', {
+  id: {
+    type: DataTypes.UUID,
+    defaultValue: DataTypes.UUIDV4,
+    primaryKey: true
+  },
   name: {
     type: DataTypes.TEXT,
     allowNull: false,
@@ -34,7 +39,7 @@ const User = sequelize.define('User', {
   isVerified: {
     type: DataTypes.INTEGER,
     allowNull: false,
-    defaultValue: 0, // 0 = false, 1 = true
+    defaultValue: 0,
   },
   rating: {
     type: DataTypes.REAL,
@@ -69,5 +74,19 @@ const User = sequelize.define('User', {
   createdAt: 'created_at',
   updatedAt: 'updated_at',
 });
+
+User.associate = (models) => {
+  User.hasMany(models.Item, {
+    as: 'items',
+    foreignKey: 'userId',
+    onDelete: 'CASCADE'
+  });
+
+  User.hasMany(models.Bid, {
+    as: 'bids',
+    foreignKey: 'userId',
+    onDelete: 'CASCADE'
+  });
+};
 
 module.exports = User;
