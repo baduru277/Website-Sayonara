@@ -13,11 +13,7 @@ router.get('/test', (req, res) => {
 // Clear all items (GET)
 router.get('/clear', async (req, res) => {
   try {
-    if (Item.mockItems) {
-      Item.mockItems = [];
-    } else {
-      await Item.destroy({ where: {} });
-    }
+    await Item.destroy({ where: {} });
     res.json({ message: 'All items cleared successfully' });
   } catch (error) {
     console.error('Clear items error:', error);
@@ -28,11 +24,7 @@ router.get('/clear', async (req, res) => {
 // Clear all items (DELETE)
 router.delete('/clear', async (req, res) => {
   try {
-    if (Item.mockItems) {
-      Item.mockItems = [];
-    } else {
-      await Item.destroy({ where: {} });
-    }
+    await Item.destroy({ where: {} });
     res.json({ message: 'All items cleared successfully' });
   } catch (error) {
     console.error('Clear items error:', error);
@@ -63,6 +55,7 @@ router.get('/', optionalAuth, async (req, res) => {
     if (category && category !== 'All') where.category = category;
     if (priority && priority !== 'All') where.priority = priority;
     if (condition && condition !== 'All') where.condition = condition;
+    
     if (search) {
       where[Op.or] = [
         { title: { [Op.iLike]: `%${search}%` } },
@@ -70,6 +63,7 @@ router.get('/', optionalAuth, async (req, res) => {
         { lookingFor: { [Op.iLike]: `%${search}%` } }
       ];
     }
+    
     if (tags) {
       const tagArray = tags.split(',');
       where.tags = { [Op.overlap]: tagArray };
