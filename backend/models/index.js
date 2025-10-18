@@ -2,18 +2,13 @@ const User = require('./User');
 const Item = require('./Item');
 const Bid = require('./Bid');
 
-// --- Associations ---
+// Call associate functions to set up relationships
+const models = { User, Item, Bid };
 
-// User ↔ Item
-User.hasMany(Item, { foreignKey: 'userId', as: 'items' });
-Item.belongsTo(User, { foreignKey: 'userId', as: 'seller' }); // ✅ alias is now 'seller'
+Object.values(models).forEach(model => {
+  if (model.associate) {
+    model.associate(models);
+  }
+});
 
-// User ↔ Bid
-User.hasMany(Bid, { foreignKey: 'userId', as: 'bids' });
-Bid.belongsTo(User, { foreignKey: 'userId', as: 'bidder' }); // ✅ alias is 'bidder'
-
-// Item ↔ Bid
-Item.hasMany(Bid, { foreignKey: 'itemId', as: 'bids' });
-Bid.belongsTo(Item, { foreignKey: 'itemId', as: 'item' });
-
-module.exports = { User, Item, Bid };
+module.exports = models;
