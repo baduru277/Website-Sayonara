@@ -5,10 +5,14 @@ require('dotenv').config();
 const app = express();
 const port = process.env.PORT || 4000;
 
+// Import sequelize and models
+const sequelize = require('./config/database');
+const { User, Item, Bid } = require('./models');
+
 // Middlewares
 app.use(cors({
-  origin: process.env.FRONTEND_URL || '*', // allow your frontend domain or all
-  methods: ['GET','POST','PUT','DELETE','OPTIONS'],
+  origin: process.env.FRONTEND_URL || '*',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   credentials: true
 }));
 app.use(express.json());
@@ -19,13 +23,13 @@ const authRouter = require('./routes/auth');
 const itemsRouter = require('./routes/items');
 const usersRouter = require('./routes/users');
 
-// Unified API prefix so frontend can call `${BASE_URL}/api/*`
+// API routes with prefix
 app.use('/api', indexRouter);
 app.use('/api/auth', authRouter);
 app.use('/api/items', itemsRouter);
 app.use('/api/users', usersRouter);
 
-// Top-level health endpoint for platform probes
+// Health check endpoint
 app.get('/health', (req, res) => {
   res.json({
     status: 'OK',
@@ -34,7 +38,22 @@ app.get('/health', (req, res) => {
   });
 });
 
-// Start server on all IPv4 addresses (0.0.0.0) and log IPv6 as well
-app.listen(port, '0.0.0.0', () => {
-  console.log(`✅ Backend running on port ${port} (accessible via 0.0.0.0)`);
-});
+// Initialize database and start server
+const startServer = async () => {
+  try {
+    // Sync database
+    await sequelize.sync({ alter: true });
+    console.log('✅ Database synchronized');
+
+    // Start server
+    app.listen(port, '0.0.0.0', () => {
+      console.log(`✅ Backend running on port ${port}`);
+      console.log(`🌐 Environment: ${process.env.NODE_ENV || 'development'}`);
+    });
+  } catch (error) {
+    console.error('❌ Server startup error:', error);
+    process.exit(1);
+  }
+};
+
+startServer();
