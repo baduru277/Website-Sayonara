@@ -72,13 +72,13 @@ export default function ItemDetailClient({ item }: Props) {
     const now = new Date().getTime();
     const end = new Date(endDate).getTime();
     const diff = end - now;
-    
+
     if (diff <= 0) return 'Auction ended';
-    
+
     const days = Math.floor(diff / (1000 * 60 * 60 * 24));
     const hours = Math.floor((diff % (1000 * 60 * 60 * 24)) / (1000 * 60 * 60));
     const minutes = Math.floor((diff % (1000 * 60 * 60)) / (1000 * 60));
-    
+
     if (days > 0) return `${days}d ${hours}h left`;
     if (hours > 0) return `${hours}h ${minutes}m left`;
     return `${minutes}m left`;
@@ -246,18 +246,95 @@ export default function ItemDetailClient({ item }: Props) {
             </div>
           )}
 
-          {/* Seller Info */}
+          {/* Action Buttons */}
+          <div style={{ display: 'flex', gap: 12, marginBottom: 18, flexWrap: 'wrap' }}>
+            <button
+              style={{
+                minWidth: 140,
+                padding: '10px 16px',
+                background: '#924DAC',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 6,
+                cursor: 'pointer',
+                fontWeight: 600,
+              }}
+            >
+              Chat with Seller
+            </button>
+
+            {item.type === 'bidding' && (
+              <button
+                style={{
+                  minWidth: 140,
+                  padding: '10px 16px',
+                  background: '#f39c12',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                Bid Now
+              </button>
+            )}
+
+            {item.type === 'exchange' && (
+              <button
+                style={{
+                  minWidth: 140,
+                  padding: '10px 16px',
+                  background: '#3498db',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                Barter
+              </button>
+            )}
+
+            {item.type === 'resell' && item.price && (
+              <button
+                style={{
+                  minWidth: 140,
+                  padding: '10px 16px',
+                  background: '#2ecc40',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 6,
+                  cursor: 'pointer',
+                  fontWeight: 600,
+                }}
+              >
+                Buy Now
+              </button>
+            )}
+          </div>
+
+          {/* Seller Information */}
           {item.seller && (
             <div style={{ background: '#f9f9f9', borderRadius: 8, padding: 16, marginBottom: 18 }}>
               <div style={{ fontWeight: 600, marginBottom: 12, color: '#333' }}>Seller Information</div>
               <div style={{ fontSize: 14, color: '#666' }}>
-                <div style={{ marginBottom: 4 }}>Name: <b>{item.seller.name}</b></div>
-                <div style={{ marginBottom: 4 }}>Rating: <b>{item.seller.rating.toFixed(1)}/5 ({item.seller.totalReviews} reviews)</b></div>
+                <div style={{ marginBottom: 4 }}>
+                  Name: <b>{item.seller.name}</b>
+                </div>
+                <div style={{ marginBottom: 4 }}>
+                  Rating: <b>{item.seller.rating.toFixed(1)}/5 ({item.seller.totalReviews} reviews)</b>
+                </div>
                 {item.seller.location && (
-                  <div style={{ marginBottom: 4 }}>Location: <b>{item.seller.location}</b></div>
+                  <div style={{ marginBottom: 4 }}>
+                    Location: <b>{item.seller.location}</b>
+                  </div>
                 )}
                 {item.seller.isVerified && (
-                  <div style={{ color: '#388e3c', fontWeight: 600 }}>✓ Verified Seller</div>
+                  <div style={{ color: '#388e3c', fontWeight: 600 }}>
+                    Verified Seller
+                  </div>
                 )}
               </div>
             </div>
@@ -317,14 +394,38 @@ export default function ItemDetailClient({ item }: Props) {
 
             {tab === 'specification' && (
               <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(250px, 1fr))', gap: 16 }}>
-                <div><strong>Category:</strong> {item.category}</div>
-                <div><strong>Condition:</strong> {item.condition}</div>
-                <div><strong>Type:</strong> {item.type.charAt(0).toUpperCase() + item.type.slice(1)}</div>
-                <div><strong>Location:</strong> {item.location}</div>
-                {item.warrantyStatus && <div><strong>Warranty:</strong> {item.warrantyStatus}</div>}
-                {item.usageHistory && <div><strong>Usage:</strong> {item.usageHistory}</div>}
-                {item.originalBox && <div><strong>Box/Accessories:</strong> {item.originalBox}</div>}
-                {item.shipping && <div><strong>Shipping:</strong> {item.shipping}</div>}
+                <div>
+                  <strong>Category:</strong> {item.category}
+                </div>
+                <div>
+                  <strong>Condition:</strong> {item.condition}
+                </div>
+                <div>
+                  <strong>Type:</strong> {item.type.charAt(0).toUpperCase() + item.type.slice(1)}
+                </div>
+                <div>
+                  <strong>Location:</strong> {item.location}
+                </div>
+                {item.warrantyStatus && (
+                  <div>
+                    <strong>Warranty:</strong> {item.warrantyStatus}
+                  </div>
+                )}
+                {item.usageHistory && (
+                  <div>
+                    <strong>Usage:</strong> {item.usageHistory}
+                  </div>
+                )}
+                {item.originalBox && (
+                  <div>
+                    <strong>Box/Accessories:</strong> {item.originalBox}
+                  </div>
+                )}
+                {item.shipping && (
+                  <div>
+                    <strong>Shipping:</strong> {item.shipping}
+                  </div>
+                )}
               </div>
             )}
 
