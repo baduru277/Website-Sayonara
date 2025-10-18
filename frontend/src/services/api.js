@@ -1,6 +1,10 @@
 // services/apiService.js
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || 'http://31.97.73.226:4000/api';
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL;
+
+if (!API_BASE_URL) {
+  throw new Error('NEXT_PUBLIC_API_URL is not defined in environment variables!');
+}
 
 // Helper: serialize errors for logging
 function serializeError(error) {
