@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { useRouter } from 'next/navigation'; // For redirection after login/signup
 
 export default function LoginPage() {
   const [tab, setTab] = useState<"login" | "signup">("login");
@@ -8,9 +9,66 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+  // State for form inputs
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [username, setUsername] = useState(""); // Only for signup
+
+  const router = useRouter(); // Initialize useRouter
+
+  // Define your backend API URL from environment variables
+  const API_URL = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:5000'; // Fallback for dev
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    alert(`${tab === "login" ? "Login" : "Signup"} form submitted!`);
+    setErrorMsg(null); // Clear previous errors
+    setLoading(true); // Start loading state
+
+    try {
+      let endpoint = '';
+      let body = {};
+
+      if (tab === "login") {
+        endpoint = `${API_URL}/api/auth/login`;
+        body = { email, password };
+      } else { // signup
+        endpoint = `${API_URL}/api/auth/signup`;
+        body = { username, email, password };
+      }
+
+      const response = await fetch(endpoint, {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(body),
+      });
+
+      const data = await response.json();
+
+      if (!response.ok) {
+        // If the server responded with an error status (e.g., 400, 401, 500)
+        setErrorMsg(data.message || "An unexpected error occurred.");
+        return;
+      }
+
+      // If successful (response.ok is true)
+      // Assuming your backend returns a token or user info upon successful login/signup
+      console.log(`${tab === "login" ? "Login" : "Signup"} successful!`, data);
+      
+      // Example: Save token to localStorage or a secure cookie
+      // localStorage.setItem('authToken', data.token); // Or use a more robust auth solution
+      // localStorage.setItem('user', JSON.stringify(data.user));
+
+      // Redirect to a dashboard or home page
+      router.push('/'); // Or '/dashboard', '/profile'
+      
+    } catch (error) {
+      console.error("Authentication error:", error);
+      setErrorMsg("Network error or server unavailable. Please try again.");
+    } finally {
+      setLoading(false); // End loading state
+    }
   };
 
   return (
@@ -58,7 +116,10 @@ export default function LoginPage() {
                 cursor: "pointer",
                 transition: "color 0.2s, border 0.2s",
               }}
-              onClick={() => setTab(type as "login" | "signup")}
+              onClick={() => {
+                setTab(type as "login" | "signup");
+                setErrorMsg(null); // Clear errors when switching tabs
+              }}
             >
               {type === "login" ? "Log In" : "Sign Up"}
             </button>
@@ -83,6 +144,39 @@ export default function LoginPage() {
 
         {/* Form */}
         <form onSubmit={handleSubmit}>
+          {tab === "signup" && (
+            <div style={{ marginBottom: 18 }}>
+              <label
+                style={{
+                  fontWeight: 600,
+                  color: "#444",
+                  fontSize: 15,
+                  display: "block",
+                }}
+              >
+                Username
+              </label>
+              <input
+                type="text"
+                placeholder="Choose a username"
+                value={username}
+                onChange={(e) => setUsername(e.target.value)}
+                required
+                style={{
+                  width: "100%",
+                  padding: "12px 14px",
+                  border: "2px solid #f3eaff",
+                  borderRadius: 8,
+                  fontSize: 16,
+                  marginTop: 6,
+                  outline: "none",
+                  color: "#924DAC",
+                  background: "#faf8fd",
+                }}
+              />
+            </div>
+          )}
+
           <div style={{ marginBottom: 18 }}>
             <label
               style={{
@@ -97,6 +191,8 @@ export default function LoginPage() {
             <input
               type="email"
               placeholder="Enter your email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               required
               style={{
                 width: "100%",
@@ -129,6 +225,8 @@ export default function LoginPage() {
                 placeholder={
                   tab === "login" ? "Enter your password" : "Create a password"
                 }
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 required
                 style={{
                   width: "100%",
@@ -178,7 +276,7 @@ export default function LoginPage() {
               opacity: loading ? 0.6 : 1,
             }}
           >
-            {tab === "login" ? "SIGN IN" : "SIGN UP"}
+            {loading ? "Loading..." : (tab === "login" ? "SIGN IN" : "SIGN UP")}
           </button>
         </form>
       </div>
