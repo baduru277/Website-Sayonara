@@ -28,16 +28,24 @@ const Bid = sequelize.define('Bid', {
   }
 }, {
   indexes: [
-    {
-      fields: ['itemId']
-    },
-    {
-      fields: ['userId']
-    },
-    {
-      fields: ['createdAt']
-    }
+    { fields: ['itemId'] },
+    { fields: ['userId'] },
+    { fields: ['createdAt'] }
   ]
 });
 
-module.exports = Bid; 
+Bid.associate = (models) => {
+  Bid.belongsTo(models.User, {
+    as: 'bidder',
+    foreignKey: 'userId',
+    onDelete: 'CASCADE'
+  });
+
+  Bid.belongsTo(models.Item, {
+    as: 'item',
+    foreignKey: 'itemId',
+    onDelete: 'CASCADE'
+  });
+};
+
+module.exports = Bid;
