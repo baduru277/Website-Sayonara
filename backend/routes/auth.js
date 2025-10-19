@@ -1,8 +1,9 @@
 const express = require('express');
 const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
-const { User } = require('../models');
-
+const models = require('../models');
+const User = models.User;
+console.log('Auth: User model loaded:', typeof User);
 const router = express.Router();
 
 // Register
