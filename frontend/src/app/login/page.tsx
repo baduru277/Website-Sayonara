@@ -1,3 +1,4 @@
+"use client";
 import React, { useState, useCallback } from "react";
 
 // Mocking the necessary dependencies for a runnable component in this environment
