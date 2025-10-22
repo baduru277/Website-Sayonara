@@ -130,6 +130,22 @@ const AuthPage = () => {
     setLoading(true);
     resetMessages();
 
+    // Client-side validation to prevent empty strings from being submitted
+    let validationError = false;
+    if (!email || !password) {
+        validationError = true;
+    }
+    if (tab === "signup" && !name) {
+        validationError = true;
+    }
+
+    if (validationError) {
+        setErrorMsg("All fields are mandatory. Please fill out the form completely.");
+        setLoading(false);
+        return;
+    }
+    // End validation check
+
     try {
       if (tab === "login") {
         await apiService.login({ email, password });
