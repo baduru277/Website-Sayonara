@@ -1,6 +1,7 @@
-// 'use client' is required for client components in Next.js, but since 
-// we are mocking dependencies, we can use a standard export.
+"use client"; // REQUIRED to use React Hooks like useState, useEffect, etc.
+
 import { useState, useCallback, useMemo } from 'react';
+
 
 // --- START: Mocked Dependencies for Standalone Environment ---
 // Mock component/hooks are typed for TypeScript compatibility.
