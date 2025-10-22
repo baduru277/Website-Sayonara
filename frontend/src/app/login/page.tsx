@@ -1,141 +1,12 @@
 "use client";
 
-import { useState, useCallback, useMemo } from "react";
+import { useState } from "react";
 import { useRouter } from "next/navigation";
-// Assuming apiService has `login`, `register`, and a new `forgotPassword` method
 import apiService from "../../services/api";
 
-// --- Data for Indian States ---
-const INDIAN_STATES = [
-  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", 
-  "Goa", "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", 
-  "Kerala", "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", 
-  "Mizoram", "Nagaland", "Odisha", "Punjab", "Rajasthan", "Sikkim", 
-  "Tamil Nadu", "Telangana", "Tripura", "Uttar Pradesh", "Uttarakhand", 
-  "West Bengal",
-  // Union Territories
-  "Andaman and Nicobar Islands", "Chandigarh", "Dadra and Nagar Haveli and Daman and Diu", 
-  "Delhi", "Jammu and Kashmir", "Ladakh", "Lakshadweep", "Puducherry"
-];
-
-// --- Input Component for Reusability ---
-interface InputFieldProps {
-  label: string;
-  type: string;
-  placeholder: string;
-  value: string;
-  onChange: (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => void;
-  required?: boolean;
-  isSelect?: boolean;
-  options?: string[];
-  showPasswordToggle?: boolean;
-  onTogglePassword?: () => void;
-  showPassword?: boolean;
-  marginBottom?: number;
-}
-
-const InputField: React.FC<InputFieldProps> = ({
-  label,
-  type,
-  placeholder,
-  value,
-  onChange,
-  required = false,
-  isSelect = false,
-  options = [],
-  showPasswordToggle = false,
-  onTogglePassword,
-  showPassword,
-  marginBottom = 20,
-}) => {
-  const inputStyle: React.CSSProperties = {
-    width: "100%",
-    padding: "14px 16px",
-    border: "2px solid #e8e8e8",
-    borderRadius: 10,
-    fontSize: 15,
-    outline: "none",
-    color: "#333",
-    background: "#fafafa",
-    boxSizing: "border-box",
-    transition: "border-color 0.2s ease",
-  };
-
-  const labelStyle: React.CSSProperties = {
-    fontWeight: 600,
-    color: "#444",
-    fontSize: 14,
-    display: "block",
-    marginBottom: 8,
-  };
-  
-  const passwordInputStyle: React.CSSProperties = showPasswordToggle ? 
-    {...inputStyle, paddingRight: "50px"} : inputStyle;
-
-  return (
-    <div style={{ marginBottom }}>
-      <label style={labelStyle}>
-        {label} {required && <span style={{ color: "#e74c3c" }}>*</span>}
-      </label>
-      {isSelect ? (
-        <div style={{ position: "relative" }}>
-          <select
-            required={required}
-            value={value}
-            onChange={onChange}
-            style={{ ...inputStyle, appearance: 'none', paddingRight: '30px' }}
-          >
-            <option value="" disabled>{placeholder}</option>
-            {options.map((option) => (
-              <option key={option} value={option}>{option}</option>
-            ))}
-          </select>
-          {/* Simple dropdown arrow indicator for style */}
-          <div style={{ position: 'absolute', right: 15, top: '50%', transform: 'translateY(-50%)', pointerEvents: 'none', color: '#888' }}>
-            ▼
-          </div>
-        </div>
-      ) : (
-        <div style={{ position: "relative" }}>
-          <input
-            type={showPasswordToggle ? (showPassword ? "text" : "password") : type}
-            placeholder={placeholder}
-            required={required}
-            value={value}
-            onChange={onChange as (e: React.ChangeEvent<HTMLInputElement>) => void}
-            style={passwordInputStyle}
-          />
-          {showPasswordToggle && onTogglePassword && (
-            <button
-              type="button"
-              onClick={onTogglePassword}
-              style={{
-                position: "absolute",
-                right: 14,
-                top: "50%",
-                transform: "translateY(-50%)",
-                background: "none",
-                border: "none",
-                cursor: "pointer",
-                fontSize: 20,
-                padding: 4,
-              }}
-            >
-              {showPassword ? "🙈" : "👁️"}
-            </button>
-          )}
-        </div>
-      )}
-    </div>
-  );
-};
-
-
-// --- Main Component ---
 export default function LoginPage() {
   const router = useRouter();
-  // Tab state now includes "forgot"
-  const [tab, setTab] = useState<"login" | "signup" | "forgot">("signup"); 
+  const [tab, setTab] = useState<"login" | "signup">("signup");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
@@ -146,10 +17,6 @@ export default function LoginPage() {
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [name, setName] = useState("");
-  // New State Field for India
-  const [state, setState] = useState(""); 
-  // State for Forgot Password flow
-  const [forgotEmail, setForgotEmail] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -175,9 +42,9 @@ export default function LoginPage() {
             router.push("/dashboard");
           }, 1500);
         }
-      } else if (tab === "signup") {
-        // SIGNUP - Added 'state' to the registration payload
-        const response = await apiService.register({ name, email, password, state }); 
+      } else {
+        // SIGNUP
+        const response = await apiService.register({ name, email, password });
         
         if (response.token) {
           // Registration successful
@@ -186,30 +53,15 @@ export default function LoginPage() {
           
           // Clear form
           setName("");
-          setEmail(""); 
           setPassword("");
-          setState("");
           
           // Switch to login after 3 seconds
           setTimeout(() => {
             setTab("login");
             setRegistrationComplete(false);
-            setSuccessMsg("Please log in with your new credentials");
+            setSuccessMsg("Please log in with your credentials");
           }, 3000);
         }
-      } else if (tab === "forgot") {
-        // FORGOT PASSWORD
-        // NOTE: Ensure your apiService.forgotPassword accepts and handles the email
-        const response = await apiService.forgotPassword({ email: forgotEmail });
-
-        setSuccessMsg(response.message || "Password reset instructions sent! Check your email.");
-        setForgotEmail(""); // Clear email after submission
-        
-        setTimeout(() => {
-          setTab("login");
-          // Clear success message when switching back, or set a temporary one
-          setSuccessMsg(null); 
-        }, 3000);
       }
     } catch (error: any) {
       console.error("Auth error:", error);
@@ -229,7 +81,7 @@ export default function LoginPage() {
     }
   };
 
-  const switchTab = useCallback((newTab: "login" | "signup" | "forgot") => {
+  const switchTab = (newTab: "login" | "signup") => {
     if (!registrationComplete) {
       setTab(newTab);
       setErrorMsg(null);
@@ -237,45 +89,9 @@ export default function LoginPage() {
       setEmail("");
       setPassword("");
       setName("");
-      setState("");
-      setForgotEmail("");
-      setShowPassword(false);
     }
-  }, [registrationComplete]);
+  };
 
-  // Determine header text based on current tab
-  const headerText = useMemo(() => {
-    switch (tab) {
-      case "login":
-        return "Welcome back!";
-      case "signup":
-        return "Create your account";
-      case "forgot":
-        return "Reset your password";
-      default:
-        return "";
-    }
-  }, [tab]);
-
-  // Determine button text based on current tab and loading state
-  const buttonText = useMemo(() => {
-    if (loading) return "⏳ Processing...";
-    switch (tab) {
-      case "login":
-        return "Sign In";
-      case "signup":
-        return "Create Account";
-      case "forgot":
-        return "Send Reset Link";
-      default:
-        return "";
-    }
-  }, [tab, loading]);
-
-
-  // Determine if the main form (login/signup) or forgot password form should be shown
-  const isMainForm = tab === "login" || tab === "signup";
-  
   return (
     <div
       style={{
@@ -313,11 +129,11 @@ export default function LoginPage() {
             Sayonara
           </h1>
           <p style={{ fontSize: 14, color: "#888", margin: 0 }}>
-            {headerText}
+            {tab === "login" ? "Welcome back!" : "Create your account"}
           </p>
         </div>
 
-        {/* Tabs (Only for Login/Signup) */}
+        {/* Tabs */}
         <div
           style={{
             display: "flex",
@@ -325,10 +141,6 @@ export default function LoginPage() {
             borderRadius: 12,
             padding: 4,
             marginBottom: 28,
-            // Hide tabs when on forgot password view
-            visibility: isMainForm ? 'visible' : 'hidden',
-            height: isMainForm ? 'auto' : 0,
-            overflow: 'hidden',
           }}
         >
           {["login", "signup"].map((type) => (
@@ -355,7 +167,7 @@ export default function LoginPage() {
           ))}
         </div>
 
-        {/* Registration Complete Message */}
+        {/* Registration Complete */}
         {registrationComplete && (
           <div
             style={{
@@ -418,102 +230,129 @@ export default function LoginPage() {
         {/* Form */}
         {!registrationComplete && (
           <form onSubmit={handleSubmit}>
-            
-            {/* --- SIGNUP & LOGIN FORMS --- */}
-            {isMainForm && (
-              <>
-                {/* Name field (signup only) */}
-                {tab === "signup" && (
-                  <InputField
-                    label="Full Name"
-                    type="text"
-                    placeholder="Enter your full name"
-                    required
-                    value={name}
-                    onChange={(e) => setName(e.target.value)}
-                  />
-                )}
-
-                {/* State Selection (signup only) */}
-                {tab === "signup" && (
-                  <InputField
-                    label="State"
-                    type="select"
-                    placeholder="Select your State/UT"
-                    required
-                    value={state}
-                    onChange={(e) => setState(e.target.value)}
-                    isSelect
-                    options={INDIAN_STATES} // Using INDIAN_STATES
-                  />
-                )}
-                
-                {/* Email (login/signup) */}
-                <InputField
-                  label="Email Address"
-                  type="email"
-                  placeholder="Enter your email"
+            {/* Name field (signup only) */}
+            {tab === "signup" && (
+              <div style={{ marginBottom: 20 }}>
+                <label
+                  style={{
+                    fontWeight: 600,
+                    color: "#444",
+                    fontSize: 14,
+                    display: "block",
+                    marginBottom: 8,
+                  }}
+                >
+                  Full Name <span style={{ color: "#e74c3c" }}>*</span>
+                </label>
+                <input
+                  type="text"
+                  placeholder="Enter your full name"
                   required
-                  value={email}
-                  onChange={(e) => setEmail(e.target.value)}
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  style={{
+                    width: "100%",
+                    padding: "14px 16px",
+                    border: "2px solid #e8e8e8",
+                    borderRadius: 10,
+                    fontSize: 15,
+                    outline: "none",
+                    color: "#333",
+                    background: "#fafafa",
+                    boxSizing: "border-box",
+                  }}
                 />
+              </div>
+            )}
 
-                {/* Password (login/signup) */}
-                <InputField
-                  label="Password"
-                  type="password"
-                  placeholder={tab === "login" ? "Enter your password" : "Create a strong password"}
+            {/* Email */}
+            <div style={{ marginBottom: 20 }}>
+              <label
+                style={{
+                  fontWeight: 600,
+                  color: "#444",
+                  fontSize: 14,
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
+                Email Address <span style={{ color: "#e74c3c" }}>*</span>
+              </label>
+              <input
+                type="email"
+                placeholder="Enter your email"
+                required
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  border: "2px solid #e8e8e8",
+                  borderRadius: 10,
+                  fontSize: 15,
+                  outline: "none",
+                  color: "#333",
+                  background: "#fafafa",
+                  boxSizing: "border-box",
+                }}
+              />
+            </div>
+
+            {/* Password */}
+            <div style={{ marginBottom: 24 }}>
+              <label
+                style={{
+                  fontWeight: 600,
+                  color: "#444",
+                  fontSize: 14,
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
+                Password <span style={{ color: "#e74c3c" }}>*</span>
+              </label>
+              <div style={{ position: "relative" }}>
+                <input
+                  type={showPassword ? "text" : "password"}
+                  placeholder={
+                    tab === "login"
+                      ? "Enter your password"
+                      : "Create a strong password"
+                  }
                   required
                   value={password}
                   onChange={(e) => setPassword(e.target.value)}
-                  showPasswordToggle
-                  showPassword={showPassword}
-                  onTogglePassword={() => setShowPassword(!showPassword)}
-                  marginBottom={tab === 'login' ? 8 : 24} // Smaller margin for login to place the forgot password link
+                  style={{
+                    width: "100%",
+                    padding: "14px 50px 14px 16px",
+                    border: "2px solid #e8e8e8",
+                    borderRadius: 10,
+                    fontSize: 15,
+                    outline: "none",
+                    color: "#333",
+                    background: "#fafafa",
+                    boxSizing: "border-box",
+                  }}
                 />
-              </>
-            )}
-            
-            {/* --- FORGOT PASSWORD FORM --- */}
-            {tab === "forgot" && (
-              <>
-                <p style={{ fontSize: 14, color: "#666", marginBottom: 20, textAlign: 'center' }}>
-                    Enter the email associated with your account and we'll send you a link to reset your password.
-                </p>
-                <InputField
-                  label="Email Address"
-                  type="email"
-                  placeholder="Enter your registered email"
-                  required
-                  value={forgotEmail}
-                  onChange={(e) => setForgotEmail(e.target.value)}
-                  marginBottom={24}
-                />
-              </>
-            )}
-
-            {/* Forgot Password Link (Only on login tab) */}
-            {tab === "login" && (
-                <div style={{ textAlign: 'right', marginBottom: 24 }}>
-                    <button 
-                        type="button" 
-                        onClick={() => switchTab("forgot")}
-                        style={{
-                            color: "#924DAC",
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            fontWeight: 600,
-                            fontSize: 13,
-                            padding: 0,
-                            textDecoration: "underline",
-                        }}
-                    >
-                        Forgot Password?
-                    </button>
-                </div>
-            )}
-
+                <button
+                  type="button"
+                  onClick={() => setShowPassword(!showPassword)}
+                  style={{
+                    position: "absolute",
+                    right: 14,
+                    top: "50%",
+                    transform: "translateY(-50%)",
+                    background: "none",
+                    border: "none",
+                    cursor: "pointer",
+                    fontSize: 20,
+                    padding: 4,
+                  }}
+                >
+                  {showPassword ? "🙈" : "👁️"}
+                </button>
+              </div>
+            </div>
 
             {/* Submit Button */}
             <button
@@ -539,7 +378,23 @@ export default function LoginPage() {
                 letterSpacing: "0.5px",
               }}
             >
-              {buttonText}
+              {loading ? (
+                <span>
+                  <span
+                    style={{
+                      display: "inline-block",
+                      marginRight: 8,
+                    }}
+                  >
+                    ⏳
+                  </span>
+                  Processing...
+                </span>
+              ) : tab === "login" ? (
+                "Sign In"
+              ) : (
+                "Create Account"
+              )}
             </button>
           </form>
         )}
@@ -553,45 +408,41 @@ export default function LoginPage() {
             color: "#888",
           }}
         >
-            {/* Show login/signup switch in footer if not on forgot password tab */}
-            {isMainForm && (
-                <p>
-                    {tab === "login" ? "Don't have an account?" : "Already have an account?"}{" "}
-                    <button
-                        onClick={() => switchTab(tab === "login" ? "signup" : "login")}
-                        style={{
-                            color: "#924DAC",
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            fontWeight: 600,
-                            textDecoration: "underline",
-                        }}
-                        disabled={registrationComplete}
-                    >
-                        {tab === "login" ? "Sign up" : "Log in"}
-                    </button>
-                </p>
-            )}
-
-            {/* Back to Login link on Forgot Password tab */}
-            {tab === "forgot" && (
-                <p>
-                    <button
-                        onClick={() => switchTab("login")}
-                        style={{
-                            color: "#924DAC",
-                            background: "none",
-                            border: "none",
-                            cursor: "pointer",
-                            fontWeight: 600,
-                            textDecoration: "underline",
-                        }}
-                    >
-                        ← Back to Log In
-                    </button>
-                </p>
-            )}
+          {tab === "login" ? (
+            <p>
+              Don't have an account?{" "}
+              <button
+                onClick={() => switchTab("signup")}
+                style={{
+                  color: "#924DAC",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                }}
+              >
+                Sign up
+              </button>
+            </p>
+          ) : (
+            <p>
+              Already have an account?{" "}
+              <button
+                onClick={() => switchTab("login")}
+                style={{
+                  color: "#924DAC",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  textDecoration: "underline",
+                }}
+              >
+                Log in
+              </button>
+            </p>
+          )}
         </div>
       </div>
     </div>
