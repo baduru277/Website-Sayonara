@@ -2,7 +2,16 @@
 
 import { useState } from "react";
 import { useRouter } from "next/navigation";
-import apiService from "../../services/api";
+import apiService from "../../services/api"; // Assuming the path is correct
+
+// List of Indian States for the dropdown
+const indianStates = [
+  "Andhra Pradesh", "Arunachal Pradesh", "Assam", "Bihar", "Chhattisgarh", "Goa",
+  "Gujarat", "Haryana", "Himachal Pradesh", "Jharkhand", "Karnataka", "Kerala",
+  "Madhya Pradesh", "Maharashtra", "Manipur", "Meghalaya", "Mizoram", "Nagaland",
+  "Odisha", "Punjab", "Rajasthan", "Sikkim", "Tamil Nadu", "Telangana",
+  "Tripura", "Uttar Pradesh", "Uttarakhand", "West Bengal",
+];
 
 export default function LoginPage() {
   const router = useRouter();
@@ -10,13 +19,17 @@ export default function LoginPage() {
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false); // New state for confirm password visibility
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
-  const [registrationComplete, setRegistrationComplete] = useState(false);
 
   // Form fields
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState(""); // 🔑 NEW STATE
   const [name, setName] = useState("");
+  const [state, setState] = useState(""); // 🔑 NEW STATE (for Indian States)
+
+  // NOTE: registrationComplete state is removed since verification is removed.
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
@@ -43,30 +56,41 @@ export default function LoginPage() {
           }, 1500);
         }
       } else {
-        // SIGNUP
-        const response = await apiService.register({ name, email, password });
+        // SIGNUP 🔑 ADDING CLIENT-SIDE VALIDATION FOR PASSWORD MATCH
+        if (password !== confirmPassword) {
+          setErrorMsg("Passwords do not match.");
+          setLoading(false);
+          return;
+        }
+
+        // Include 'state' in the register call
+        const response = await apiService.register({ name, email, password, location: state });
         
         if (response.token) {
-          // Registration successful
-          setRegistrationComplete(true);
-          setSuccessMsg("Thank you for signing up! Registration successful.");
+          // 🔑 NEW: Store token and user immediately after successful registration
+          if (typeof window !== "undefined") {
+            localStorage.setItem("token", response.token);
+            localStorage.setItem("user", JSON.stringify(response.user));
+          }
           
-          // Clear form
+          setSuccessMsg("Account created successfully! Redirecting to dashboard...");
+          
+          // Clear form fields after successful registration
           setName("");
+          setEmail("");
           setPassword("");
-          
-          // Switch to login after 3 seconds
+          setConfirmPassword("");
+          setState("");
+
+          // Redirect to dashboard immediately
           setTimeout(() => {
-            setTab("login");
-            setRegistrationComplete(false);
-            setSuccessMsg("Please log in with your credentials");
-          }, 3000);
+            router.push("/dashboard");
+          }, 1500);
         }
       }
     } catch (error: any) {
       console.error("Auth error:", error);
       
-      // Handle different error formats
       let errorMessage = "An error occurred. Please try again.";
       
       if (error.message) {
@@ -82,19 +106,20 @@ export default function LoginPage() {
   };
 
   const switchTab = (newTab: "login" | "signup") => {
-    if (!registrationComplete) {
-      setTab(newTab);
-      setErrorMsg(null);
-      setSuccessMsg(null);
-      setEmail("");
-      setPassword("");
-      setName("");
-    }
+    setTab(newTab);
+    setErrorMsg(null);
+    setSuccessMsg(null);
+    setEmail("");
+    setPassword("");
+    setConfirmPassword("");
+    setName("");
+    setState("");
   };
 
   return (
     <div
       style={{
+        // ... (existing styles for full screen container)
         minHeight: "100vh",
         background: "linear-gradient(135deg, #f5f7fa 0%, #e8eaf6 100%)",
         display: "flex",
@@ -106,6 +131,7 @@ export default function LoginPage() {
     >
       <div
         style={{
+          // ... (existing styles for form card)
           width: "100%",
           maxWidth: 420,
           background: "#fff",
@@ -136,6 +162,7 @@ export default function LoginPage() {
         {/* Tabs */}
         <div
           style={{
+            // ... (existing tab styles)
             display: "flex",
             background: "#f8f5fc",
             borderRadius: 12,
@@ -146,8 +173,8 @@ export default function LoginPage() {
           {["login", "signup"].map((type) => (
             <button
               key={type}
-              disabled={registrationComplete}
               style={{
+                // ... (existing tab button styles)
                 flex: 1,
                 background: tab === type ? "#924DAC" : "transparent",
                 color: tab === type ? "#fff" : "#888",
@@ -156,9 +183,8 @@ export default function LoginPage() {
                 fontSize: 16,
                 padding: "10px 0",
                 borderRadius: 8,
-                cursor: registrationComplete ? "not-allowed" : "pointer",
+                cursor: "pointer",
                 transition: "all 0.3s ease",
-                opacity: registrationComplete ? 0.5 : 1,
               }}
               onClick={() => switchTab(type as "login" | "signup")}
             >
@@ -167,32 +193,11 @@ export default function LoginPage() {
           ))}
         </div>
 
-        {/* Registration Complete */}
-        {registrationComplete && (
-          <div
-            style={{
-              background: "linear-gradient(135deg, #2ecc40 0%, #27ae60 100%)",
-              color: "white",
-              padding: "24px",
-              borderRadius: 12,
-              marginBottom: 24,
-              textAlign: "center",
-            }}
-          >
-            <div style={{ fontSize: 48, marginBottom: 12 }}>✓</div>
-            <h3 style={{ margin: 0, marginBottom: 8, fontSize: 18 }}>
-              Thank You for Signing Up!
-            </h3>
-            <p style={{ margin: 0, fontSize: 14, opacity: 0.95 }}>
-              Registration successful. Redirecting to login...
-            </p>
-          </div>
-        )}
-
         {/* Success Message */}
-        {successMsg && !registrationComplete && (
+        {successMsg && (
           <div
             style={{
+              // ... (existing success message styles)
               color: "#2ecc40",
               background: "#e8f8e8",
               padding: "14px",
@@ -212,6 +217,7 @@ export default function LoginPage() {
         {errorMsg && (
           <div
             style={{
+              // ... (existing error message styles)
               color: "#e74c3c",
               background: "#ffe6e6",
               padding: "14px",
@@ -228,47 +234,13 @@ export default function LoginPage() {
         )}
 
         {/* Form */}
-        {!registrationComplete && (
-          <form onSubmit={handleSubmit}>
-            {/* Name field (signup only) */}
-            {tab === "signup" && (
-              <div style={{ marginBottom: 20 }}>
-                <label
-                  style={{
-                    fontWeight: 600,
-                    color: "#444",
-                    fontSize: 14,
-                    display: "block",
-                    marginBottom: 8,
-                  }}
-                >
-                  Full Name <span style={{ color: "#e74c3c" }}>*</span>
-                </label>
-                <input
-                  type="text"
-                  placeholder="Enter your full name"
-                  required
-                  value={name}
-                  onChange={(e) => setName(e.target.value)}
-                  style={{
-                    width: "100%",
-                    padding: "14px 16px",
-                    border: "2px solid #e8e8e8",
-                    borderRadius: 10,
-                    fontSize: 15,
-                    outline: "none",
-                    color: "#333",
-                    background: "#fafafa",
-                    boxSizing: "border-box",
-                  }}
-                />
-              </div>
-            )}
-
-            {/* Email */}
+        <form onSubmit={handleSubmit}>
+          {/* Name field (signup only) */}
+          {tab === "signup" && (
             <div style={{ marginBottom: 20 }}>
               <label
                 style={{
+                  // ... (label styles)
                   fontWeight: 600,
                   color: "#444",
                   fontSize: 14,
@@ -276,15 +248,16 @@ export default function LoginPage() {
                   marginBottom: 8,
                 }}
               >
-                Email Address <span style={{ color: "#e74c3c" }}>*</span>
+                Full Name <span style={{ color: "#e74c3c" }}>*</span>
               </label>
               <input
-                type="email"
-                placeholder="Enter your email"
+                type="text"
+                placeholder="Enter your full name"
                 required
-                value={email}
-                onChange={(e) => setEmail(e.target.value)}
+                value={name}
+                onChange={(e) => setName(e.target.value)}
                 style={{
+                  // ... (input styles)
                   width: "100%",
                   padding: "14px 16px",
                   border: "2px solid #e8e8e8",
@@ -297,9 +270,105 @@ export default function LoginPage() {
                 }}
               />
             </div>
+          )}
 
-            {/* Password */}
-            <div style={{ marginBottom: 24 }}>
+          {/* Email */}
+          <div style={{ marginBottom: 20 }}>
+            <label
+              style={{
+                // ... (label styles)
+                fontWeight: 600,
+                color: "#444",
+                fontSize: 14,
+                display: "block",
+                marginBottom: 8,
+              }}
+            >
+              Email Address <span style={{ color: "#e74c3c" }}>*</span>
+            </label>
+            <input
+              type="email"
+              placeholder="Enter your email"
+              required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              style={{
+                // ... (input styles)
+                width: "100%",
+                padding: "14px 16px",
+                border: "2px solid #e8e8e8",
+                borderRadius: 10,
+                fontSize: 15,
+                outline: "none",
+                color: "#333",
+                background: "#fafafa",
+                boxSizing: "border-box",
+              }}
+            />
+          </div>
+
+          {/* Password */}
+          <div style={{ marginBottom: 20 }}>
+            <label
+              style={{
+                // ... (label styles)
+                fontWeight: 600,
+                color: "#444",
+                fontSize: 14,
+                display: "block",
+                marginBottom: 8,
+              }}
+            >
+              Password <span style={{ color: "#e74c3c" }}>*</span>
+            </label>
+            <div style={{ position: "relative" }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                placeholder={
+                  tab === "login"
+                    ? "Enter your password"
+                    : "Create a strong password"
+                }
+                required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                style={{
+                  // ... (input styles)
+                  width: "100%",
+                  padding: "14px 50px 14px 16px",
+                  border: "2px solid #e8e8e8",
+                  borderRadius: 10,
+                  fontSize: 15,
+                  outline: "none",
+                  color: "#333",
+                  background: "#fafafa",
+                  boxSizing: "border-box",
+                }}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  // ... (show/hide button styles)
+                  position: "absolute",
+                  right: 14,
+                  top: "50%",
+                  transform: "translateY(-50%)",
+                  background: "none",
+                  border: "none",
+                  cursor: "pointer",
+                  fontSize: 20,
+                  padding: 4,
+                }}
+              >
+                {showPassword ? "🙈" : "👁️"}
+              </button>
+            </div>
+          </div>
+
+          {/* Confirm Password (signup only) 🔑 NEW FIELD */}
+          {tab === "signup" && (
+            <div style={{ marginBottom: 20 }}>
               <label
                 style={{
                   fontWeight: 600,
@@ -309,19 +378,15 @@ export default function LoginPage() {
                   marginBottom: 8,
                 }}
               >
-                Password <span style={{ color: "#e74c3c" }}>*</span>
+                Confirm Password <span style={{ color: "#e74c3c" }}>*</span>
               </label>
               <div style={{ position: "relative" }}>
                 <input
-                  type={showPassword ? "text" : "password"}
-                  placeholder={
-                    tab === "login"
-                      ? "Enter your password"
-                      : "Create a strong password"
-                  }
+                  type={showConfirmPassword ? "text" : "password"}
+                  placeholder="Confirm your password"
                   required
-                  value={password}
-                  onChange={(e) => setPassword(e.target.value)}
+                  value={confirmPassword}
+                  onChange={(e) => setConfirmPassword(e.target.value)}
                   style={{
                     width: "100%",
                     padding: "14px 50px 14px 16px",
@@ -336,7 +401,7 @@ export default function LoginPage() {
                 />
                 <button
                   type="button"
-                  onClick={() => setShowPassword(!showPassword)}
+                  onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   style={{
                     position: "absolute",
                     right: 14,
@@ -349,59 +414,107 @@ export default function LoginPage() {
                     padding: 4,
                   }}
                 >
-                  {showPassword ? "🙈" : "👁️"}
+                  {showConfirmPassword ? "🙈" : "👁️"}
                 </button>
               </div>
             </div>
+          )}
 
-            {/* Submit Button */}
-            <button
-              type="submit"
-              disabled={loading}
-              style={{
-                width: "100%",
-                background: loading
-                  ? "#ccc"
-                  : "linear-gradient(135deg, #924DAC 0%, #b06ac9 100%)",
-                color: "white",
-                border: "none",
-                padding: "16px",
-                borderRadius: 12,
-                fontWeight: 700,
-                fontSize: 16,
-                cursor: loading ? "not-allowed" : "pointer",
-                boxShadow: loading
-                  ? "none"
-                  : "0 4px 12px rgba(146,77,172,0.3)",
-                transition: "all 0.3s ease",
-                textTransform: "uppercase",
-                letterSpacing: "0.5px",
-              }}
-            >
-              {loading ? (
-                <span>
-                  <span
-                    style={{
-                      display: "inline-block",
-                      marginRight: 8,
-                    }}
-                  >
-                    ⏳
-                  </span>
-                  Processing...
+          {/* Indian State Dropdown (signup only) 🔑 NEW FIELD */}
+          {tab === "signup" && (
+            <div style={{ marginBottom: 24 }}>
+              <label
+                style={{
+                  fontWeight: 600,
+                  color: "#444",
+                  fontSize: 14,
+                  display: "block",
+                  marginBottom: 8,
+                }}
+              >
+                State/Region <span style={{ color: "#e74c3c" }}>*</span>
+              </label>
+              <select
+                required
+                value={state}
+                onChange={(e) => setState(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "14px 16px",
+                  border: "2px solid #e8e8e8",
+                  borderRadius: 10,
+                  fontSize: 15,
+                  outline: "none",
+                  color: state === "" ? "#888" : "#333",
+                  background: "#fafafa",
+                  boxSizing: "border-box",
+                  appearance: "none", // Remove default arrow
+                  backgroundImage: "url(\"data:image/svg+xml;utf8,<svg xmlns='http://www.w3.org/2000/svg' width='24' height='24' viewBox='0 0 24 24'><path fill='gray' d='M7.41,8.58L12,13.17L16.59,8.58L18,10L12,16L6,10L7.41,8.58Z'/></svg>\")",
+                  backgroundRepeat: "no-repeat",
+                  backgroundPosition: "right 10px top 50%",
+                  paddingRight: "40px",
+                }}
+              >
+                <option value="" disabled>Select your state</option>
+                {indianStates.map((s) => (
+                  <option key={s} value={s}>
+                    {s}
+                  </option>
+                ))}
+              </select>
+            </div>
+          )}
+
+
+          {/* Submit Button */}
+          <button
+            type="submit"
+            disabled={loading}
+            style={{
+              // ... (existing button styles)
+              width: "100%",
+              background: loading
+                ? "#ccc"
+                : "linear-gradient(135deg, #924DAC 0%, #b06ac9 100%)",
+              color: "white",
+              border: "none",
+              padding: "16px",
+              borderRadius: 12,
+              fontWeight: 700,
+              fontSize: 16,
+              cursor: loading ? "not-allowed" : "pointer",
+              boxShadow: loading
+                ? "none"
+                : "0 4px 12px rgba(146,77,172,0.3)",
+              transition: "all 0.3s ease",
+              textTransform: "uppercase",
+              letterSpacing: "0.5px",
+            }}
+          >
+            {loading ? (
+              <span>
+                <span
+                  style={{
+                    display: "inline-block",
+                    marginRight: 8,
+                  }}
+                >
+                  ⏳
                 </span>
-              ) : tab === "login" ? (
-                "Sign In"
-              ) : (
-                "Create Account"
-              )}
-            </button>
-          </form>
-        )}
+                Processing...
+              </span>
+            ) : tab === "login" ? (
+              "Sign In"
+            ) : (
+              "Create Account"
+            )}
+          </button>
+        </form>
 
         {/* Footer */}
         <div
           style={{
+            // ... (existing footer styles)
             marginTop: 24,
             textAlign: "center",
             fontSize: 13,
@@ -414,6 +527,7 @@ export default function LoginPage() {
               <button
                 onClick={() => switchTab("signup")}
                 style={{
+                  // ... (link button styles)
                   color: "#924DAC",
                   background: "none",
                   border: "none",
@@ -431,6 +545,7 @@ export default function LoginPage() {
               <button
                 onClick={() => switchTab("login")}
                 style={{
+                  // ... (link button styles)
                   color: "#924DAC",
                   background: "none",
                   border: "none",
