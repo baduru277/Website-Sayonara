@@ -1,14 +1,24 @@
 "use client";
-import React, { useState } from "react";
 
-export default function AuthModal({ onClose }: { onClose: () => void }) {
-  const [mode, setMode] = useState<"login" | "register">("login");
-  const [formData, setFormData] = useState({
-    name: "",
-    email: "",
-    password: "",
-    state: "",
-  });
+import React, { useState } from "react";
+import apiService from '@/services/api';
+
+type AuthModalProps = {
+  open: boolean;
+  onClose: () => void;
+};
+
+export default function AuthModal({ open, onClose }: AuthModalProps) {
+  const [tab, setTab] = useState<'login' | 'signup'>('login');
+  const [name, setName] = useState("");
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+  const [confirmPassword, setConfirmPassword] = useState("");
+  const [state, setState] = useState("");
+  const [terms, setTerms] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
 
   const indianStates = [
     "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa",
@@ -20,31 +30,57 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
     "Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"
   ];
 
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
-    setFormData({ ...formData, [e.target.name]: e.target.value });
-  };
+  if (!open) return null;
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  // Login handler
+  async function handleLogin(e: React.FormEvent) {
     e.preventDefault();
-    const endpoint = mode === "login" ? "/api/auth/login" : "/api/auth/register";
-
+    setLoading(true);
+    setErrorMsg(null);
     try {
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify(formData),
-      });
-      const data = await res.json();
-      if (!res.ok) throw new Error(data.error || "Something went wrong");
-      alert(`${mode === "login" ? "Logged in" : "Registered"} successfully!`);
-      onClose();
-    } catch (err: any) {
-      alert(err.message);
+      const res = await apiService.login({ email, password });
+      if (res.token) {
+        localStorage.setItem('isLoggedIn', 'true');
+        setLoading(false);
+        onClose();
+        window.location.reload();
+      } else {
+        setErrorMsg(res.error || res.message || 'Login failed.');
+        setLoading(false);
+      }
+    } catch (err: unknown) {
+      let errorMessage = 'Login failed.';
+      if (err instanceof Error) errorMessage = err.message;
+      setErrorMsg(errorMessage);
+      setLoading(false);
     }
-  };
+  }
+
+  // Signup handler
+  async function handleSignup(e: React.FormEvent) {
+    e.preventDefault();
+    setLoading(true);
+    setErrorMsg(null);
+    try {
+      const res = await apiService.register({ name, email, password, state });
+      if (res.token || res.user) {
+        setLoading(false);
+        alert("Registered successfully!");
+        onClose();
+      } else {
+        setErrorMsg(res.error || res.message || 'Signup failed.');
+        setLoading(false);
+      }
+    } catch (err: unknown) {
+      let errorMessage = 'Signup failed.';
+      if (err instanceof Error) errorMessage = err.message;
+      setErrorMsg(errorMessage);
+      setLoading(false);
+    }
+  }
 
   return (
-    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-40 z-50">
+    <div className="fixed inset-0 flex items-center justify-center bg-black bg-opacity-30 z-50">
       <div className="bg-white rounded-2xl shadow-xl w-full max-w-md p-6 relative">
         <button
           onClick={onClose}
@@ -53,94 +89,107 @@ export default function AuthModal({ onClose }: { onClose: () => void }) {
           ✕
         </button>
 
-        <div className="flex justify-center space-x-4 mb-6">
+        <div className="flex justify-center border-b-2 border-gray-200 mb-6">
           <button
-            onClick={() => setMode("login")}
-            className={`px-4 py-2 font-medium rounded ${
-              mode === "login" ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
+            className={`flex-1 py-2 font-semibold ${tab === 'login' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+            onClick={() => setTab('login')}
           >
             Login
           </button>
           <button
-            onClick={() => setMode("register")}
-            className={`px-4 py-2 font-medium rounded ${
-              mode === "register" ? "bg-blue-600 text-white" : "bg-gray-200"
-            }`}
+            className={`flex-1 py-2 font-semibold ${tab === 'signup' ? 'border-b-2 border-blue-600 text-blue-600' : 'text-gray-500'}`}
+            onClick={() => setTab('signup')}
           >
-            Register
+            Sign Up
           </button>
         </div>
 
-        <form onSubmit={handleSubmit} className="space-y-4">
-          {mode === "register" && (
-            <>
-              <div>
-                <label className="block text-sm font-medium mb-1">Full Name</label>
-                <input
-                  type="text"
-                  name="name"
-                  className="w-full border rounded p-2"
-                  placeholder="Enter your name"
-                  value={formData.name}
-                  onChange={handleChange}
-                  required
-                />
-              </div>
+        {errorMsg && <div className="text-red-500 mb-4 text-center">{errorMsg}</div>}
 
-              <div>
-                <label className="block text-sm font-medium mb-1">State</label>
-                <select
-                  name="state"
-                  className="w-full border rounded p-2"
-                  value={formData.state}
-                  onChange={handleChange}
-                  required
-                >
-                  <option value="">Select State</option>
-                  {indianStates.map((state) => (
-                    <option key={state} value={state}>
-                      {state}
-                    </option>
-                  ))}
-                </select>
-              </div>
-            </>
-          )}
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Email</label>
+        {tab === 'login' ? (
+          <form onSubmit={handleLogin} className="space-y-4">
             <input
               type="email"
-              name="email"
-              className="w-full border rounded p-2"
-              placeholder="Enter your email"
-              value={formData.email}
-              onChange={handleChange}
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
               required
+              className="w-full border p-2 rounded"
             />
-          </div>
-
-          <div>
-            <label className="block text-sm font-medium mb-1">Password</label>
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              className="w-full border p-2 rounded"
+            />
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 rounded"
+              disabled={loading}
+            >
+              {loading ? "Logging in..." : "Login"}
+            </button>
+          </form>
+        ) : (
+          <form onSubmit={handleSignup} className="space-y-4">
+            <input
+              type="text"
+              placeholder="Full Name"
+              value={name}
+              onChange={e => setName(e.target.value)}
+              required
+              className="w-full border p-2 rounded"
+            />
+            <input
+              type="email"
+              placeholder="Email"
+              value={email}
+              onChange={e => setEmail(e.target.value)}
+              required
+              className="w-full border p-2 rounded"
+            />
+            <input
+              type={showPassword ? "text" : "password"}
+              placeholder="Password"
+              value={password}
+              onChange={e => setPassword(e.target.value)}
+              required
+              className="w-full border p-2 rounded"
+            />
             <input
               type="password"
-              name="password"
-              className="w-full border rounded p-2"
-              placeholder="Enter your password"
-              value={formData.password}
-              onChange={handleChange}
+              placeholder="Confirm Password"
+              value={confirmPassword}
+              onChange={e => setConfirmPassword(e.target.value)}
               required
+              className="w-full border p-2 rounded"
             />
-          </div>
-
-          <button
-            type="submit"
-            className="w-full bg-blue-600 text-white py-2 rounded hover:bg-blue-700 transition"
-          >
-            {mode === "login" ? "Login" : "Register"}
-          </button>
-        </form>
+            <select
+              value={state}
+              onChange={e => setState(e.target.value)}
+              required
+              className="w-full border p-2 rounded"
+            >
+              <option value="">Select State</option>
+              {indianStates.map(s => (
+                <option key={s} value={s}>{s}</option>
+              ))}
+            </select>
+            <div className="flex items-center">
+              <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} className="mr-2"/>
+              <span className="text-sm text-gray-600">Agree to Terms & Privacy</span>
+            </div>
+            <button
+              type="submit"
+              className="w-full bg-blue-600 text-white py-2 rounded"
+              disabled={loading}
+            >
+              {loading ? "Signing up..." : "Sign Up"}
+            </button>
+          </form>
+        )}
       </div>
     </div>
   );
