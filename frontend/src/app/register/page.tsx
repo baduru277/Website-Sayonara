@@ -70,10 +70,10 @@ export default function RegisterPage() {
         
         setSuccessMessage('Registration successful! Redirecting to dashboard...');
         
-        // Redirect to dashboard after a short delay
-        setTimeout(() => {
-          router.push('/dashboard');
-        }, 2000);
+//         // Redirect to dashboard after a short delay
+//         setTimeout(() => {
+//           router.push('/dashboard');
+//         }, 2000);
       } else {
         setErrors({ general: 'Registration failed. Please try again.' });
       }
