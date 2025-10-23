@@ -14,7 +14,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
   const [gender, setGender] = useState("");
   const [contact, setContact] = useState("");
   const [location, setLocation] = useState("");
-//   const [verificationCode, setVerificationCode] = useState("");
+  const [verificationCode, setVerificationCode] = useState("");
   const [terms, setTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
@@ -385,32 +385,32 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
             </form>
           )}
 
-{/*            */}{/* Step 4: Email Verification */}
-{/*           {step === "verify-email" && ( */}
-{/*             <form onSubmit={e => { e.preventDefault(); setStep('basic-info'); }}> */}
-{/*               <h3 style={{ fontWeight: 700, fontSize: 20, color: '#222', marginBottom: 10 }}>Verify Your Email Address</h3> */}
-{/*               <p style={{ color: '#666', fontSize: 15, marginBottom: 18 }}> */}
-{/*                 We&apos;ve sent a verification to <span style={{ color: '#924DAC', fontWeight: 600 }}>{email || 'your email'}</span> to verify your email address and activate your account. */}
-{/*               </p> */}
-{/*               <div style={{ marginBottom: 18 }}> */}
-{/*                 <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Verification Code</label> */}
-{/*                 <input */}
-{/*                   type="text" */}
-{/*                   placeholder="Enter code" */}
-{/*                   value={verificationCode} */}
-{/*                   onChange={e => setVerificationCode(e.target.value)} */}
-{/*                 /> */}
-{/*                 <div style={{ textAlign: 'right', marginTop: 4 }}> */}
-{/*                   <button type="button" style={{ color: '#924DAC', fontSize: 13, textDecoration: 'underline', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => alert('Code resent!')}> */}
-{/*                     Resend Code */}
-{/*                   </button> */}
-{/*                 </div> */}
-{/*               </div> */}
-{/*               <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }}> */}
-{/*                 VERIFY ME */}
-{/*               </button> */}
-{/*             </form> */}
-{/*           )} */}
+          {/* Step 4: Email Verification */}
+          {step === "verify-email" && (
+            <form onSubmit={e => { e.preventDefault(); setStep('basic-info'); }}>
+              <h3 style={{ fontWeight: 700, fontSize: 20, color: '#222', marginBottom: 10 }}>Verify Your Email Address</h3>
+              <p style={{ color: '#666', fontSize: 15, marginBottom: 18 }}>
+                We&apos;ve sent a verification to <span style={{ color: '#924DAC', fontWeight: 600 }}>{email || 'your email'}</span> to verify your email address and activate your account.
+              </p>
+              <div style={{ marginBottom: 18 }}>
+                <label style={{ fontWeight: 600, color: '#444', fontSize: 15 }}>Verification Code</label>
+                <input
+                  type="text"
+                  placeholder="Enter code"
+                  value={verificationCode}
+                  onChange={e => setVerificationCode(e.target.value)}
+                />
+                <div style={{ textAlign: 'right', marginTop: 4 }}>
+                  <button type="button" style={{ color: '#924DAC', fontSize: 13, textDecoration: 'underline', fontWeight: 500, background: 'none', border: 'none', cursor: 'pointer' }} onClick={() => alert('Code resent!')}>
+                    Resend Code
+                  </button>
+                </div>
+              </div>
+              <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }}>
+                VERIFY ME
+              </button>
+            </form>
+          )}
 
           {/* Step 5: Basic Info */}
           {step === "basic-info" && (

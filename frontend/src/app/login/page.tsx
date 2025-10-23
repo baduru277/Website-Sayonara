@@ -1,47 +1,16 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
 
 export default function LoginPage() {
   const [tab, setTab] = useState<"login" | "signup">("login");
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
-  const router = useRouter();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    setLoading(true);
-    setErrorMsg(null);
-
-    const formData = new FormData(e.currentTarget);
-    const email = formData.get("email");
-    const password = formData.get("password");
-
-    try {
-      const endpoint =
-        tab === "login" ? "/api/auth/login" : "/api/auth/register";
-
-      const res = await fetch(endpoint, {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ email, password }),
-      });
-
-      if (!res.ok) {
-        const data = await res.json();
-        throw new Error(data.message || "Failed to authenticate");
-      }
-
-      // ✅ Redirect to dashboard after real login
-      router.push("/dashboard");
-      router.refresh(); // ensures header re-renders if it reads auth cookies
-    } catch (err: any) {
-      setErrorMsg(err.message || "Something went wrong.");
-    } finally {
-      setLoading(false);
-    }
+    alert(`${tab === "login" ? "Login" : "Signup"} form submitted!`);
   };
 
   return (
@@ -126,7 +95,6 @@ export default function LoginPage() {
               Email Address
             </label>
             <input
-              name="email"
               type="email"
               placeholder="Enter your email"
               required
@@ -157,7 +125,6 @@ export default function LoginPage() {
             </label>
             <div style={{ position: "relative" }}>
               <input
-                name="password"
                 type={showPassword ? "text" : "password"}
                 placeholder={
                   tab === "login" ? "Enter your password" : "Create a password"
@@ -211,11 +178,7 @@ export default function LoginPage() {
               opacity: loading ? 0.6 : 1,
             }}
           >
-            {loading
-              ? "Processing..."
-              : tab === "login"
-              ? "SIGN IN"
-              : "SIGN UP"}
+            {tab === "login" ? "SIGN IN" : "SIGN UP"}
           </button>
         </form>
       </div>
