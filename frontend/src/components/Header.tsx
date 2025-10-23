@@ -10,62 +10,65 @@ import apiService from '../services/api';
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [location, setLocation] = useState(''); // <-- initially empty
+  const [location, setLocation] = useState('Oguru');
   const [showAuth, setShowAuth] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [pendingPostAction, setPendingPostAction] = useState(false);
 
-  const indianStates = [
-    "Andhra Pradesh","Arunachal Pradesh","Assam","Bihar","Chhattisgarh","Goa",
-    "Gujarat","Haryana","Himachal Pradesh","Jharkhand","Karnataka","Kerala",
-    "Madhya Pradesh","Maharashtra","Manipur","Meghalaya","Mizoram","Nagaland",
-    "Odisha","Punjab","Rajasthan","Sikkim","Tamil Nadu","Telangana","Tripura",
-    "Uttar Pradesh","Uttarakhand","West Bengal","Andaman and Nicobar Islands",
-    "Chandigarh","Dadra and Nagar Haveli and Daman and Diu","Delhi",
-    "Jammu and Kashmir","Ladakh","Lakshadweep","Puducherry"
-  ];
-
   useEffect(() => {
+    // Check if user is logged in by looking for JWT token
     const token = localStorage.getItem('token');
     if (token) {
       setIsLoggedIn(true);
+      // Fetch user data
       apiService.getCurrentUser()
-        .then(userData => setUser(userData))
-        .catch(() => {
+        .then(userData => {
+          setUser(userData);
+        })
+        .catch(error => {
+          console.error('Failed to get user data:', error);
+          // If token is invalid, clear it
           localStorage.removeItem('token');
           setIsLoggedIn(false);
         });
     }
 
-    // Only fetch geolocation if user has not logged in / no selected state
-    if (!token && !location) {
-      fetch('https://ip-api.com/json')
-        .then(res => res.json())
-        .then(data => setLocation(data?.city || 'Oguru'))
-        .catch(() => setLocation('Oguru'));
-    }
+    // Fetch city from ip-api.com
+    fetch('https://ip-api.com/json')
+      .then(res => res.json())
+      .then(data => {
+        if (data && data.city) {
+          setLocation(data.city);
+        }
+      })
+      .catch(() => setLocation('Oguru'));
 
+    // Close dropdown when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
       if (!(event.target as Element).closest('.user-dropdown-container')) {
         setShowDropdown(false);
       }
     };
-    document.addEventListener('click', handleClickOutside);
 
+    document.addEventListener('click', handleClickOutside);
+    
+    // Listen for auth state changes
     const handleAuthStateChange = (event: CustomEvent) => {
       if (event.detail.isLoggedIn) {
         setIsLoggedIn(true);
         setUser(event.detail.userData);
-        if (event.detail.selectedState) setLocation(event.detail.selectedState);
-
+        // If user was trying to post, redirect them now
         if (pendingPostAction) {
           setPendingPostAction(false);
-          window.location.href = '/add-item';
+          setTimeout(() => {
+            window.location.href = '/add-item';
+          }, 500);
         }
       }
     };
+    
     window.addEventListener('authStateChanged', handleAuthStateChange as EventListener);
-
+    
     return () => {
       document.removeEventListener('click', handleClickOutside);
       window.removeEventListener('authStateChanged', handleAuthStateChange as EventListener);
@@ -92,8 +95,10 @@ export default function Header() {
   const handlePostClick = (e: React.MouseEvent) => {
     e.preventDefault();
     if (isLoggedIn) {
+      // If logged in, navigate to add-item page
       window.location.href = '/add-item';
     } else {
+      // If not logged in, show auth modal and set pending action
       setPendingPostAction(true);
       setShowAuth(true);
     }
@@ -117,7 +122,7 @@ export default function Header() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
                   {user && (
                     <div className="user-dropdown-container" style={{ position: 'relative' }}>
-                      <div
+                      <div 
                         onClick={toggleDropdown}
                         style={{
                           width: 40,
@@ -139,7 +144,7 @@ export default function Header() {
                       >
                         {getInitials(user.firstName, user.lastName)}
                       </div>
-
+                      
                       {/* Dropdown Menu */}
                       {showDropdown && (
                         <div style={{
@@ -168,7 +173,7 @@ export default function Header() {
                               {user.email}
                             </div>
                           </div>
-
+                          
                           {/* Menu Items */}
                           <div style={{ padding: '8px 0' }}>
                             <Link href="/dashboard" style={{ textDecoration: 'none' }}>
@@ -182,15 +187,22 @@ export default function Header() {
                                 gap: 12,
                                 transition: 'background-color 0.2s ease'
                               }}
-                                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6'}
-                                onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'}
-                                onClick={() => setShowDropdown(false)}
+                            onMouseEnter={(e) => {
+                             (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
+                              }}
+                            onMouseLeave={(e) => {
+                             (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                              }}
+
+                              onClick={() => setShowDropdown(false)}
                               >
                                 <span style={{ fontSize: 16 }}>📊</span>
                                 Dashboard
                               </div>
                             </Link>
-
+                            
+                            
+                            
                             <Link href="/messages" style={{ textDecoration: 'none' }}>
                               <div style={{
                                 padding: '12px 16px',
@@ -202,18 +214,23 @@ export default function Header() {
                                 gap: 12,
                                 transition: 'background-color 0.2s ease'
                               }}
-                                onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6'}
-                                onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'}
-                                onClick={() => setShowDropdown(false)}
+                            onMouseEnter={(e) => {
+                                (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
+                            }}
+                            onMouseLeave={(e) => {
+                             (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                               }}
+
+                              onClick={() => setShowDropdown(false)}
                               >
                                 <span style={{ fontSize: 16 }}>💬</span>
                                 Messages
                               </div>
                             </Link>
-
+                            
                             <div style={{ height: 1, backgroundColor: '#e5e7eb', margin: '8px 0' }}></div>
-
-                            <div
+                            
+                            <div 
                               onClick={handleLogout}
                               style={{
                                 padding: '12px 16px',
@@ -225,9 +242,14 @@ export default function Header() {
                                 gap: 12,
                                 transition: 'background-color 0.2s ease'
                               }}
-                              onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6'}
-                              onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'}
-                            >
+                              onMouseEnter={(e) => {
+  (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
+}}
+onMouseLeave={(e) => {
+  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+}}
+
+                              >
                               <span style={{ fontSize: 16 }}>🚪</span>
                               Logout
                             </div>
@@ -239,42 +261,26 @@ export default function Header() {
                 </div>
               )}
             </div>
-
-            {/* Location Select */}
             <div style={{ marginLeft: 24 }}>
               <select
                 style={{ fontSize: 16, padding: '4px 12px', borderRadius: 4, border: '1px solid #ccc' }}
                 value={location}
                 onChange={e => setLocation(e.target.value)}
               >
-                {indianStates.map(state => (
-                  <option key={state} value={state}>{state}</option>
-                ))}
+                <option value={location}>{location}</option>
+                <option value="Oguru">Oguru</option>
+                <option value="Lagos">Lagos</option>
+                <option value="Abuja">Abuja</option>
               </select>
             </div>
           </div>
         </div>
       </header>
-
-      {/* Auth Modal */}
-      <AuthModal
-        open={showAuth}
-        onClose={() => {
-          setShowAuth(false);
-          setPendingPostAction(false);
-        }}
-        onSuccess={(message: string, selectedState?: string) => {
-          console.log(message);
-          setShowAuth(false);
-          setIsLoggedIn(true);
-          if (selectedState) setLocation(selectedState);
-
-          if (pendingPostAction) {
-            setPendingPostAction(false);
-            window.location.href = '/add-item';
-          }
-        }}
-      />
+      <AuthModal open={showAuth} onClose={() => {
+        setShowAuth(false);
+        // Clear pending action if user closes modal without logging in
+        setPendingPostAction(false);
+      }} />
     </>
   );
 }
