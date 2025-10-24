@@ -13,19 +13,27 @@ export default function LoginPage() {
   const [password, setPassword] = useState("");
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault(); // ensures no GET request is made
-    if (e.nativeEvent.type !== "submit") return; // extra safety
-
+    e.preventDefault(); // prevent default GET
     setLoading(true);
     setErrorMsg(null);
 
     try {
       if (tab === "login") {
         const res = await apiService.login({ email, password });
-        console.log("Login success:", res);
-        alert("Login successful!");
+        if (res.token) {
+          console.log("Login success:", res);
+          alert("Login successful!");
+        } else {
+          setErrorMsg(res.error || "Login failed");
+        }
       } else {
-        alert("Signup submitted!"); // Implement signup POST request
+        // Signup POST request
+        const res = await apiService.register({ name: "Test", email, password }); // replace name as needed
+        if (res.token) {
+          alert("Signup successful!");
+        } else {
+          setErrorMsg(res.error || "Signup failed");
+        }
       }
     } catch (err: any) {
       setErrorMsg(err.message || "Something went wrong");
