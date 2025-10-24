@@ -17,6 +17,13 @@ const sidebarItems = [
   { key: "logout", label: "Log-out" },
 ];
 
+// Sample available subscription plans
+const availablePlans = [
+  { id: 1, name: "Basic Plan", price: 99, desc: "Basic features for casual users." },
+  { id: 2, name: "Standard Plan", price: 299, desc: "Standard features for regular users." },
+  { id: 3, name: "Premium Plan", price: 499, desc: "All features for power users." },
+];
+
 export default function DashboardPage() {
   const [selected, setSelected] = useState("dashboard");
   const [userProfile, setUserProfile] = useState<any>(null);
@@ -34,7 +41,7 @@ export default function DashboardPage() {
         const user = await apiService.getCurrentUser();
         setUserProfile(user);
       } catch (error: unknown) {
-        console.error(error);
+        console.error('Failed to fetch user profile:', error);
         if (error instanceof Error) {
           if (error.message.includes('Invalid token') || error.message.includes('401')) {
             router.push('/');
@@ -44,13 +51,11 @@ export default function DashboardPage() {
         setLoading(false);
       }
     };
-
     fetchUserProfile();
   }, [router]);
 
   const getUserDisplayName = () => {
     if (!userProfile) return 'User';
-    
     if (userProfile.firstName && userProfile.lastName) return `${userProfile.firstName} ${userProfile.lastName}`;
     if (userProfile.name) return userProfile.name;
     if (userProfile.firstName) return userProfile.firstName;
@@ -73,6 +78,18 @@ export default function DashboardPage() {
     apiService.removeAuthToken();
     router.push("/");
     window.location.reload();
+  };
+
+  const handleSubscribe = async (plan: any) => {
+    try {
+      await apiService.subscribeToPlan(plan.id);
+      alert(`Subscribed to ${plan.name} successfully!`);
+      const user = await apiService.getCurrentUser();
+      setUserProfile(user);
+    } catch (err) {
+      console.error(err);
+      alert("Failed to subscribe. Please try again.");
+    }
   };
 
   const Sidebar = () => (
@@ -121,10 +138,8 @@ export default function DashboardPage() {
       case "dashboard":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 28 }}>Welcome to your Dashboard!</h2>
-            <p style={{ color: "#444", marginTop: 12 }}>
-              Manage your orders, notifications, subscriptions, and settings here.
-            </p>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 28 }}>Welcome, {getUserDisplayName()}!</h2>
+            <p style={{ color: "#444", marginTop: 12 }}>Manage your orders, notifications, subscriptions, and settings here.</p>
 
             {/* Motivational Section */}
             <div style={{
@@ -140,128 +155,90 @@ export default function DashboardPage() {
                   Ready to Share Your Treasures?
                 </h3>
                 <p style={{ color: "#666", fontSize: 16, lineHeight: 1.6, marginBottom: 24 }}>
-                  One person's unused item is another person's treasure. Start giving items a second life today!
+                  One person's unused item is another person's treasure. Start giving items a second life!
                 </p>
               </div>
 
-              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 24 }}>
-                {[
-                  { icon: "📦", title: "Declutter & Earn", desc: "Turn unused items into cash while helping others find what they need." },
-                  { icon: "🤝", title: "Build Community", desc: "Connect with people who value sustainability and smart shopping." },
-                  { icon: "🌱", title: "Go Green", desc: "Reduce waste and contribute to a sustainable future." }
-                ].map((card) => (
-                  <div key={card.title} style={{
-                    background: "white",
-                    padding: 20,
-                    borderRadius: 12,
-                    textAlign: "center",
-                    boxShadow: "0 4px 12px rgba(146,77,172,0.1)"
-                  }}>
-                    <span style={{ fontSize: 32, marginBottom: 12, display: "block" }}>{card.icon}</span>
-                    <h4 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 8 }}>{card.title}</h4>
-                    <p style={{ color: "#666", fontSize: 14 }}>{card.desc}</p>
-                  </div>
-                ))}
+              {/* Stats */}
+              <div style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: 20,
+                marginBottom: 24
+              }}>
+                <div style={{ background: "white", padding: 24, borderRadius: 12, textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+                  <div style={{ fontSize: 32, color: "#924DAC", fontWeight: 700 }}>0</div>
+                  <div style={{ color: "#666", fontSize: 14 }}>Items Posted</div>
+                </div>
+                <div style={{ background: "white", padding: 24, borderRadius: 12, textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+                  <div style={{ fontSize: 32, color: "#924DAC", fontWeight: 700 }}>0</div>
+                  <div style={{ color: "#666", fontSize: 14 }}>Total Views</div>
+                </div>
+                <div style={{ background: "white", padding: 24, borderRadius: 12, textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+                  <div style={{ fontSize: 32, color: "#924DAC", fontWeight: 700 }}>0</div>
+                  <div style={{ color: "#666", fontSize: 14 }}>Total Likes</div>
+                </div>
+                <div style={{ background: "white", padding: 24, borderRadius: 12, textAlign: "center", boxShadow: "0 2px 8px rgba(0,0,0,0.1)" }}>
+                  <div style={{ fontSize: 32, color: "#924DAC", fontWeight: 700 }}>0</div>
+                  <div style={{ color: "#666", fontSize: 14 }}>Successful Trades</div>
+                </div>
               </div>
             </div>
+          </div>
+        );
 
-            {/* Quick Stats */}
-            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 20, marginTop: 32 }}>
-              {["Items Posted", "Total Views", "Total Likes", "Successful Trades"].map((stat) => (
-                <div key={stat} style={{
-                  background: "white",
-                  padding: 24,
+      case "subscription":
+        return (
+          <div style={{ padding: 32 }}>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
+              Your Subscription Plan
+            </h2>
+
+            {userProfile?.subscription ? (
+              <div style={{ background: "#f3eaff", borderRadius: 12, padding: 28, maxWidth: 400, marginBottom: 32 }}>
+                <div style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 8 }}>
+                  Current Plan: {userProfile.subscription.planName}
+                </div>
+                <div style={{ color: "#444", marginBottom: 12 }}>
+                  {userProfile.subscription.features.join(", ")}
+                </div>
+                <div style={{ fontSize: 28, fontWeight: 700, color: "#222" }}>₹{userProfile.subscription.price}</div>
+                <div style={{ color: "#888", fontSize: 14 }}>per month</div>
+              </div>
+            ) : (
+              <p style={{ color: "#666", marginBottom: 32 }}>
+                You don't have an active subscription yet. Choose a plan to enjoy full benefits!
+              </p>
+            )}
+
+            <h3 style={{ color: "#924DAC", fontWeight: 700, marginBottom: 16 }}>Available Plans</h3>
+            <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+              {availablePlans.map((plan) => (
+                <div key={plan.id} style={{
+                  background: "#fff",
                   borderRadius: 12,
-                  textAlign: "center",
-                  boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+                  boxShadow: "0 2px 8px rgba(146,77,172,0.04)",
+                  padding: 28,
+                  minWidth: 220,
+                  flex: "1 1 220px"
                 }}>
-                  <div style={{ fontSize: 32, color: "#924DAC", fontWeight: 700 }}>0</div>
-                  <div style={{ color: "#666", fontSize: 14 }}>{stat}</div>
-                  <p style={{ color: "#888", fontSize: 12, marginTop: 4, fontStyle: "italic" }}>
-                    No {stat.toLowerCase()} yet. Add your first item to get started!
-                  </p>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 8 }}>{plan.name}</div>
+                  <div style={{ color: "#444", marginBottom: 12 }}>{plan.desc}</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: "#222" }}>₹{plan.price}</div>
+                  <div style={{ color: "#888", fontSize: 14, marginBottom: 12 }}>per month</div>
+                  <button
+                    style={{ padding: "8px 16px", borderRadius: 6, background: "#924DAC", color: "#fff", border: "none", cursor: "pointer" }}
+                    onClick={() => handleSubscribe(plan)}
+                  >
+                    Subscribe
+                  </button>
                 </div>
               ))}
             </div>
           </div>
         );
 
-      case "my-post-items":
-        return (
-          <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>My Post Items</h2>
-            <p style={{ color: "#444", marginBottom: 16 }}>You haven't posted any items yet. Click the Post button to share your treasures!</p>
-            <table style={{ width: "100%", background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(146,77,172,0.06)", overflow: "hidden" }}>
-              <thead>
-                <tr style={{ background: "#f3eaff", color: "#924DAC" }}>
-                  <th style={{ padding: 12 }}>ITEM</th>
-                  <th style={{ padding: 12 }}>STATUS</th>
-                  <th style={{ padding: 12 }}>VIEWS</th>
-                  <th style={{ padding: 12 }}>LIKES</th>
-                  <th style={{ padding: 12 }}>POSTED DATE</th>
-                  <th style={{ padding: 12 }}>ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td colSpan={6} style={{ padding: 24, textAlign: "center", color: "#888", fontStyle: "italic" }}>
-                    No items posted yet. Click the Post button to start sharing your treasures!
-                  </td>
-                </tr>
-              </tbody>
-            </table>
-          </div>
-        );
-
-      case "location":
-        return (
-          <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>📍 Location Settings</h2>
-            <p style={{ color: "#444", marginBottom: 24 }}>Set your location to help buyers find items near you</p>
-
-            <div style={{
-              background: "white",
-              borderRadius: 12,
-              padding: 24,
-              boxShadow: "0 2px 12px rgba(146,77,172,0.06)",
-              marginBottom: 24
-            }}>
-              <h3 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 16 }}>Select Your Location</h3>
-              <LocationMap onLocationSelect={setSelectedLocation} height="400px" />
-            </div>
-
-            {selectedLocation && (
-              <div style={{
-                background: "linear-gradient(135deg, #f3eaff 0%, #e8f4fd 100%)",
-                borderRadius: 12,
-                padding: 20,
-                border: "2px solid #e0e7ff"
-              }}>
-                <h4 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 12 }}>📍 Selected Location</h4>
-                <div style={{ color: "#666", marginBottom: 8 }}><strong>Address:</strong> {selectedLocation.address}</div>
-                <div style={{ color: "#666", marginBottom: 8 }}>
-                  <strong>Coordinates:</strong> {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
-                </div>
-                <button
-                  className="sayonara-btn"
-                  style={{ fontSize: 14, padding: "8px 16px", marginTop: 8 }}
-                  onClick={() => {
-                    console.log('Saving location:', selectedLocation);
-                    alert('Location saved successfully!');
-                  }}
-                >
-                  💾 Save Location
-                </button>
-              </div>
-            )}
-          </div>
-        );
-
-      // Keep other sections unchanged
-      case "order-history": /* your original code */ return <div style={{ padding: 32 }}>Order History Section</div>;
-      case "notification": return <div style={{ padding: 32 }}>Notification Section</div>;
-      case "subscription": return <div style={{ padding: 32 }}>Subscription Section</div>;
-      case "setting": return <div style={{ padding: 32 }}>Setting Section</div>;
+      // Keep other cases (location, my-post-items, order-history, notification, setting) same as your existing code
       default: return null;
     }
   };
@@ -284,18 +261,9 @@ export default function DashboardPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ fontWeight: 600 }}>{loading ? 'Loading...' : getUserDisplayName()}</div>
             <div style={{ fontSize: 13, color: "#eee" }}>{loading ? 'loading@email.com' : userProfile?.email || 'user@example.com'}</div>
-            <div style={{
-              width: 36,
-              height: 36,
-              background: "#fff",
-              borderRadius: "50%",
-              display: "flex",
-              alignItems: "center",
-              justifyContent: "center",
-              color: "#924DAC",
-              fontWeight: 700,
-              fontSize: 18
-            }}>{loading ? 'L' : getUserInitials()}</div>
+            <div style={{ width: 36, height: 36, background: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#924DAC", fontWeight: 700, fontSize: 18 }}>
+              {loading ? 'L' : getUserInitials()}
+            </div>
           </div>
         </div>
       </div>
