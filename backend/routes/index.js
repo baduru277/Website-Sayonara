@@ -1,8 +1,9 @@
-var express = require('express');
-var router = express.Router();
+// routes/index.js
+const express = require('express');
+const router = express.Router();
 
 /* API root */
-router.get('/', function(req, res) {
+router.get('/', (req, res) => {
   res.status(200).json({
     status: 'OK',
     message: 'Sayonara API root',
@@ -10,8 +11,8 @@ router.get('/', function(req, res) {
   });
 });
 
-/* Health check endpoint for Render */
-router.get('/health', function(req, res) {
+/* Health check endpoint */
+router.get('/health', (req, res) => {
   res.status(200).json({
     status: 'OK',
     message: 'Sayonara API is running',
