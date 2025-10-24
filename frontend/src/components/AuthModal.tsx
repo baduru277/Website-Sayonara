@@ -17,6 +17,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
   const [terms, setTerms] = useState(false);
   const [loading, setLoading] = useState(false);
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
+  const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
   if (!open) return null;
@@ -186,9 +187,31 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
 
           {/* Step: Basic Info (directly after signup) */}
           {step === "basic-info" && (
-            <form onSubmit={e => { e.preventDefault(); onClose(); }}>
+            <form onSubmit={e => {
+              e.preventDefault();
+              setSuccessMsg('🎉 Your Sayonara account has been created! Happy exchanging, bidding, and reselling.');
+              setTimeout(() => {
+                setSuccessMsg(null);
+                setStep('login-signup');
+                setTab('login');
+              }, 2500); // show message 2.5s
+            }}>
+              {successMsg && (
+                <div style={{
+                  background: '#e6f9f0',
+                  color: '#0f9d58',
+                  textAlign: 'center',
+                  padding: '12px 16px',
+                  borderRadius: 12,
+                  fontWeight: 600,
+                  marginBottom: 16,
+                  boxShadow: '0 2px 10px rgba(0,0,0,0.08)'
+                }}>
+                  {successMsg}
+                </div>
+              )}
               <h3 style={{ fontWeight: 700, fontSize: 20, color: '#222', marginBottom: 10 }}>Basic Information</h3>
-              <p style={{ color: '#666', fontSize: 15, marginBottom: 18 }}>Let&apos;s start with the basics</p>
+              <p style={{ color: '#666', fontSize: 15, marginBottom: 18 }}>Let's start with the basics</p>
               <input type="text" placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} />
               <input type="date" placeholder="Date of Birth" value={dob} onChange={e => setDob(e.target.value)} />
               <select value={gender} onChange={e => setGender(e.target.value)}>
@@ -199,7 +222,13 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
               </select>
               <input type="text" placeholder="Contact Number" value={contact} onChange={e => setContact(e.target.value)} />
               <input type="text" placeholder="Location" value={location} onChange={e => setLocation(e.target.value)} />
-              <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }}>
+              <button type="submit" className="sayonara-btn" style={{ 
+                width: '100%', 
+                marginTop: 8, 
+                fontSize: 18, 
+                backgroundColor: successMsg ? '#c1e1c1' : '#924DAC',
+                cursor: successMsg ? 'not-allowed' : 'pointer'
+              }} disabled={!!successMsg}>
                 CONTINUE
               </button>
             </form>
