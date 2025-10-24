@@ -11,6 +11,7 @@ export default function LoginPage() {
 
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
+  const [name, setName] = useState(""); // for signup
 
   const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault(); // prevent default GET
@@ -27,9 +28,9 @@ export default function LoginPage() {
           setErrorMsg(res.error || "Login failed");
         }
       } else {
-        // Signup POST request
-        const res = await apiService.register({ name: "Test", email, password }); // replace name as needed
+        const res = await apiService.register({ name, email, password });
         if (res.token) {
+          console.log("Signup success:", res);
           alert("Signup successful!");
         } else {
           setErrorMsg(res.error || "Signup failed");
@@ -111,6 +112,40 @@ export default function LoginPage() {
         )}
 
         <form onSubmit={handleSubmit}>
+          {/* Name (Signup only) */}
+          {tab === "signup" && (
+            <div style={{ marginBottom: 18 }}>
+              <label
+                style={{
+                  fontWeight: 600,
+                  color: "#444",
+                  fontSize: 15,
+                  display: "block",
+                }}
+              >
+                Name
+              </label>
+              <input
+                type="text"
+                placeholder="Enter your name"
+                required
+                value={name}
+                onChange={(e) => setName(e.target.value)}
+                style={{
+                  width: "100%",
+                  padding: "12px 14px",
+                  border: "2px solid #f3eaff",
+                  borderRadius: 8,
+                  fontSize: 16,
+                  marginTop: 6,
+                  outline: "none",
+                  color: "#924DAC",
+                  background: "#faf8fd",
+                }}
+              />
+            </div>
+          )}
+
           {/* Email */}
           <div style={{ marginBottom: 18 }}>
             <label
@@ -191,8 +226,12 @@ export default function LoginPage() {
                   fontSize: 18,
                   transition: "transform 0.2s",
                 }}
-                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-50%) scale(1.2)")}
-                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(-50%) scale(1)")}
+                onMouseEnter={(e) =>
+                  (e.currentTarget.style.transform = "translateY(-50%) scale(1.2)")
+                }
+                onMouseLeave={(e) =>
+                  (e.currentTarget.style.transform = "translateY(-50%) scale(1)")
+                }
               >
                 {showPassword ? "🙈" : "👁️"}
               </button>
