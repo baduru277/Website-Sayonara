@@ -25,9 +25,11 @@ class ApiService {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('token');
   }
+
   setAuthToken(token) {
     if (typeof window !== 'undefined') localStorage.setItem('token', token);
   }
+
   removeAuthToken() {
     if (typeof window !== 'undefined') localStorage.removeItem('token');
   }
@@ -35,8 +37,18 @@ class ApiService {
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getAuthToken();
+
+    // For /auth/me or any protected route, require token
+    if (endpoint === '/auth/me' && !token) {
+      throw new Error('No authentication token found. Please login first.');
+    }
+
     const config = {
-      headers: { 'Content-Type': 'application/json', ...(token && { Authorization: `Bearer ${token}` }), ...options.headers },
+      headers: {
+        'Content-Type': 'application/json',
+        ...(token && { Authorization: `Bearer ${token}` }),
+        ...options.headers
+      },
       ...options,
     };
 
@@ -62,15 +74,27 @@ class ApiService {
   }
 
   // Auth
-  register(userData) { return this.request('/auth/register', { method: 'POST', body: JSON.stringify(userData) }); }
+  register(userData) {
+    return this.request('/auth/register', { method: 'POST', body: JSON.stringify(userData) });
+  }
+
   async login(credentials) {
     const data = await this.request('/auth/login', { method: 'POST', body: JSON.stringify(credentials) });
     if (data.token) this.setAuthToken(data.token);
     return data;
   }
-  getCurrentUser() { return this.request('/auth/me'); }
-  updateProfile(profileData) { return this.request('/auth/profile', { method: 'PUT', body: JSON.stringify(profileData) }); }
-  logout() { this.removeAuthToken(); }
+
+  getCurrentUser() {
+    return this.request('/auth/me'); // token added automatically
+  }
+
+  updateProfile(profileData) {
+    return this.request('/auth/profile', { method: 'PUT', body: JSON.stringify(profileData) });
+  }
+
+  logout() {
+    this.removeAuthToken();
+  }
 
   // Items
   getItems(params = {}) {
@@ -78,10 +102,7 @@ class ApiService {
     return this.request(`/items?${query}`);
   }
 
-  // Existing method
   getItem(id) { return this.request(`/items/${id}`); }
-
-  // New method (fixes TypeScript error)
   getItemById(id) { return this.request(`/items/${id}`); }
 
   createItem(itemData) { return this.request('/items', { method: 'POST', body: JSON.stringify(itemData) }); }
@@ -94,11 +115,13 @@ class ApiService {
   getCategories() { return this.request('/items/categories/list'); }
   searchItems(query, filters = {}) { return this.getItems({ search: query, ...filters }); }
   getExchangeItems(filters = {}) { return this.getItems({ type: 'exchange', ...filters }); }
+  
   async getBiddingItems(filters = {}) {
     let res = await this.getItems({ type: 'bidding', ...filters });
     if (!res.items?.length) res = await this.getItems({ type: 'bid', ...filters });
     return res;
   }
+
   getResellItems(filters = {}) { return this.getItems({ type: 'resell', ...filters }); }
 
   // File upload
@@ -125,6 +148,6 @@ class ApiService {
   }
 }
 
-// Singleton
+// Singleton instance
 const apiService = new ApiService();
 export default apiService;
