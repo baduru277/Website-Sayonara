@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import apiService from "@/services/api";
 
 export default function LoginPage() {
   const [tab, setTab] = useState<"login" | "signup">("login");
@@ -8,9 +9,29 @@ export default function LoginPage() {
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    alert(`${tab === "login" ? "Login" : "Signup"} form submitted!`);
+  const [email, setEmail] = useState("");
+  const [password, setPassword] = useState("");
+
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault(); // ensures no GET request is made
+    if (e.nativeEvent.type !== "submit") return; // extra safety
+
+    setLoading(true);
+    setErrorMsg(null);
+
+    try {
+      if (tab === "login") {
+        const res = await apiService.login({ email, password });
+        console.log("Login success:", res);
+        alert("Login successful!");
+      } else {
+        alert("Signup submitted!"); // Implement signup POST request
+      }
+    } catch (err: any) {
+      setErrorMsg(err.message || "Something went wrong");
+    } finally {
+      setLoading(false);
+    }
   };
 
   return (
@@ -81,8 +102,8 @@ export default function LoginPage() {
           </div>
         )}
 
-        {/* Form */}
         <form onSubmit={handleSubmit}>
+          {/* Email */}
           <div style={{ marginBottom: 18 }}>
             <label
               style={{
@@ -98,6 +119,8 @@ export default function LoginPage() {
               type="email"
               placeholder="Enter your email"
               required
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
               style={{
                 width: "100%",
                 padding: "12px 14px",
@@ -112,6 +135,7 @@ export default function LoginPage() {
             />
           </div>
 
+          {/* Password */}
           <div style={{ marginBottom: 18 }}>
             <label
               style={{
@@ -126,10 +150,10 @@ export default function LoginPage() {
             <div style={{ position: "relative" }}>
               <input
                 type={showPassword ? "text" : "password"}
-                placeholder={
-                  tab === "login" ? "Enter your password" : "Create a password"
-                }
+                placeholder={tab === "login" ? "Enter your password" : "Create a password"}
                 required
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
                 style={{
                   width: "100%",
                   padding: "12px 44px 12px 14px",
@@ -145,6 +169,8 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setShowPassword(!showPassword)}
+                aria-label={showPassword ? "Hide password" : "Show password"}
+                title={showPassword ? "Hide password" : "Show password"}
                 style={{
                   position: "absolute",
                   right: 12,
@@ -154,7 +180,11 @@ export default function LoginPage() {
                   border: "none",
                   cursor: "pointer",
                   color: "#924DAC",
+                  fontSize: 18,
+                  transition: "transform 0.2s",
                 }}
+                onMouseEnter={(e) => (e.currentTarget.style.transform = "translateY(-50%) scale(1.2)")}
+                onMouseLeave={(e) => (e.currentTarget.style.transform = "translateY(-50%) scale(1)")}
               >
                 {showPassword ? "🙈" : "👁️"}
               </button>
@@ -176,6 +206,7 @@ export default function LoginPage() {
               fontSize: 18,
               cursor: loading ? "not-allowed" : "pointer",
               opacity: loading ? 0.6 : 1,
+              transition: "opacity 0.2s, background 0.2s",
             }}
           >
             {tab === "login" ? "SIGN IN" : "SIGN UP"}
