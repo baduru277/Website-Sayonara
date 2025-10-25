@@ -23,8 +23,10 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        // Check if token exists
+        // Check if token exists first
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        
+        console.log('Token found:', token ? 'Yes' : 'No');
         
         if (!token) {
           console.log('No token found, redirecting to login');
@@ -32,21 +34,26 @@ export default function DashboardPage() {
           return;
         }
 
-        // Try to get user from localStorage first
+        // Get user from localStorage (stored during login)
         const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+        
+        console.log('Stored user:', storedUser);
         
         if (storedUser) {
           try {
             const parsedUser = JSON.parse(storedUser);
+            console.log('User profile loaded from storage:', parsedUser);
             setUserProfile(parsedUser);
-            setLoading(false);
-          } catch (e) {
-            console.error('Error parsing stored user:', e);
+          } catch (parseError) {
+            console.error('Error parsing user data:', parseError);
+            router.push('/login');
           }
+        } else {
+          console.log('No user data found in localStorage');
+          router.push('/login');
         }
-
       } catch (error: unknown) {
-        console.error('Failed to fetch user profile:', error);
+        console.error('Failed to load user profile:', error);
         router.push('/login');
       } finally {
         setLoading(false);
@@ -57,14 +64,25 @@ export default function DashboardPage() {
   }, [router]);
 
   const getUserDisplayName = () => {
+    console.log('getUserDisplayName called, userProfile:', userProfile);
     if (!userProfile) return 'User';
-    return userProfile.name || userProfile.email?.split('@')[0] || 'User';
+    
+    // Try different name fields
+    if (userProfile.name) return userProfile.name;
+    if (userProfile.firstName && userProfile.lastName) {
+      return `${userProfile.firstName} ${userProfile.lastName}`;
+    }
+    if (userProfile.firstName) return userProfile.firstName;
+    if (userProfile.email) return userProfile.email.split('@')[0];
+    
+    return 'User';
   };
 
   const getUserInitials = () => {
     if (!userProfile) return 'U';
-    const name = getUserDisplayName();
-    return name
+    
+    const displayName = getUserDisplayName();
+    return displayName
       .split(' ')
       .map((word: string) => word.charAt(0))
       .join('')
@@ -76,6 +94,7 @@ export default function DashboardPage() {
     if (typeof window !== 'undefined') {
       localStorage.removeItem("token");
       localStorage.removeItem("user");
+      localStorage.removeItem("isLoggedIn");
     }
     apiService.removeAuthToken();
     router.push("/login");
@@ -270,12 +289,18 @@ export default function DashboardPage() {
               <span style={{ fontSize: 64, marginBottom: 16, display: "block" }}>📦</span>
               <h3 style={{ color: "#924DAC", marginBottom: 12 }}>No Items Posted Yet</h3>
               <p style={{ color: "#666", marginBottom: 20 }}>Start posting your items to see them here!</p>
-              <button 
-                className="sayonara-btn"
-                onClick={() => router.push('/post-item')}
-              >
-                Post Your First Item
-              </button>
+              <div style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center", 
+                gap: 8,
+                color: "#924DAC",
+                fontSize: 16
+              }}>
+                <span>Click the</span>
+                <span style={{ fontSize: 24, fontWeight: "bold" }}>↑</span>
+                <span>Post button to add new items</span>
+              </div>
             </div>
           </div>
         );
@@ -329,7 +354,7 @@ export default function DashboardPage() {
                   <div style={{ color: "#444", marginBottom: 12 }}>{plan.desc}</div>
                   <div style={{ fontSize: 28, fontWeight: 700, color: "#222" }}>₹{plan.price}</div>
                   <div style={{ color: "#888", fontSize: 14, marginBottom: 16 }}>per month</div>
-                  <button className="sayonara-btn" style={{ width: "100%", fontSize: 14 }}>
+                  <button className="sayonara-btn" style={{ width: "100%", fontSize: 14, padding: "10px" }}>
                     Subscribe
                   </button>
                 </div>
@@ -352,17 +377,17 @@ export default function DashboardPage() {
               </div>
               <div style={{ marginBottom: 24 }}>
                 <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-                  <input type="checkbox" defaultChecked style={{ marginRight: 8 }} />
+                  <input type="checkbox" defaultChecked style={{ marginRight: 8, width: 18, height: 18 }} />
                   <span style={{ fontWeight: 600, color: "#444" }}>Message Notifications</span>
                 </label>
               </div>
               <div style={{ marginBottom: 24 }}>
                 <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
-                  <input type="checkbox" defaultChecked style={{ marginRight: 8 }} />
+                  <input type="checkbox" defaultChecked style={{ marginRight: 8, width: 18, height: 18 }} />
                   <span style={{ fontWeight: 600, color: "#444" }}>Email Notifications</span>
                 </label>
               </div>
-              <button className="sayonara-btn" style={{ width: "100%" }}>
+              <button className="sayonara-btn" style={{ width: "100%", padding: "12px", fontSize: 16 }}>
                 Save Settings
               </button>
             </div>
@@ -387,17 +412,17 @@ export default function DashboardPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
-      <div style={{ background: "#924DAC", padding: "24px 0", color: "#fff" }}>
+      <div style={{ background: "#924DAC", padding: "24px 0 16px 0", color: "#fff" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", padding: "0 20px", display: "flex", alignItems: "center", justifyContent: "space-between", flexWrap: "wrap", gap: 16 }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 32 }}>🌟</span>
+            <span style={{ fontSize: 32, marginRight: 8 }}>🌟</span>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 20 }}>Welcome back, {getUserDisplayName()}!</div>
+              <div style={{ fontWeight: 700, fontSize: 20, letterSpacing: 1 }}>Welcome back, {getUserDisplayName()}!</div>
               <div style={{ fontSize: 14, color: "#e0e7ff", marginTop: 2 }}>Ready to discover amazing deals?</div>
             </div>
           </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <div style={{ textAlign: "right" }}>
+          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
+            <div style={{ textAlign: "right", marginRight: 8 }}>
               <div style={{ fontWeight: 600 }}>{getUserDisplayName()}</div>
               <div style={{ fontSize: 13, color: "#eee" }}>{userProfile?.email || 'user@example.com'}</div>
             </div>
