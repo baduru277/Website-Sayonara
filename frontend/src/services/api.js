@@ -7,7 +7,7 @@ if (!API_BASE_URL) {
 }
 
 // Helper: serialize errors for logging
-function serializeError(error) {
+function serializeError(error: any) {
   if (!error) return { message: 'Unknown error' };
   if (error instanceof Error) {
     return { name: error.name, message: error.message, stack: error.stack, cause: error.cause || null };
@@ -17,17 +17,19 @@ function serializeError(error) {
 }
 
 class ApiService {
+  baseURL: string;
+
   constructor() {
     this.baseURL = API_BASE_URL;
   }
 
-  // Auth Token Management
+  // ----------------- AUTH TOKEN -----------------
   getAuthToken() {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('token');
   }
 
-  setAuthToken(token) {
+  setAuthToken(token: string) {
     if (typeof window !== 'undefined') localStorage.setItem('token', token);
   }
 
@@ -35,21 +37,16 @@ class ApiService {
     if (typeof window !== 'undefined') localStorage.removeItem('token');
   }
 
-  // Core request method
-  async request(endpoint, options = {}) {
+  // ----------------- CORE REQUEST -----------------
+  async request(endpoint: string, options: RequestInit = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getAuthToken();
 
-    // Require token for protected routes
-    if (endpoint === '/auth/me' && !token) {
-      throw new Error('No authentication token found. Please login first.');
-    }
-
-    const config = {
+    const config: RequestInit = {
       headers: {
         'Content-Type': 'application/json',
         ...(token && { Authorization: `Bearer ${token}` }),
-        ...options.headers
+        ...options.headers,
       },
       ...options,
     };
@@ -76,21 +73,23 @@ class ApiService {
   }
 
   // ----------------- AUTH -----------------
-  register(userData) {
+  register(userData: any) {
     return this.request('/auth/register', { method: 'POST', body: JSON.stringify(userData) });
   }
 
-  async login(credentials) {
+  async login(credentials: any) {
     const data = await this.request('/auth/login', { method: 'POST', body: JSON.stringify(credentials) });
     if (data.token) this.setAuthToken(data.token);
     return data;
   }
 
-  getCurrentUser() {
-    return this.request('/auth/me'); // token added automatically
+  async getCurrentUser() {
+    const token = this.getAuthToken();
+    if (!token) return null; // <- safe fallback if not logged in
+    return this.request('/auth/me');
   }
 
-  updateProfile(profileData) {
+  updateProfile(profileData: any) {
     return this.request('/auth/profile', { method: 'PUT', body: JSON.stringify(profileData) });
   }
 
@@ -99,35 +98,35 @@ class ApiService {
   }
 
   // ----------------- ITEMS -----------------
-  getItems(params = {}) {
+  getItems(params: any = {}) {
     const query = new URLSearchParams(params).toString();
     return this.request(`/items?${query}`);
   }
 
-  getItem(id) { return this.request(`/items/${id}`); }
-  getItemById(id) { return this.request(`/items/${id}`); }
+  getItem(id: string) { return this.request(`/items/${id}`); }
+  getItemById(id: string) { return this.request(`/items/${id}`); }
 
-  createItem(itemData) { return this.request('/items', { method: 'POST', body: JSON.stringify(itemData) }); }
-  updateItem(id, itemData) { return this.request(`/items/${id}`, { method: 'PUT', body: JSON.stringify(itemData) }); }
-  deleteItem(id) { return this.request(`/items/${id}`, { method: 'DELETE' }); }
+  createItem(itemData: any) { return this.request('/items', { method: 'POST', body: JSON.stringify(itemData) }); }
+  updateItem(id: string, itemData: any) { return this.request(`/items/${id}`, { method: 'PUT', body: JSON.stringify(itemData) }); }
+  deleteItem(id: string) { return this.request(`/items/${id}`, { method: 'DELETE' }); }
 
-  // ----------------- MARKETPLACE FEATURES -----------------
-  placeBid(itemId, amount) { return this.request(`/items/${itemId}/bid`, { method: 'POST', body: JSON.stringify({ amount }) }); }
+  // ----------------- MARKETPLACE -----------------
+  placeBid(itemId: string, amount: number) { return this.request(`/items/${itemId}/bid`, { method: 'POST', body: JSON.stringify({ amount }) }); }
   getFeaturedItems() { return this.request('/items/featured/items'); }
   getCategories() { return this.request('/items/categories/list'); }
-  searchItems(query, filters = {}) { return this.getItems({ search: query, ...filters }); }
-  getExchangeItems(filters = {}) { return this.getItems({ type: 'exchange', ...filters }); }
-  
-  async getBiddingItems(filters = {}) {
+  searchItems(query: string, filters: any = {}) { return this.getItems({ search: query, ...filters }); }
+  getExchangeItems(filters: any = {}) { return this.getItems({ type: 'exchange', ...filters }); }
+
+  async getBiddingItems(filters: any = {}) {
     let res = await this.getItems({ type: 'bidding', ...filters });
     if (!res.items?.length) res = await this.getItems({ type: 'bid', ...filters });
     return res;
   }
 
-  getResellItems(filters = {}) { return this.getItems({ type: 'resell', ...filters }); }
+  getResellItems(filters: any = {}) { return this.getItems({ type: 'resell', ...filters }); }
 
   // ----------------- FILE UPLOAD -----------------
-  async uploadImage(file) {
+  async uploadImage(file: File) {
     const formData = new FormData();
     formData.append('image', file);
     const token = this.getAuthToken();
@@ -146,10 +145,11 @@ class ApiService {
     try {
       const res = await fetch(`${this.baseURL.replace('/api','')}/health`);
       return res.ok;
-    } catch { return false; }
+    } catch {
+      return false;
+    }
   }
 }
 
-// Singleton instance
 const apiService = new ApiService();
 export default apiService;
