@@ -16,23 +16,71 @@ const sidebarItems = [
 
 export default function DashboardPage() {
   const [selected, setSelected] = useState("dashboard");
-  const [userProfile, setUserProfile] = useState<any>({
-    name: "Guest User",
-    email: "guest@example.com",
-  });
-  const [loading, setLoading] = useState(false);
+  const [userProfile, setUserProfile] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
   const router = useRouter();
 
+  useEffect(() => {
+    const fetchUserProfile = async () => {
+      try {
+        // Check if token exists first
+        const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
+        
+        console.log('Token found:', token ? 'Yes' : 'No');
+        
+        if (!token) {
+          console.log('No token found, redirecting to login');
+          router.push('/login');
+          return;
+        }
+
+        // Get user from localStorage (stored during login)
+        const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
+        
+        console.log('Stored user:', storedUser);
+        
+        if (storedUser) {
+          try {
+            const parsedUser = JSON.parse(storedUser);
+            console.log('User profile loaded from storage:', parsedUser);
+            setUserProfile(parsedUser);
+          } catch (parseError) {
+            console.error('Error parsing user data:', parseError);
+            router.push('/login');
+          }
+        } else {
+          console.log('No user data found in localStorage');
+          router.push('/login');
+        }
+      } catch (error: unknown) {
+        console.error('Failed to load user profile:', error);
+        router.push('/login');
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchUserProfile();
+  }, [router]);
+
   const getUserDisplayName = () => {
+    console.log('getUserDisplayName called, userProfile:', userProfile);
     if (!userProfile) return 'User';
+    
+    // Try different name fields
     if (userProfile.name) return userProfile.name;
-    if (userProfile.firstName && userProfile.lastName) return `${userProfile.firstName} ${userProfile.lastName}`;
+    if (userProfile.firstName && userProfile.lastName) {
+      return `${userProfile.firstName} ${userProfile.lastName}`;
+    }
+    if (userProfile.firstName) return userProfile.firstName;
     if (userProfile.email) return userProfile.email.split('@')[0];
+    
     return 'User';
   };
 
   const getUserInitials = () => {
     if (!userProfile) return 'U';
+    
     const displayName = getUserDisplayName();
     return displayName
       .split(' ')
@@ -93,18 +141,274 @@ export default function DashboardPage() {
     </nav>
   );
 
-  // --- All your renderContent() cases remain unchanged ---
-  // (dashboard, my-post-items, order-history, etc.)
-  // Keeping exactly as you had before
   const renderContent = () => {
     switch (selected) {
-      // Your existing "dashboard", "my-post-items", "order-history",
-      // "notification", "subscription", and "setting" cases
-      // Paste them here unchanged from your original file
+      case "dashboard":
+        return (
+          <div style={{ padding: 32 }}>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 28 }}>Welcome to your Dashboard!</h2>
+            <p style={{ color: "#444", marginTop: 12 }}>Here you can manage your orders, notifications, subscriptions, and settings.</p>
+            
+            <div style={{ 
+              background: "linear-gradient(135deg, #f3eaff 0%, #e8f4fd 100%)", 
+              borderRadius: 16, 
+              padding: 32, 
+              marginTop: 32,
+              border: "2px solid #e0e7ff"
+            }}>
+              <div style={{ textAlign: "center", marginBottom: 24 }}>
+                <span style={{ fontSize: 48, marginBottom: 16, display: "block" }}>🌟</span>
+                <h3 style={{ color: "#924DAC", fontWeight: 700, fontSize: 24, marginBottom: 16 }}>
+                  Ready to Share Your Treasures?
+                </h3>
+                <p style={{ color: "#666", fontSize: 16, lineHeight: 1.6, marginBottom: 24 }}>
+                  "One person's unused item is another person's treasure. Start your journey of giving items a second life!"
+                </p>
+              </div>
+              
+              <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 24 }}>
+                <div style={{ 
+                  background: "white", 
+                  padding: 20, 
+                  borderRadius: 12, 
+                  textAlign: "center",
+                  boxShadow: "0 4px 12px rgba(146,77,172,0.1)"
+                }}>
+                  <span style={{ fontSize: 32, marginBottom: 12, display: "block" }}>📦</span>
+                  <h4 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 8 }}>Declutter & Earn</h4>
+                  <p style={{ color: "#666", fontSize: 14 }}>Turn your unused items into cash while helping others find what they need</p>
+                </div>
+                
+                <div style={{ 
+                  background: "white", 
+                  padding: 20, 
+                  borderRadius: 12, 
+                  textAlign: "center",
+                  boxShadow: "0 4px 12px rgba(146,77,172,0.1)"
+                }}>
+                  <span style={{ fontSize: 32, marginBottom: 12, display: "block" }}>🤝</span>
+                  <h4 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 8 }}>Build Community</h4>
+                  <p style={{ color: "#666", fontSize: 14 }}>Connect with like-minded people who value sustainability and smart shopping</p>
+                </div>
+                
+                <div style={{ 
+                  background: "white", 
+                  padding: 20, 
+                  borderRadius: 12, 
+                  textAlign: "center",
+                  boxShadow: "0 4px 12px rgba(146,77,172,0.1)"
+                }}>
+                  <span style={{ fontSize: 32, marginBottom: 12, display: "block" }}>🌱</span>
+                  <h4 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 8 }}>Go Green</h4>
+                  <p style={{ color: "#666", fontSize: 14 }}>Reduce waste and contribute to a more sustainable future for everyone</p>
+                </div>
+              </div>
+              
+              <div style={{ textAlign: "center" }}>
+                <div style={{ 
+                  display: "flex", 
+                  alignItems: "center", 
+                  justifyContent: "center", 
+                  gap: 12,
+                  marginBottom: 16
+                }}>
+                  <span style={{ fontSize: 20, color: "#924DAC" }}>Click the</span>
+                  <span style={{ fontSize: 24, color: "#924DAC", fontWeight: "bold" }}>↑</span>
+                  <span style={{ fontSize: 20, color: "#924DAC" }}>Post button to upload your first item!</span>
+                </div>
+                
+                <p style={{ color: "#888", fontSize: 14, fontStyle: "italic" }}>
+                  "The best time to start was yesterday. The second best time is now!"
+                </p>
+              </div>
+            </div>
+            
+            <div style={{ 
+              display: "grid", 
+              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
+              gap: 20, 
+              marginTop: 32 
+            }}>
+              <div style={{ 
+                background: "white", 
+                padding: 24, 
+                borderRadius: 12, 
+                textAlign: "center",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+              }}>
+                <div style={{ fontSize: 32, color: "#924DAC", fontWeight: 700 }}>0</div>
+                <div style={{ color: "#666", fontSize: 14 }}>Items Posted</div>
+              </div>
+              
+              <div style={{ 
+                background: "white", 
+                padding: 24, 
+                borderRadius: 12, 
+                textAlign: "center",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+              }}>
+                <div style={{ fontSize: 32, color: "#924DAC", fontWeight: 700 }}>0</div>
+                <div style={{ color: "#666", fontSize: 14 }}>Total Views</div>
+              </div>
+              
+              <div style={{ 
+                background: "white", 
+                padding: 24, 
+                borderRadius: 12, 
+                textAlign: "center",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+              }}>
+                <div style={{ fontSize: 32, color: "#924DAC", fontWeight: 700 }}>0</div>
+                <div style={{ color: "#666", fontSize: 14 }}>Total Likes</div>
+              </div>
+              
+              <div style={{ 
+                background: "white", 
+                padding: 24, 
+                borderRadius: 12, 
+                textAlign: "center",
+                boxShadow: "0 2px 8px rgba(0,0,0,0.1)"
+              }}>
+                <div style={{ fontSize: 32, color: "#924DAC", fontWeight: 700 }}>0</div>
+                <div style={{ color: "#666", fontSize: 14 }}>Successful Trades</div>
+              </div>
+            </div>
+          </div>
+        );
+      
+      case "my-post-items":
+        return (
+          <div style={{ padding: 32 }}>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>My Post Items</h2>
+            <div style={{ 
+              background: "#f8f9fa", 
+              borderRadius: 12, 
+              padding: 40,
+              textAlign: "center"
+            }}>
+              <span style={{ fontSize: 64, marginBottom: 16, display: "block" }}>📦</span>
+              <h3 style={{ color: "#924DAC", marginBottom: 12 }}>No Items Posted Yet</h3>
+              <p style={{ color: "#666", marginBottom: 20 }}>Start posting your items to see them here!</p>
+              <div style={{ 
+                display: "flex", 
+                alignItems: "center", 
+                justifyContent: "center", 
+                gap: 8,
+                color: "#924DAC",
+                fontSize: 16
+              }}>
+                <span>Click the</span>
+                <span style={{ fontSize: 24, fontWeight: "bold" }}>↑</span>
+                <span>Post button to add new items</span>
+              </div>
+            </div>
+          </div>
+        );
+      
+      case "order-history":
+        return (
+          <div style={{ padding: 32 }}>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Order History</h2>
+            <div style={{ 
+              background: "#f8f9fa", 
+              borderRadius: 12, 
+              padding: 40,
+              textAlign: "center"
+            }}>
+              <span style={{ fontSize: 64, marginBottom: 16, display: "block" }}>📋</span>
+              <h3 style={{ color: "#924DAC", marginBottom: 12 }}>No Orders Yet</h3>
+              <p style={{ color: "#666" }}>Your order history will appear here</p>
+            </div>
+          </div>
+        );
+      
+      case "notification":
+        return (
+          <div style={{ padding: 32 }}>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Notifications</h2>
+            <div style={{ 
+              background: "#f8f9fa", 
+              borderRadius: 12, 
+              padding: 40,
+              textAlign: "center"
+            }}>
+              <span style={{ fontSize: 64, marginBottom: 16, display: "block" }}>🔔</span>
+              <h3 style={{ color: "#924DAC", marginBottom: 12 }}>No Notifications</h3>
+              <p style={{ color: "#666" }}>You're all caught up!</p>
+            </div>
+          </div>
+        );
+      
+      case "subscription":
+        return (
+          <div style={{ padding: 32 }}>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Subscription Plans</h2>
+            <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+              {[
+                { name: "Basic Plan", price: 99, desc: "Basic features for casual users.", color: "#f3eaff" },
+                { name: "Standard Plan", price: 299, desc: "Standard features for regular users.", color: "#eafff3" },
+                { name: "Premium Plan", price: 499, desc: "All features for power users.", color: "#fff3ea" },
+              ].map((plan) => (
+                <div key={plan.name} style={{ background: plan.color, borderRadius: 12, boxShadow: "0 2px 8px rgba(146,77,172,0.04)", padding: 28, minWidth: 220, flex: 1 }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 8 }}>{plan.name}</div>
+                  <div style={{ color: "#444", marginBottom: 12 }}>{plan.desc}</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: "#222" }}>₹{plan.price}</div>
+                  <div style={{ color: "#888", fontSize: 14, marginBottom: 16 }}>per month</div>
+                  <button className="sayonara-btn" style={{ width: "100%", fontSize: 14, padding: "10px" }}>
+                    Subscribe
+                  </button>
+                </div>
+              ))}
+            </div>
+          </div>
+        );
+      
+      case "setting":
+        return (
+          <div style={{ padding: 32 }}>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Settings</h2>
+            <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(146,77,172,0.04)", padding: 28, maxWidth: 500 }}>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ fontWeight: 600, color: "#444", display: "block", marginBottom: 8 }}>Language</label>
+                <select style={{ width: "100%", padding: 10, borderRadius: 6, border: "1px solid #e8e8e8" }}>
+                  <option>English</option>
+                  <option>Hindi</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+                  <input type="checkbox" defaultChecked style={{ marginRight: 8, width: 18, height: 18 }} />
+                  <span style={{ fontWeight: 600, color: "#444" }}>Message Notifications</span>
+                </label>
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: "flex", alignItems: "center", cursor: "pointer" }}>
+                  <input type="checkbox" defaultChecked style={{ marginRight: 8, width: 18, height: 18 }} />
+                  <span style={{ fontWeight: 600, color: "#444" }}>Email Notifications</span>
+                </label>
+              </div>
+              <button className="sayonara-btn" style={{ width: "100%", padding: "12px", fontSize: 16 }}>
+                Save Settings
+              </button>
+            </div>
+          </div>
+        );
+      
       default:
         return null;
     }
   };
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: "100vh", display: "flex", alignItems: "center", justifyContent: "center", background: "#f8f9fa" }}>
+        <div style={{ textAlign: "center" }}>
+          <div style={{ fontSize: 48, marginBottom: 16 }}>⏳</div>
+          <div style={{ color: "#924DAC", fontWeight: 600 }}>Loading your dashboard...</div>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
