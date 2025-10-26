@@ -5,6 +5,30 @@ import { useRouter } from "next/navigation";
 import apiService from '@/services/api';
 import LocationMap from '@/components/LocationMap';
 
+interface UserProfile {
+  id: string;
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  email: string;
+  posts?: UserPost[];
+}
+
+interface UserPost {
+  id: string;
+  title: string;
+  status: "Active" | "Pending" | "Inactive";
+  views: number;
+  likes: number;
+  date: string;
+}
+
+interface Location {
+  lat: number;
+  lng: number;
+  address: string;
+}
+
 const sidebarItems = [
   { key: "dashboard", label: "Dashboard" },
   { key: "my-post-items", label: "My Post Items" },
@@ -17,11 +41,11 @@ const sidebarItems = [
 ];
 
 export default function DashboardPage() {
-  const [selected, setSelected] = useState("dashboard");
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
-  const [myPosts, setMyPosts] = useState<any[]>([]);
+  const [selected, setSelected] = useState<string>("dashboard");
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
+  const [myPosts, setMyPosts] = useState<UserPost[]>([]);
   const router = useRouter();
 
   // Fetch user profile
@@ -44,17 +68,17 @@ export default function DashboardPage() {
   }, [router]);
 
   // Helper functions
-  const getUserDisplayName = () => {
+  const getUserDisplayName = (): string => {
     if (!userProfile) return 'User';
     return userProfile.firstName && userProfile.lastName
       ? `${userProfile.firstName} ${userProfile.lastName}`
       : userProfile.name || userProfile.firstName || userProfile.email.split('@')[0] || 'User';
   };
 
-  const getUserInitials = () =>
+  const getUserInitials = (): string =>
     getUserDisplayName()
       .split(' ')
-      .map(w => w.charAt(0))
+      .map((w: string) => w.charAt(0)) // fixed implicit any
       .join('')
       .toUpperCase()
       .slice(0, 2);
@@ -101,13 +125,10 @@ export default function DashboardPage() {
       case "dashboard":
         return (
           <div style={{ padding: 32 }}>
-            {/* Dashboard header */}
             <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 28 }}>Welcome, {getUserDisplayName()}!</h2>
             <p style={{ color: "#444", marginTop: 12 }}>Manage your activities, notifications, and settings here.</p>
-
             {/* Dashboard motivational & quick stats section */}
             <div style={{ background: "linear-gradient(135deg, #f3eaff 0%, #e8f4fd 100%)", borderRadius: 16, padding: 32, marginTop: 32, border: "2px solid #e0e7ff" }}>
-              {/* Motivational section */}
               <div style={{ textAlign: "center", marginBottom: 24 }}>
                 <span style={{ fontSize: 48 }}>🌟</span>
                 <h3 style={{ color: "#924DAC", fontWeight: 700, fontSize: 24, marginBottom: 16 }}>Ready to Share Your Treasures?</h3>
@@ -115,14 +136,10 @@ export default function DashboardPage() {
                   One person's unused item is another's treasure. Start your journey of giving items a second life!
                 </p>
               </div>
-
-              {/* Features section */}
               <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))", gap: 20, marginBottom: 24 }}>
-                {[
-                  { icon: "📦", title: "Declutter & Earn", desc: "Turn your unused items into cash" },
+                {[{ icon: "📦", title: "Declutter & Earn", desc: "Turn your unused items into cash" },
                   { icon: "🤝", title: "Build Community", desc: "Connect with like-minded people" },
-                  { icon: "🌱", title: "Go Green", desc: "Reduce waste and help the environment" }
-                ].map(item => (
+                  { icon: "🌱", title: "Go Green", desc: "Reduce waste and help the environment" }].map(item => (
                   <div key={item.title} style={{ background: "white", padding: 20, borderRadius: 12, textAlign: "center", boxShadow: "0 4px 12px rgba(146,77,172,0.1)" }}>
                     <span style={{ fontSize: 32, marginBottom: 12 }}>{item.icon}</span>
                     <h4 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 8 }}>{item.title}</h4>
@@ -130,8 +147,6 @@ export default function DashboardPage() {
                   </div>
                 ))}
               </div>
-
-              {/* Call-to-action */}
               <div style={{ textAlign: "center" }}>
                 <div style={{ display: "flex", justifyContent: "center", alignItems: "center", gap: 12, marginBottom: 16 }}>
                   <span style={{ fontSize: 20, color: "#924DAC" }}>Click the</span>
@@ -150,11 +165,9 @@ export default function DashboardPage() {
             <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Subscription Plans</h2>
             {/* Subscription cards section (unchanged) */}
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 20 }}>
-              {[
-                { title: "Basic Plan", price: "Rs 99/month", features: ["Post up to 5 items", "Basic support"] },
+              {[{ title: "Basic Plan", price: "Rs 99/month", features: ["Post up to 5 items", "Basic support"] },
                 { title: "Pro Plan", price: "Rs 399/6month", features: ["Post up to 50 items", "Priority support", "Analytics"] },
-                { title: "Premium Plan", price: "Rs 699/12month", features: ["Unlimited items", "24/7 support", "Advanced analytics", "Feature priority"] }
-              ].map(plan => (
+                { title: "Premium Plan", price: "Rs 699/12month", features: ["Unlimited items", "24/7 support", "Advanced analytics", "Feature priority"] }].map(plan => (
                 <div key={plan.title} style={{ background: "#fff", padding: 24, borderRadius: 12, boxShadow: "0 2px 12px rgba(146,77,172,0.06)" }}>
                   <h3 style={{ color: "#924DAC", fontWeight: 600, fontSize: 18, marginBottom: 12 }}>{plan.title}</h3>
                   <p style={{ color: "#444", fontSize: 16, marginBottom: 12 }}>{plan.price}</p>
