@@ -2,9 +2,22 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import apiService from '@/services/api';
-import LocationMap from '@/components/LocationMap';
-import LocationDisplay from '@/components/LocationDisplay';
+import apiService from "@/services/api";
+import LocationMap from "@/components/LocationMap";
+import LocationDisplay from "@/components/LocationDisplay";
+
+interface UserProfile {
+  firstName?: string;
+  lastName?: string;
+  name?: string;
+  email: string;
+}
+
+interface Location {
+  lat: number;
+  lng: number;
+  address: string;
+}
 
 const sidebarItems = [
   { key: "dashboard", label: "Dashboard" },
@@ -18,29 +31,30 @@ const sidebarItems = [
 ];
 
 export default function DashboardPage() {
-  const [selected, setSelected] = useState("dashboard");
-  const [userProfile, setUserProfile] = useState<any>(null);
-  const [loading, setLoading] = useState(true);
-  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  const [selected, setSelected] = useState<string>("dashboard");
+  const [userProfile, setUserProfile] = useState<UserProfile | null>(null);
+  const [loading, setLoading] = useState<boolean>(true);
+  const [selectedLocation, setSelectedLocation] = useState<Location | null>(null);
   const router = useRouter();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const token = localStorage.getItem("token");
-      if (!token) {
-        // no token, redirect to login
-        router.push("/");
-        setLoading(false);
-        return;
-      }
-
       try {
         const user = await apiService.getCurrentUser();
         setUserProfile(user);
-      } catch (error) {
+      } catch (error: unknown) {
         console.error("Failed to fetch user profile:", error);
-        localStorage.removeItem("token");
-        router.push("/");
+        if (error instanceof Error) {
+          if (
+            error.message.includes("Invalid token") ||
+            error.message.includes("401") ||
+            error.message.includes("No authentication token")
+          ) {
+            apiService.removeAuthToken();
+            localStorage.removeItem("isLoggedIn");
+            router.push("/"); // redirect to home/login
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -49,35 +63,54 @@ export default function DashboardPage() {
     fetchUserProfile();
   }, [router]);
 
-  const getUserDisplayName = () => {
+  const getUserDisplayName = (): string => {
     if (!userProfile) return "User";
-    return userProfile.firstName && userProfile.lastName
-      ? `${userProfile.firstName} ${userProfile.lastName}`
-      : userProfile.name || userProfile.firstName || userProfile.email.split("@")[0];
+    if (userProfile.firstName && userProfile.lastName)
+      return `${userProfile.firstName} ${userProfile.lastName}`;
+    if (userProfile.name) return userProfile.name;
+    if (userProfile.firstName) return userProfile.firstName;
+    if (userProfile.email) return userProfile.email.split("@")[0];
+    return "User";
   };
 
-  const getUserInitials = () => {
+  const getUserInitials = (): string => {
     if (!userProfile) return "U";
     return getUserDisplayName()
       .split(" ")
-      .map((w) => w.charAt(0))
+      .map((w: string) => w.charAt(0))
       .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("token");
+    localStorage.removeItem("isLoggedIn");
+    apiService.removeAuthToken();
     router.push("/");
     window.location.reload();
   };
 
+  // Sidebar component
   const Sidebar = () => (
-    <nav style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(146,77,172,0.06)", padding: 0, minWidth: 180, marginRight: 32, marginTop: 24, marginBottom: 24, overflow: "hidden" }}>
+    <nav
+      style={{
+        background: "#fff",
+        borderRadius: 12,
+        boxShadow: "0 2px 12px rgba(146,77,172,0.06)",
+        padding: 0,
+        minWidth: 180,
+        marginRight: 32,
+        marginTop: 24,
+        marginBottom: 24,
+        overflow: "hidden",
+      }}
+    >
       {sidebarItems.map((item) => (
         <button
           key={item.key}
-          onClick={() => (item.key === "logout" ? handleLogout() : setSelected(item.key))}
+          onClick={() =>
+            item.key === "logout" ? handleLogout() : setSelected(item.key)
+          }
           style={{
             display: "block",
             width: "100%",
@@ -87,7 +120,10 @@ export default function DashboardPage() {
             color: selected === item.key ? "#924DAC" : "#444",
             fontWeight: selected === item.key ? 700 : 500,
             border: "none",
-            borderLeft: selected === item.key ? "4px solid #924DAC" : "4px solid transparent",
+            borderLeft:
+              selected === item.key
+                ? "4px solid #924DAC"
+                : "4px solid transparent",
             fontSize: 16,
             cursor: "pointer",
             outline: "none",
@@ -100,21 +136,241 @@ export default function DashboardPage() {
     </nav>
   );
 
+  // Main content renderer
   const renderContent = () => {
     switch (selected) {
       case "dashboard":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 28 }}>Welcome, {getUserDisplayName()}!</h2>
-            <p style={{ color: "#444", marginTop: 12 }}>Manage your dashboard items, orders, notifications, and subscriptions here.</p>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 28 }}>
+              Welcome to your Dashboard!
+            </h2>
+            <p style={{ color: "#444", marginTop: 12 }}>
+              Here you can manage your orders, notifications, subscriptions, and
+              settings.
+            </p>
+
+            {/* Motivational Section */}
+            <div
+              style={{
+                background: "linear-gradient(135deg, #f3eaff 0%, #e8f4fd 100%)",
+                borderRadius: 16,
+                padding: 32,
+                marginTop: 32,
+                border: "2px solid #e0e7ff",
+              }}
+            >
+              <div style={{ textAlign: "center", marginBottom: 24 }}>
+                <span
+                  style={{ fontSize: 48, marginBottom: 16, display: "block" }}
+                >
+                  🌟
+                </span>
+                <h3
+                  style={{
+                    color: "#924DAC",
+                    fontWeight: 700,
+                    fontSize: 24,
+                    marginBottom: 16,
+                  }}
+                >
+                  Ready to Share Your Treasures?
+                </h3>
+                <p
+                  style={{
+                    color: "#666",
+                    fontSize: 16,
+                    lineHeight: 1.6,
+                    marginBottom: 24,
+                  }}
+                >
+                  One person's unused item is another's treasure. Start your
+                  journey of giving items a second life!
+                </p>
+              </div>
+
+              <div
+                style={{
+                  display: "grid",
+                  gridTemplateColumns: "repeat(auto-fit, minmax(280px, 1fr))",
+                  gap: 20,
+                  marginBottom: 24,
+                }}
+              >
+                <div
+                  style={{
+                    background: "white",
+                    padding: 20,
+                    borderRadius: 12,
+                    textAlign: "center",
+                    boxShadow: "0 4px 12px rgba(146,77,172,0.1)",
+                  }}
+                >
+                  <span
+                    style={{ fontSize: 32, marginBottom: 12, display: "block" }}
+                  >
+                    📦
+                  </span>
+                  <h4
+                    style={{
+                      color: "#924DAC",
+                      fontWeight: 600,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Declutter & Earn
+                  </h4>
+                  <p style={{ color: "#666", fontSize: 14 }}>
+                    Turn your unused items into cash while helping others find
+                    what they need
+                  </p>
+                </div>
+                <div
+                  style={{
+                    background: "white",
+                    padding: 20,
+                    borderRadius: 12,
+                    textAlign: "center",
+                    boxShadow: "0 4px 12px rgba(146,77,172,0.1)",
+                  }}
+                >
+                  <span
+                    style={{ fontSize: 32, marginBottom: 12, display: "block" }}
+                  >
+                    🤝
+                  </span>
+                  <h4
+                    style={{
+                      color: "#924DAC",
+                      fontWeight: 600,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Build Community
+                  </h4>
+                  <p style={{ color: "#666", fontSize: 14 }}>
+                    Connect with like-minded people who value sustainability and
+                    smart shopping
+                  </p>
+                </div>
+                <div
+                  style={{
+                    background: "white",
+                    padding: 20,
+                    borderRadius: 12,
+                    textAlign: "center",
+                    boxShadow: "0 4px 12px rgba(146,77,172,0.1)",
+                  }}
+                >
+                  <span
+                    style={{ fontSize: 32, marginBottom: 12, display: "block" }}
+                  >
+                    🌱
+                  </span>
+                  <h4
+                    style={{
+                      color: "#924DAC",
+                      fontWeight: 600,
+                      marginBottom: 8,
+                    }}
+                  >
+                    Go Green
+                  </h4>
+                  <p style={{ color: "#666", fontSize: 14 }}>
+                    Reduce waste and contribute to a more sustainable future for
+                    everyone
+                  </p>
+                </div>
+              </div>
+
+              <div style={{ textAlign: "center" }}>
+                <div
+                  style={{
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    gap: 12,
+                    marginBottom: 16,
+                  }}
+                >
+                  <span style={{ fontSize: 20, color: "#924DAC" }}>Click the</span>
+                  <span style={{ fontSize: 24, color: "#924DAC", fontWeight: "bold" }}>
+                    ↑
+                  </span>
+                  <span style={{ fontSize: 20, color: "#924DAC" }}>
+                    Post button to upload your first item!
+                  </span>
+                </div>
+                <p style={{ color: "#888", fontSize: 14, fontStyle: "italic" }}>
+                  The best time to start was yesterday. The second best time is
+                  now!
+                </p>
+              </div>
+            </div>
+
+            {/* Quick Stats */}
+            <div
+              style={{
+                display: "grid",
+                gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+                gap: 20,
+                marginTop: 32,
+              }}
+            >
+              {["Items Posted", "Total Views", "Total Likes", "Successful Trades"].map(
+                (label, idx) => (
+                  <div
+                    key={idx}
+                    style={{
+                      background: "white",
+                      padding: 24,
+                      borderRadius: 12,
+                      textAlign: "center",
+                      boxShadow: "0 2px 8px rgba(0,0,0,0.1)",
+                    }}
+                  >
+                    <div style={{ fontSize: 32, color: "#924DAC", fontWeight: 700 }}>
+                      0
+                    </div>
+                    <div style={{ color: "#666", fontSize: 14 }}>{label}</div>
+                  </div>
+                )
+              )}
+            </div>
           </div>
         );
 
+      // --------------------------------------------------------
+      // Other sections: my-post-items, location, order-history,
+      // notification, subscription, setting
+      // --------------------------------------------------------
       case "my-post-items":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700 }}>My Post Items</h2>
-            <table style={{ width: "100%", background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(146,77,172,0.06)", overflow: "hidden" }}>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
+              My Post Items
+            </h2>
+            <div
+              style={{
+                display: "flex",
+                justifyContent: "space-between",
+                alignItems: "center",
+                marginBottom: 20,
+              }}
+            >
+              <p style={{ color: "#444" }}>
+                Manage your posted items and track their performance
+              </p>
+            </div>
+            <table
+              style={{
+                width: "100%",
+                background: "#fff",
+                borderRadius: 12,
+                boxShadow: "0 2px 12px rgba(146,77,172,0.06)",
+                overflow: "hidden",
+              }}
+            >
               <thead>
                 <tr style={{ background: "#f3eaff", color: "#924DAC" }}>
                   <th style={{ padding: 12 }}>ITEM</th>
@@ -127,18 +383,83 @@ export default function DashboardPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td colSpan={6} style={{ padding: 12, textAlign: "center", color: "#666" }}>No items posted yet</td>
+                  <td colSpan={6} style={{ padding: 12, textAlign: "center", color: "#666" }}>
+                    No items have been posted
+                  </td>
                 </tr>
               </tbody>
             </table>
           </div>
         );
 
+      case "location":
+        return (
+          <div style={{ padding: 32 }}>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
+              📍 Location Settings
+            </h2>
+            <p style={{ color: "#444", marginBottom: 24 }}>
+              Set your location to help buyers find items near you
+            </p>
+            <div
+              style={{
+                background: "white",
+                borderRadius: 12,
+                padding: 24,
+                boxShadow: "0 2px 12px rgba(146,77,172,0.06)",
+                marginBottom: 24,
+              }}
+            >
+              <h3 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 16 }}>
+                Select Your Location
+              </h3>
+              <LocationMap onLocationSelect={setSelectedLocation} height="400px" />
+            </div>
+            {selectedLocation && (
+              <div
+                style={{
+                  background: "linear-gradient(135deg, #f3eaff 0%, #e8f4fd 100%)",
+                  borderRadius: 12,
+                  padding: 20,
+                  border: "2px solid #e0e7ff",
+                }}
+              >
+                <h4 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 12 }}>
+                  📍 Selected Location
+                </h4>
+                <div style={{ color: "#666", marginBottom: 8 }}>
+                  <strong>Address:</strong> {selectedLocation.address}
+                </div>
+                <div style={{ color: "#666", marginBottom: 8 }}>
+                  <strong>Coordinates:</strong> {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}
+                </div>
+                <button
+                  className="sayonara-btn"
+                  style={{ fontSize: 14, padding: "8px 16px", marginTop: 8 }}
+                  onClick={() => alert("Location saved successfully!")}
+                >
+                  💾 Save Location
+                </button>
+              </div>
+            )}
+          </div>
+        );
+
       case "order-history":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Order History</h2>
-            <table style={{ width: "100%", background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(146,77,172,0.06)", overflow: "hidden" }}>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
+              Order History
+            </h2>
+            <table
+              style={{
+                width: "100%",
+                background: "#fff",
+                borderRadius: 12,
+                boxShadow: "0 2px 12px rgba(146,77,172,0.06)",
+                overflow: "hidden",
+              }}
+            >
               <thead>
                 <tr style={{ background: "#f3eaff", color: "#924DAC" }}>
                   <th style={{ padding: 12 }}>ORDER ID</th>
@@ -150,7 +471,9 @@ export default function DashboardPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td colSpan={5} style={{ padding: 12, textAlign: "center", color: "#666" }}>No orders yet</td>
+                  <td colSpan={5} style={{ padding: 12, textAlign: "center", color: "#666" }}>
+                    No orders yet
+                  </td>
                 </tr>
               </tbody>
             </table>
@@ -160,32 +483,34 @@ export default function DashboardPage() {
       case "notification":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Notifications</h2>
-            <div style={{ background: "#fff", borderRadius: 12, padding: 24, color: "#666", textAlign: "center" }}>
-              No notifications
-            </div>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
+              Notification
+            </h2>
+            <p style={{ color: "#666", fontSize: 14 }}>No new notifications</p>
           </div>
         );
 
       case "subscription":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Subscription Plans</h2>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
+              Subscription Plans
+            </h2>
             <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
               {[
-                { name: "Starter", price: 99, duration: "1 Month", benefits: ["Post up to 5 items"], color: "#f3eaff" },
-                { name: "Standard", price: 199, duration: "3 Months", benefits: ["Post up to 15 items"], color: "#eafff3" },
-                { name: "Pro", price: 399, duration: "6 Months", benefits: ["Post up to 50 items"], color: "#fff3ea" },
-                { name: "Premium", price: 699, duration: "12 Months", benefits: ["Unlimited posts"], color: "#f0e7ff" },
+                { name: "Starter", price: 99, duration: "1 Month", benefits: ["Post up to 5 items", "Exchange items", "Resell options", "Bid on items"], color: "#f3eaff" },
+                { name: "Standard", price: 199, duration: "3 Months", benefits: ["Post up to 15 items", "Exchange items", "Resell options", "Bid on items", "Priority support"], color: "#eafff3" },
+                { name: "Pro", price: 399, duration: "6 Months", benefits: ["Post up to 50 items", "Exchange items", "Resell options", "Bid on items", "Analytics & Insights"], color: "#fff3ea" },
+                { name: "Premium", price: 699, duration: "12 Months", benefits: ["Unlimited posts", "Exchange items", "Resell options", "Bid on items", "Priority support", "Analytics & Insights", "Feature priority"], color: "#f0e7ff" },
               ].map(plan => (
                 <div key={plan.name} style={{ background: plan.color, borderRadius: 12, boxShadow: "0 2px 8px rgba(146,77,172,0.04)", padding: 28, minWidth: 220, flex: "1 1 220px" }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 8 }}>{plan.name}</div>
                   <div style={{ color: "#444", marginBottom: 12 }}>{plan.duration}</div>
-                  <div style={{ fontSize: 28, fontWeight: 700, color: "#222", marginBottom: 12 }}>₹{plan.price}</div>
-                  <ul style={{ fontSize: 14, color: "#666", marginBottom: 12, paddingLeft: 16 }}>
-                    {plan.benefits.map(b => <li key={b}>{b}</li>)}
+                  <div style={{ fontSize: 28, fontWeight: 700, color: "#924DAC", marginBottom: 16 }}>₹{plan.price}</div>
+                  <ul style={{ color: "#666", fontSize: 14, marginBottom: 16 }}>
+                    {plan.benefits.map((b, i) => <li key={i}>{b}</li>)}
                   </ul>
-                  <button style={{ fontSize: 14, padding: "8px 16px" }}>Subscribe</button>
+                  <button style={{ background: "#924DAC", color: "#fff", borderRadius: 6, padding: "8px 16px", fontWeight: 600, cursor: "pointer" }}>Subscribe</button>
                 </div>
               ))}
             </div>
@@ -195,60 +520,41 @@ export default function DashboardPage() {
       case "setting":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Settings</h2>
-            <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(146,77,172,0.04)", padding: 28, minWidth: 320 }}>
-              <div style={{ marginBottom: 18 }}>
-                <div style={{ fontWeight: 600, color: "#444" }}>Language</div>
-                <select style={{ width: "100%", padding: 8, borderRadius: 6, border: "1px solid #eee", marginTop: 6 }}>
-                  <option>English</option>
-                  <option>Hindi</option>
-                </select>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
+              Account Settings
+            </h2>
+            <div style={{ display: "flex", flexDirection: "column", gap: 16 }}>
+              <div>
+                <label style={{ fontWeight: 600 }}>Full Name:</label>
+                <input
+                  style={{ marginTop: 6, padding: 8, borderRadius: 6, border: "1px solid #ccc", width: "100%" }}
+                  value={getUserDisplayName()}
+                  readOnly
+                />
               </div>
-              <div style={{ marginBottom: 18 }}>
-                <div style={{ fontWeight: 600, color: "#444" }}>Notification Preferences</div>
-                <input type="checkbox" /> Enable Notifications
+              <div>
+                <label style={{ fontWeight: 600 }}>Email:</label>
+                <input
+                  style={{ marginTop: 6, padding: 8, borderRadius: 6, border: "1px solid #ccc", width: "100%" }}
+                  value={userProfile?.email || ""}
+                  readOnly
+                />
               </div>
             </div>
           </div>
         );
 
       default:
-        return null;
+        return <div style={{ padding: 32 }}>Select a section</div>;
     }
   };
 
-  return (
-    <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
-      <div style={{ background: "#924DAC", padding: "24px 0 16px 0", color: "#fff" }}>
-        <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
-          <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 32 }}>🌟</span>
-            <div>
-              <div style={{ fontWeight: 700, fontSize: 20 }}>Welcome back!</div>
-              <div style={{ fontSize: 14, color: "#e0e7ff", marginTop: 2 }}>Ready to discover amazing deals?</div>
-              <div style={{ marginTop: 8 }}>
-                <LocationDisplay showUpdateButton={false} />
-              </div>
-            </div>
-          </div>
-          <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
-            <div style={{ fontWeight: 600 }}>{loading ? 'Loading...' : getUserDisplayName()}</div>
-            <div style={{ fontSize: 13, color: "#eee" }}>{loading ? 'loading@email.com' : userProfile?.email || 'user@example.com'}</div>
-            <div style={{
-              width: 36, height: 36, background: "#fff", borderRadius: "50%",
-              display: "flex", alignItems: "center", justifyContent: "center",
-              color: "#924DAC", fontWeight: 700, fontSize: 18
-            }}>
-              {loading ? 'L' : getUserInitials()}
-            </div>
-          </div>
-        </div>
-      </div>
+  if (loading) return <div style={{ padding: 32 }}>Loading...</div>;
 
-      <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex" }}>
-        <Sidebar />
-        <div style={{ flex: 1, marginTop: 24, marginBottom: 24 }}>{renderContent()}</div>
-      </div>
+  return (
+    <div style={{ display: "flex", minHeight: "100vh", background: "#f8f8f8" }}>
+      <Sidebar />
+      <div style={{ flex: 1 }}>{renderContent()}</div>
     </div>
   );
 }
