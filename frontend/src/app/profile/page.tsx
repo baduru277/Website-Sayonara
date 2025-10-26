@@ -21,15 +21,10 @@ export default function DashboardPage() {
   const [selected, setSelected] = useState("dashboard");
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
-  const [selectedLocation, setSelectedLocation] = useState<{
-    lat: number;
-    lng: number;
-    address: string;
-  } | null>(null);
+  const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
 
   const router = useRouter();
 
-  // Fetch user profile with auth check
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -43,7 +38,7 @@ export default function DashboardPage() {
             error.message.includes('Invalid token') ||
             error.message.includes('401')
           ) {
-            router.push('/'); // Redirect to home/login
+            router.push('/');
             return;
           }
         }
@@ -55,7 +50,6 @@ export default function DashboardPage() {
     fetchUserProfile();
   }, [router]);
 
-  // Helpers
   const getUserDisplayName = () => {
     if (!userProfile) return 'User';
     if (userProfile.firstName && userProfile.lastName) return `${userProfile.firstName} ${userProfile.lastName}`;
@@ -82,7 +76,6 @@ export default function DashboardPage() {
     window.location.reload();
   };
 
-  // Sidebar component
   const Sidebar = () => (
     <nav style={{
       background: "#fff",
@@ -121,7 +114,6 @@ export default function DashboardPage() {
     </nav>
   );
 
-  // Main content renderer
   const renderContent = () => {
     switch (selected) {
       case "dashboard":
@@ -154,7 +146,23 @@ export default function DashboardPage() {
         return (
           <div style={{ padding: 32 }}>
             <h2 style={{ color: "#924DAC", fontWeight: 700 }}>My Post Items</h2>
-            <p style={{ color: "#666" }}>No items have been posted yet.</p>
+            <table style={{ width: "100%", background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(146,77,172,0.06)", overflow: "hidden" }}>
+              <thead>
+                <tr style={{ background: "#f3eaff", color: "#924DAC" }}>
+                  <th style={{ padding: 12 }}>ITEM</th>
+                  <th style={{ padding: 12 }}>STATUS</th>
+                  <th style={{ padding: 12 }}>VIEWS</th>
+                  <th style={{ padding: 12 }}>LIKES</th>
+                  <th style={{ padding: 12 }}>POSTED DATE</th>
+                  <th style={{ padding: 12 }}>ACTION</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colSpan={6} style={{ padding: 12, textAlign: "center", color: "#666" }}>No items have been posted yet</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         );
 
@@ -162,7 +170,22 @@ export default function DashboardPage() {
         return (
           <div style={{ padding: 32 }}>
             <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Order History</h2>
-            <p style={{ color: "#666" }}>No orders yet.</p>
+            <table style={{ width: "100%", background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(146,77,172,0.06)", overflow: "hidden" }}>
+              <thead>
+                <tr style={{ background: "#f3eaff", color: "#924DAC" }}>
+                  <th style={{ padding: 12 }}>ORDER ID</th>
+                  <th style={{ padding: 12 }}>STATUS</th>
+                  <th style={{ padding: 12 }}>DATE</th>
+                  <th style={{ padding: 12 }}>TOTAL</th>
+                  <th style={{ padding: 12 }}>ACTION</th>
+                </tr>
+              </thead>
+              <tbody>
+                <tr>
+                  <td colSpan={5} style={{ padding: 12, textAlign: "center", color: "#666" }}>No orders yet</td>
+                </tr>
+              </tbody>
+            </table>
           </div>
         );
 
@@ -170,7 +193,9 @@ export default function DashboardPage() {
         return (
           <div style={{ padding: 32 }}>
             <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Notifications</h2>
-            <p style={{ color: "#666" }}>No notifications.</p>
+            <div style={{ background: "#fff", borderRadius: 12, padding: 24, color: "#666", textAlign: "center" }}>
+              No notifications
+            </div>
           </div>
         );
 
@@ -178,7 +203,24 @@ export default function DashboardPage() {
         return (
           <div style={{ padding: 32 }}>
             <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Subscription Plans</h2>
-            <p style={{ color: "#666" }}>No subscription active.</p>
+            <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
+              {[
+                { name: "Starter", price: 99, duration: "1 Month", benefits: ["Post up to 5 items", "Exchange items"], color: "#f3eaff" },
+                { name: "Standard", price: 199, duration: "3 Months", benefits: ["Post up to 15 items", "Priority support"], color: "#eafff3" },
+                { name: "Pro", price: 399, duration: "6 Months", benefits: ["Post up to 50 items", "Analytics & Insights"], color: "#fff3ea" },
+                { name: "Premium", price: 699, duration: "12 Months", benefits: ["Unlimited posts", "Priority support", "Feature priority"], color: "#f0e7ff" },
+              ].map(plan => (
+                <div key={plan.name} style={{ background: plan.color, borderRadius: 12, boxShadow: "0 2px 8px rgba(146,77,172,0.04)", padding: 28, minWidth: 220, flex: "1 1 220px" }}>
+                  <div style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 8 }}>{plan.name}</div>
+                  <div style={{ color: "#444", marginBottom: 12 }}>{plan.duration}</div>
+                  <div style={{ fontSize: 28, fontWeight: 700, color: "#222", marginBottom: 12 }}>₹{plan.price}</div>
+                  <ul style={{ fontSize: 14, color: "#666", marginBottom: 12, paddingLeft: 16 }}>
+                    {plan.benefits.map(b => <li key={b}>{b}</li>)}
+                  </ul>
+                  <button className="sayonara-btn" style={{ fontSize: 14, padding: "8px 16px" }}>Subscribe</button>
+                </div>
+              ))}
+            </div>
           </div>
         );
 
@@ -186,7 +228,7 @@ export default function DashboardPage() {
         return (
           <div style={{ padding: 32 }}>
             <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Settings</h2>
-            <p style={{ color: "#666" }}>Manage your preferences.</p>
+            <p style={{ color: "#666" }}>Manage your preferences here.</p>
           </div>
         );
 
