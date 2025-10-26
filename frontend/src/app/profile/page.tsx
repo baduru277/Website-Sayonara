@@ -22,26 +22,25 @@ export default function DashboardPage() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
-
   const router = useRouter();
 
   useEffect(() => {
     const fetchUserProfile = async () => {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        // no token, redirect to login
+        router.push("/");
+        setLoading(false);
+        return;
+      }
+
       try {
         const user = await apiService.getCurrentUser();
         setUserProfile(user);
-      } catch (error: unknown) {
-        console.error('Failed to fetch user profile:', error);
-        if (error instanceof Error) {
-          if (
-            error.message.includes('No authentication token') ||
-            error.message.includes('Invalid token') ||
-            error.message.includes('401')
-          ) {
-            router.push('/');
-            return;
-          }
-        }
+      } catch (error) {
+        console.error("Failed to fetch user profile:", error);
+        localStorage.removeItem("token");
+        router.push("/");
       } finally {
         setLoading(false);
       }
@@ -51,47 +50,34 @@ export default function DashboardPage() {
   }, [router]);
 
   const getUserDisplayName = () => {
-    if (!userProfile) return 'User';
-    if (userProfile.firstName && userProfile.lastName) return `${userProfile.firstName} ${userProfile.lastName}`;
-    if (userProfile.name) return userProfile.name;
-    if (userProfile.firstName) return userProfile.firstName;
-    if (userProfile.email) return userProfile.email.split('@')[0];
-    return 'User';
+    if (!userProfile) return "User";
+    return userProfile.firstName && userProfile.lastName
+      ? `${userProfile.firstName} ${userProfile.lastName}`
+      : userProfile.name || userProfile.firstName || userProfile.email.split("@")[0];
   };
 
   const getUserInitials = () => {
-    if (!userProfile) return 'U';
+    if (!userProfile) return "U";
     return getUserDisplayName()
-      .split(' ')
-      .map((word: string) => word.charAt(0))
-      .join('')
+      .split(" ")
+      .map((w) => w.charAt(0))
+      .join("")
       .toUpperCase()
       .slice(0, 2);
   };
 
   const handleLogout = () => {
-    localStorage.removeItem("isLoggedIn");
-    apiService.removeAuthToken();
+    localStorage.removeItem("token");
     router.push("/");
     window.location.reload();
   };
 
   const Sidebar = () => (
-    <nav style={{
-      background: "#fff",
-      borderRadius: 12,
-      boxShadow: "0 2px 12px rgba(146,77,172,0.06)",
-      padding: 0,
-      minWidth: 180,
-      marginRight: 32,
-      marginTop: 24,
-      marginBottom: 24,
-      overflow: "hidden",
-    }}>
+    <nav style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(146,77,172,0.06)", padding: 0, minWidth: 180, marginRight: 32, marginTop: 24, marginBottom: 24, overflow: "hidden" }}>
       {sidebarItems.map((item) => (
         <button
           key={item.key}
-          onClick={() => item.key === "logout" ? handleLogout() : setSelected(item.key)}
+          onClick={() => (item.key === "logout" ? handleLogout() : setSelected(item.key))}
           style={{
             display: "block",
             width: "100%",
@@ -119,26 +105,8 @@ export default function DashboardPage() {
       case "dashboard":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 28 }}>Welcome to your Dashboard!</h2>
-            <p style={{ color: "#444", marginTop: 12 }}>Manage your orders, notifications, subscriptions, and settings here.</p>
-          </div>
-        );
-
-      case "location":
-        return (
-          <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>📍 Location Settings</h2>
-            <div style={{ background: "white", borderRadius: 12, padding: 24, boxShadow: "0 2px 12px rgba(146,77,172,0.06)" }}>
-              <h3 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 16 }}>Select Your Location</h3>
-              <LocationMap onLocationSelect={setSelectedLocation} height="400px" />
-            </div>
-            {selectedLocation && (
-              <div style={{ background: "#f3eaff", borderRadius: 12, padding: 20, marginTop: 16 }}>
-                <h4 style={{ color: "#924DAC" }}>📍 Selected Location</h4>
-                <div>Address: {selectedLocation.address}</div>
-                <div>Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}</div>
-              </div>
-            )}
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 28 }}>Welcome, {getUserDisplayName()}!</h2>
+            <p style={{ color: "#444", marginTop: 12 }}>Manage your dashboard items, orders, notifications, and subscriptions here.</p>
           </div>
         );
 
@@ -159,7 +127,7 @@ export default function DashboardPage() {
               </thead>
               <tbody>
                 <tr>
-                  <td colSpan={6} style={{ padding: 12, textAlign: "center", color: "#666" }}>No items have been posted yet</td>
+                  <td colSpan={6} style={{ padding: 12, textAlign: "center", color: "#666" }}>No items posted yet</td>
                 </tr>
               </tbody>
             </table>
@@ -205,10 +173,10 @@ export default function DashboardPage() {
             <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Subscription Plans</h2>
             <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
               {[
-                { name: "Starter", price: 99, duration: "1 Month", benefits: ["Post up to 5 items", "Exchange items"], color: "#f3eaff" },
-                { name: "Standard", price: 199, duration: "3 Months", benefits: ["Post up to 15 items", "Priority support"], color: "#eafff3" },
-                { name: "Pro", price: 399, duration: "6 Months", benefits: ["Post up to 50 items", "Analytics & Insights"], color: "#fff3ea" },
-                { name: "Premium", price: 699, duration: "12 Months", benefits: ["Unlimited posts", "Priority support", "Feature priority"], color: "#f0e7ff" },
+                { name: "Starter", price: 99, duration: "1 Month", benefits: ["Post up to 5 items"], color: "#f3eaff" },
+                { name: "Standard", price: 199, duration: "3 Months", benefits: ["Post up to 15 items"], color: "#eafff3" },
+                { name: "Pro", price: 399, duration: "6 Months", benefits: ["Post up to 50 items"], color: "#fff3ea" },
+                { name: "Premium", price: 699, duration: "12 Months", benefits: ["Unlimited posts"], color: "#f0e7ff" },
               ].map(plan => (
                 <div key={plan.name} style={{ background: plan.color, borderRadius: 12, boxShadow: "0 2px 8px rgba(146,77,172,0.04)", padding: 28, minWidth: 220, flex: "1 1 220px" }}>
                   <div style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 8 }}>{plan.name}</div>
@@ -217,7 +185,7 @@ export default function DashboardPage() {
                   <ul style={{ fontSize: 14, color: "#666", marginBottom: 12, paddingLeft: 16 }}>
                     {plan.benefits.map(b => <li key={b}>{b}</li>)}
                   </ul>
-                  <button className="sayonara-btn" style={{ fontSize: 14, padding: "8px 16px" }}>Subscribe</button>
+                  <button style={{ fontSize: 14, padding: "8px 16px" }}>Subscribe</button>
                 </div>
               ))}
             </div>
@@ -228,7 +196,19 @@ export default function DashboardPage() {
         return (
           <div style={{ padding: 32 }}>
             <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Settings</h2>
-            <p style={{ color: "#666" }}>Manage your preferences here.</p>
+            <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 8px rgba(146,77,172,0.04)", padding: 28, minWidth: 320 }}>
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ fontWeight: 600, color: "#444" }}>Language</div>
+                <select style={{ width: "100%", padding: 8, borderRadius: 6, border: "1px solid #eee", marginTop: 6 }}>
+                  <option>English</option>
+                  <option>Hindi</option>
+                </select>
+              </div>
+              <div style={{ marginBottom: 18 }}>
+                <div style={{ fontWeight: 600, color: "#444" }}>Notification Preferences</div>
+                <input type="checkbox" /> Enable Notifications
+              </div>
+            </div>
           </div>
         );
 
@@ -239,7 +219,6 @@ export default function DashboardPage() {
 
   return (
     <div style={{ minHeight: "100vh", background: "#f8f9fa" }}>
-      {/* Header */}
       <div style={{ background: "#924DAC", padding: "24px 0 16px 0", color: "#fff" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
@@ -266,7 +245,6 @@ export default function DashboardPage() {
         </div>
       </div>
 
-      {/* Main Content */}
       <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex" }}>
         <Sidebar />
         <div style={{ flex: 1, marginTop: 24, marginBottom: 24 }}>{renderContent()}</div>
