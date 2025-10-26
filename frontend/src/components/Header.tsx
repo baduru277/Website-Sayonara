@@ -176,7 +176,7 @@ export default function Header() {
 
                           {/* Menu Items */}
                           <div style={{ padding: '8px 0' }}>
-                            <Link href="/dashboard" style={{ textDecoration: 'none' }}>
+                            <Link href="/profile" style={{ textDecoration: 'none' }}>
                               <div style={{
                                 padding: '12px 16px',
                                 color: '#374151',
