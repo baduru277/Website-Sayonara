@@ -21,6 +21,7 @@ class ApiService {
     this.baseURL = API_BASE_URL;
   }
 
+  // Auth Token Management
   getAuthToken() {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('token');
@@ -34,11 +35,12 @@ class ApiService {
     if (typeof window !== 'undefined') localStorage.removeItem('token');
   }
 
+  // Core request method
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getAuthToken();
 
-    // For /auth/me or any protected route, require token
+    // Require token for protected routes
     if (endpoint === '/auth/me' && !token) {
       throw new Error('No authentication token found. Please login first.');
     }
@@ -73,7 +75,7 @@ class ApiService {
     }
   }
 
-  // Auth
+  // ----------------- AUTH -----------------
   register(userData) {
     return this.request('/auth/register', { method: 'POST', body: JSON.stringify(userData) });
   }
@@ -96,7 +98,7 @@ class ApiService {
     this.removeAuthToken();
   }
 
-  // Items
+  // ----------------- ITEMS -----------------
   getItems(params = {}) {
     const query = new URLSearchParams(params).toString();
     return this.request(`/items?${query}`);
@@ -109,7 +111,7 @@ class ApiService {
   updateItem(id, itemData) { return this.request(`/items/${id}`, { method: 'PUT', body: JSON.stringify(itemData) }); }
   deleteItem(id) { return this.request(`/items/${id}`, { method: 'DELETE' }); }
 
-  // Marketplace features
+  // ----------------- MARKETPLACE FEATURES -----------------
   placeBid(itemId, amount) { return this.request(`/items/${itemId}/bid`, { method: 'POST', body: JSON.stringify({ amount }) }); }
   getFeaturedItems() { return this.request('/items/featured/items'); }
   getCategories() { return this.request('/items/categories/list'); }
@@ -124,7 +126,7 @@ class ApiService {
 
   getResellItems(filters = {}) { return this.getItems({ type: 'resell', ...filters }); }
 
-  // File upload
+  // ----------------- FILE UPLOAD -----------------
   async uploadImage(file) {
     const formData = new FormData();
     formData.append('image', file);
@@ -139,7 +141,7 @@ class ApiService {
     return res.json();
   }
 
-  // Backend health
+  // ----------------- HEALTH CHECK -----------------
   async healthCheck() {
     try {
       const res = await fetch(`${this.baseURL.replace('/api','')}/health`);
