@@ -143,7 +143,7 @@ After both services are deployed:
 ### Useful Commands:
 
 ```bash
-# Check logs in Render dashboard
+# Check logs in Render profile
 # Monitor build process
 # Test API endpoints
 curl https://your-backend-url.onrender.com/api/health
