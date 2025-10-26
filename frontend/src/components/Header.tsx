@@ -41,7 +41,7 @@ export default function Header() {
           setLocation(data.city);
         }
       })
-      .catch(() => setLocation('Oguru'));
+      .catch(() => setLocation('Andhra Pradesh'));
 
     // Close dropdown when clicking outside
     const handleClickOutside = (event: MouseEvent) => {
