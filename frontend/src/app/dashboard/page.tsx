@@ -23,18 +23,16 @@ export default function DashboardPage() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        // Check if token exists first
         const token = typeof window !== 'undefined' ? localStorage.getItem('token') : null;
         
         console.log('Token found:', token ? 'Yes' : 'No');
         
         if (!token) {
-          console.log('No token found, redirecting to login');
-          router.push('/login');
+          console.log('No token found, redirecting to home');
+          router.push('/');
           return;
         }
 
-        // Get user from localStorage (stored during login)
         const storedUser = typeof window !== 'undefined' ? localStorage.getItem('user') : null;
         
         console.log('Stored user:', storedUser);
@@ -42,19 +40,19 @@ export default function DashboardPage() {
         if (storedUser) {
           try {
             const parsedUser = JSON.parse(storedUser);
-            console.log('User profile loaded from storage:', parsedUser);
+            console.log('User profile loaded:', parsedUser);
             setUserProfile(parsedUser);
           } catch (parseError) {
             console.error('Error parsing user data:', parseError);
-            router.push('/login');
+            router.push('/');
           }
         } else {
-          console.log('No user data found in localStorage');
-          router.push('/login');
+          console.log('No user data found');
+          router.push('/');
         }
       } catch (error: unknown) {
         console.error('Failed to load user profile:', error);
-        router.push('/login');
+        router.push('/');
       } finally {
         setLoading(false);
       }
@@ -67,7 +65,6 @@ export default function DashboardPage() {
     console.log('getUserDisplayName called, userProfile:', userProfile);
     if (!userProfile) return 'User';
     
-    // Try different name fields
     if (userProfile.name) return userProfile.name;
     if (userProfile.firstName && userProfile.lastName) {
       return `${userProfile.firstName} ${userProfile.lastName}`;
@@ -97,7 +94,7 @@ export default function DashboardPage() {
       localStorage.removeItem("isLoggedIn");
     }
     apiService.removeAuthToken();
-    router.push("/login");
+    router.push("/");
   };
 
   const Sidebar = () => (
