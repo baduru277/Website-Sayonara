@@ -26,22 +26,27 @@ export default function DashboardPage() {
     lng: number;
     address: string;
   } | null>(null);
+
   const router = useRouter();
 
+  // Fetch user profile with auth check
   useEffect(() => {
     const fetchUserProfile = async () => {
-      const token = localStorage.getItem('authToken');
-      if (!token) {
-        router.push('/'); // redirect to login if no token
-        return;
-      }
-
       try {
         const user = await apiService.getCurrentUser();
         setUserProfile(user);
       } catch (error: unknown) {
         console.error('Failed to fetch user profile:', error);
-        router.push('/'); // redirect to login if token invalid
+        if (error instanceof Error) {
+          if (
+            error.message.includes('No authentication token') ||
+            error.message.includes('Invalid token') ||
+            error.message.includes('401')
+          ) {
+            router.push('/'); // Redirect to home/login
+            return;
+          }
+        }
       } finally {
         setLoading(false);
       }
@@ -50,6 +55,7 @@ export default function DashboardPage() {
     fetchUserProfile();
   }, [router]);
 
+  // Helpers
   const getUserDisplayName = () => {
     if (!userProfile) return 'User';
     if (userProfile.firstName && userProfile.lastName) return `${userProfile.firstName} ${userProfile.lastName}`;
@@ -76,6 +82,7 @@ export default function DashboardPage() {
     window.location.reload();
   };
 
+  // Sidebar component
   const Sidebar = () => (
     <nav style={{
       background: "#fff",
@@ -114,6 +121,7 @@ export default function DashboardPage() {
     </nav>
   );
 
+  // Main content renderer
   const renderContent = () => {
     switch (selected) {
       case "dashboard":
@@ -128,16 +136,15 @@ export default function DashboardPage() {
         return (
           <div style={{ padding: 32 }}>
             <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>📍 Location Settings</h2>
-            <div style={{ background: "white", borderRadius: 12, padding: 24, boxShadow: "0 2px 12px rgba(146,77,172,0.06)", marginBottom: 24 }}>
+            <div style={{ background: "white", borderRadius: 12, padding: 24, boxShadow: "0 2px 12px rgba(146,77,172,0.06)" }}>
               <h3 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 16 }}>Select Your Location</h3>
               <LocationMap onLocationSelect={setSelectedLocation} height="400px" />
             </div>
             {selectedLocation && (
-              <div style={{ background: "linear-gradient(135deg, #f3eaff 0%, #e8f4fd 100%)", borderRadius: 12, padding: 20, border: "2px solid #e0e7ff" }}>
-                <h4 style={{ color: "#924DAC", fontWeight: 600, marginBottom: 12 }}>📍 Selected Location</h4>
-                <div style={{ color: "#666", marginBottom: 8 }}><strong>Address:</strong> {selectedLocation.address}</div>
-                <div style={{ color: "#666", marginBottom: 8 }}><strong>Coordinates:</strong> {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}</div>
-                <button className="sayonara-btn" style={{ fontSize: 14, padding: "8px 16px", marginTop: 8 }} onClick={() => alert('Location saved successfully!')}>💾 Save Location</button>
+              <div style={{ background: "#f3eaff", borderRadius: 12, padding: 20, marginTop: 16 }}>
+                <h4 style={{ color: "#924DAC" }}>📍 Selected Location</h4>
+                <div>Address: {selectedLocation.address}</div>
+                <div>Coordinates: {selectedLocation.lat.toFixed(6)}, {selectedLocation.lng.toFixed(6)}</div>
               </div>
             )}
           </div>
@@ -146,57 +153,40 @@ export default function DashboardPage() {
       case "my-post-items":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>My Post Items</h2>
-            <p style={{ color: "#444" }}>Manage your posted items here.</p>
-            <table style={{ width: "100%", background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(146,77,172,0.06)", overflow: "hidden" }}>
-              <thead>
-                <tr style={{ background: "#f3eaff", color: "#924DAC" }}>
-                  <th style={{ padding: 12 }}>ITEM</th>
-                  <th style={{ padding: 12 }}>STATUS</th>
-                  <th style={{ padding: 12 }}>VIEWS</th>
-                  <th style={{ padding: 12 }}>LIKES</th>
-                  <th style={{ padding: 12 }}>POSTED DATE</th>
-                  <th style={{ padding: 12 }}>ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td colSpan={6} style={{ padding: 12, textAlign: "center", color: "#666" }}>No items have been posted</td>
-                </tr>
-              </tbody>
-            </table>
+            <h2 style={{ color: "#924DAC", fontWeight: 700 }}>My Post Items</h2>
+            <p style={{ color: "#666" }}>No items have been posted yet.</p>
           </div>
         );
 
       case "order-history":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Order History</h2>
-            <p style={{ color: "#444" }}>Your order history will appear here.</p>
+            <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Order History</h2>
+            <p style={{ color: "#666" }}>No orders yet.</p>
           </div>
         );
 
       case "notification":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Notification</h2>
-            <p style={{ color: "#444" }}>You have no new notifications.</p>
+            <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Notifications</h2>
+            <p style={{ color: "#666" }}>No notifications.</p>
           </div>
         );
 
       case "subscription":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Subscription Plans</h2>
-            <p style={{ color: "#444" }}>View available subscription plans.</p>
+            <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Subscription Plans</h2>
+            <p style={{ color: "#666" }}>No subscription active.</p>
           </div>
         );
 
       case "setting":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Setting</h2>
-            <p style={{ color: "#444" }}>Update your account settings here.</p>
+            <h2 style={{ color: "#924DAC", fontWeight: 700 }}>Settings</h2>
+            <p style={{ color: "#666" }}>Manage your preferences.</p>
           </div>
         );
 
@@ -211,9 +201,9 @@ export default function DashboardPage() {
       <div style={{ background: "#924DAC", padding: "24px 0 16px 0", color: "#fff" }}>
         <div style={{ maxWidth: 1200, margin: "0 auto", display: "flex", alignItems: "center", justifyContent: "space-between" }}>
           <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
-            <span style={{ fontSize: 32, marginRight: 8 }}>🌟</span>
+            <span style={{ fontSize: 32 }}>🌟</span>
             <div>
-              <div style={{ fontWeight: 700, fontSize: 20, letterSpacing: 1 }}>Welcome back!</div>
+              <div style={{ fontWeight: 700, fontSize: 20 }}>Welcome back!</div>
               <div style={{ fontSize: 14, color: "#e0e7ff", marginTop: 2 }}>Ready to discover amazing deals?</div>
               <div style={{ marginTop: 8 }}>
                 <LocationDisplay showUpdateButton={false} />
@@ -223,7 +213,11 @@ export default function DashboardPage() {
           <div style={{ display: "flex", alignItems: "center", gap: 8 }}>
             <div style={{ fontWeight: 600 }}>{loading ? 'Loading...' : getUserDisplayName()}</div>
             <div style={{ fontSize: 13, color: "#eee" }}>{loading ? 'loading@email.com' : userProfile?.email || 'user@example.com'}</div>
-            <div style={{ width: 36, height: 36, background: "#fff", borderRadius: "50%", display: "flex", alignItems: "center", justifyContent: "center", color: "#924DAC", fontWeight: 700, fontSize: 18 }}>
+            <div style={{
+              width: 36, height: 36, background: "#fff", borderRadius: "50%",
+              display: "flex", alignItems: "center", justifyContent: "center",
+              color: "#924DAC", fontWeight: 700, fontSize: 18
+            }}>
               {loading ? 'L' : getUserInitials()}
             </div>
           </div>
