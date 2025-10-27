@@ -29,12 +29,18 @@ export default function ProfilePage() {
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
-        const user = await apiService.getCurrentUser();
+        const response = await apiService.getCurrentUser();
+        console.log("Fetched response:", response); // Debug log
+        
+        // Extract user from response - backend returns { user: {...} }
+        const user = response?.user || response;
+        
         if (!user) {
-          console.warn("No token found, redirecting to home...");
+          console.warn("No user data found, redirecting to home...");
           router.push("/");
           return;
         }
+        
         setUserProfile(user);
 
         // ✅ Restore previously saved location (backend or localStorage)
@@ -50,7 +56,7 @@ export default function ProfilePage() {
         }
       } catch (err) {
         console.error("Error fetching user profile:", err);
-        router.push("/");
+        // Don't redirect on error, allow user to see profile page
       } finally {
         setLoading(false);
       }
@@ -61,10 +67,11 @@ export default function ProfilePage() {
   // Get user display name
   const getUserDisplayName = () => {
     if (!userProfile) return "User";
-    if (userProfile.firstName && userProfile.lastName) return `${userProfile.firstName} ${userProfile.lastName}`;
+    
+    // Backend returns: { name, email, ... } - flat structure
     if (userProfile.name) return userProfile.name;
-    if (userProfile.firstName) return userProfile.firstName;
     if (userProfile.email) return userProfile.email.split("@")[0];
+    
     return "User";
   };
 
