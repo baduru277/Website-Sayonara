@@ -36,6 +36,14 @@ export default function ProfilePage() {
           return;
         }
         setUserProfile(user);
+
+        // ✅ Restore previously saved location (backend or localStorage)
+        if (user.location) {
+          setSelectedLocation(user.location);
+        } else {
+          const saved = localStorage.getItem("userLocation");
+          if (saved) setSelectedLocation(JSON.parse(saved));
+        }
       } catch (err) {
         console.error("Error fetching user profile:", err);
         router.push("/");
@@ -57,14 +65,14 @@ export default function ProfilePage() {
   };
 
   const getUserInitials = () => {
-  if (!userProfile) return "U";
-  return getUserDisplayName()
-    .split(" ")
-    .map((w: string) => w.charAt(0))
-    .join("")
-    .toUpperCase()
-    .slice(0, 2);
-};
+    if (!userProfile) return "U";
+    return getUserDisplayName()
+      .split(" ")
+      .map((w: string) => w.charAt(0))
+      .join("")
+      .toUpperCase()
+      .slice(0, 2);
+  };
 
   const handleLogout = () => {
     apiService.logout();
@@ -217,15 +225,57 @@ export default function ProfilePage() {
       case "subscription":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
-              Subscription Plans
-            </h2>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Subscription Plans</h2>
             <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
               {[
-                { name: "Starter", price: 99, duration: "1 Month", benefits: ["Post up to 5 items", "Exchange items", "Resell options", "Bid on items"], color: "#f3eaff" },
-                { name: "Standard", price: 199, duration: "3 Months", benefits: ["Post up to 15 items", "Exchange items", "Resell options", "Bid on items", "Priority support"], color: "#eafff3" },
-                { name: "Pro", price: 399, duration: "6 Months", benefits: ["Post up to 50 items", "Exchange items", "Resell options", "Bid on items", "Analytics & Insights"], color: "#fff3ea" },
-                { name: "Premium", price: 699, duration: "12 Months", benefits: ["Unlimited posts", "Exchange items", "Resell options", "Bid on items", "Priority support", "Analytics & Insights", "Feature priority"], color: "#f0e7ff" },
+                {
+                  name: "Starter",
+                  price: 99,
+                  duration: "1 Month",
+                  benefits: ["Post up to 5 items", "Exchange items", "Resell options", "Bid on items"],
+                  color: "#f3eaff",
+                },
+                {
+                  name: "Standard",
+                  price: 199,
+                  duration: "3 Months",
+                  benefits: [
+                    "Post up to 15 items",
+                    "Exchange items",
+                    "Resell options",
+                    "Bid on items",
+                    "Priority support",
+                  ],
+                  color: "#eafff3",
+                },
+                {
+                  name: "Pro",
+                  price: 399,
+                  duration: "6 Months",
+                  benefits: [
+                    "Post up to 50 items",
+                    "Exchange items",
+                    "Resell options",
+                    "Bid on items",
+                    "Analytics & Insights",
+                  ],
+                  color: "#fff3ea",
+                },
+                {
+                  name: "Premium",
+                  price: 699,
+                  duration: "12 Months",
+                  benefits: [
+                    "Unlimited posts",
+                    "Exchange items",
+                    "Resell options",
+                    "Bid on items",
+                    "Priority support",
+                    "Analytics & Insights",
+                    "Feature priority",
+                  ],
+                  color: "#f0e7ff",
+                },
               ].map((plan) => (
                 <div
                   key={plan.name}
@@ -262,7 +312,34 @@ export default function ProfilePage() {
           <div style={{ padding: 32 }}>
             <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Manage Location</h2>
             <LocationMap selectedLocation={selectedLocation} setSelectedLocation={setSelectedLocation} />
-            {selectedLocation && <LocationDisplay location={selectedLocation} />}
+            {selectedLocation && (
+              <>
+                <LocationDisplay location={selectedLocation} />
+                <button
+                  onClick={async () => {
+                    try {
+                      await apiService.updateProfile({ ...userProfile, location: selectedLocation });
+                      localStorage.setItem("userLocation", JSON.stringify(selectedLocation));
+                      alert("Location saved successfully!");
+                    } catch (err) {
+                      console.error("Error saving location:", err);
+                      alert("Failed to save location.");
+                    }
+                  }}
+                  style={{
+                    marginTop: 16,
+                    padding: "10px 18px",
+                    borderRadius: 6,
+                    background: "#924DAC",
+                    color: "#fff",
+                    border: "none",
+                    cursor: "pointer",
+                  }}
+                >
+                  💾 Save Location
+                </button>
+              </>
+            )}
           </div>
         );
 
