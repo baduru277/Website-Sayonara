@@ -1,17 +1,17 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState } from "react";
 
 interface LocationMapProps {
-  selectedLocation: { lat: number; lng: number; address: string } | null;
-  setSelectedLocation: React.Dispatch<
+  onLocationSelect: React.Dispatch<
     React.SetStateAction<{ lat: number; lng: number; address: string } | null>
   >;
+  height?: string;
 }
 
 export default function LocationMap({
-  selectedLocation,
-  setSelectedLocation,
+  onLocationSelect,
+  height = "400px",
 }: LocationMapProps) {
   const [mapError, setMapError] = useState<string | null>(null);
 
@@ -26,7 +26,7 @@ export default function LocationMap({
     const lat = 17.3569 + (x - rect.width / 2) / 10000;
     const lng = 78.4753 + (y - rect.height / 2) / 10000;
 
-    setSelectedLocation({
+    onLocationSelect({
       lat: parseFloat(lat.toFixed(4)),
       lng: parseFloat(lng.toFixed(4)),
       address: `Location: ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
@@ -38,7 +38,7 @@ export default function LocationMap({
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          setSelectedLocation({
+          onLocationSelect({
             lat: parseFloat(latitude.toFixed(4)),
             lng: parseFloat(longitude.toFixed(4)),
             address: `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
@@ -59,8 +59,8 @@ export default function LocationMap({
         onClick={handleMapClick}
         style={{
           width: "100%",
-          height: 400,
-          background: "#e8f5e9",
+          height: height,
+          background: "linear-gradient(135deg, #e8f5e9 0%, #f3eaff 100%)",
           borderRadius: 12,
           marginBottom: 18,
           display: "flex",
@@ -72,26 +72,29 @@ export default function LocationMap({
           position: "relative",
           border: "2px solid #924DAC",
           overflow: "hidden",
+          boxShadow: "0 2px 12px rgba(146,77,172,0.1)",
         }}
       >
         {mapError ? (
           <div style={{ color: "#d32f2f", textAlign: "center" }}>
             <p>{mapError}</p>
           </div>
-        ) : selectedLocation ? (
-          <div
-            style={{
-              position: "absolute",
-              top: "50%",
-              left: "50%",
-              transform: "translate(-50%, -50%)",
-              fontSize: 32,
-            }}
-          >
-            📍
-          </div>
         ) : (
-          <p>Click on the map to select a location or use current location</p>
+          <>
+            <div
+              style={{
+                position: "absolute",
+                top: "50%",
+                left: "50%",
+                transform: "translate(-50%, -50%)",
+                fontSize: 32,
+                opacity: 0.5,
+              }}
+            >
+              📍
+            </div>
+            <p style={{ position: "relative", zIndex: 1 }}>Click on the map to select a location</p>
+          </>
         )}
       </div>
 
@@ -107,33 +110,17 @@ export default function LocationMap({
           marginBottom: 18,
           fontSize: 14,
           fontWeight: 500,
+          transition: "background 0.2s",
+        }}
+        onMouseOver={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = "#45a049";
+        }}
+        onMouseOut={(e) => {
+          (e.currentTarget as HTMLButtonElement).style.background = "#4CAF50";
         }}
       >
         📍 Use Current Location
       </button>
-
-      {selectedLocation && (
-        <div
-          style={{
-            background: "#f3eaff",
-            borderRadius: 12,
-            padding: 16,
-            marginBottom: 18,
-            color: "#924DAC",
-            fontSize: 14,
-          }}
-        >
-          <p>
-            <strong>Latitude:</strong> {selectedLocation.lat}
-          </p>
-          <p>
-            <strong>Longitude:</strong> {selectedLocation.lng}
-          </p>
-          <p>
-            <strong>Address:</strong> {selectedLocation.address}
-          </p>
-        </div>
-      )}
     </div>
   );
 }
