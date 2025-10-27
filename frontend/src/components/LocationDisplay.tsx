@@ -3,12 +3,31 @@
 import React from "react";
 
 interface LocationDisplayProps {
-  location: { lat: number; lng: number; address: string } | null;
+  location?: { lat: number; lng: number; address: string } | null;
+  showUpdateButton?: boolean;
 }
 
-export default function LocationDisplay({ location }: LocationDisplayProps) {
+export default function LocationDisplay({ 
+  location, 
+  showUpdateButton = true 
+}: LocationDisplayProps) {
   if (!location) {
-    return null;
+    return (
+      <div
+        style={{
+          background: "#fff3cd",
+          borderRadius: 8,
+          padding: 16,
+          color: "#856404",
+          fontSize: 14,
+          border: "1px solid #ffeaa7",
+          marginBottom: 16,
+        }}
+      >
+        <span style={{ marginRight: 8 }}>📍</span>
+        No location selected yet
+      </div>
+    );
   }
 
   return (
@@ -22,7 +41,7 @@ export default function LocationDisplay({ location }: LocationDisplayProps) {
       }}
     >
       <h3 style={{ color: "#924DAC", fontWeight: 700, marginBottom: 16, fontSize: 18 }}>
-        Selected Location Details
+        📍 Your Location Details
       </h3>
 
       <div
@@ -30,6 +49,7 @@ export default function LocationDisplay({ location }: LocationDisplayProps) {
           display: "grid",
           gridTemplateColumns: "1fr 1fr",
           gap: 16,
+          marginBottom: 16,
         }}
       >
         <div>
@@ -43,6 +63,7 @@ export default function LocationDisplay({ location }: LocationDisplayProps) {
               borderRadius: 6,
               color: "#222",
               fontFamily: "monospace",
+              fontSize: 14,
             }}
           >
             {location.lat}
@@ -60,6 +81,7 @@ export default function LocationDisplay({ location }: LocationDisplayProps) {
               borderRadius: 6,
               color: "#222",
               fontFamily: "monospace",
+              fontSize: 14,
             }}
           >
             {location.lng}
@@ -67,7 +89,7 @@ export default function LocationDisplay({ location }: LocationDisplayProps) {
         </div>
       </div>
 
-      <div style={{ marginTop: 16 }}>
+      <div style={{ marginBottom: 16 }}>
         <label style={{ display: "block", color: "#666", fontSize: 12, marginBottom: 4, fontWeight: 600 }}>
           Address
         </label>
@@ -78,11 +100,28 @@ export default function LocationDisplay({ location }: LocationDisplayProps) {
             borderRadius: 6,
             color: "#222",
             wordBreak: "break-word",
+            fontSize: 14,
           }}
         >
           {location.address}
         </div>
       </div>
+
+      {showUpdateButton && (
+        <div
+          style={{
+            background: "#f3eaff",
+            borderRadius: 8,
+            padding: 12,
+            marginTop: 16,
+            fontSize: 13,
+            color: "#666",
+            borderLeft: "4px solid #924DAC",
+          }}
+        >
+          ✓ Location saved. You can update it anytime from the Location section.
+        </div>
+      )}
     </div>
   );
 }
