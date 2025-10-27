@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter } from "next/navigation";
-import apiService from "@/services/apiService";
+import apiService from "@/services/api";
 import LocationMap from "@/components/LocationMap";
 import LocationDisplay from "@/components/LocationDisplay";
 
