@@ -57,14 +57,14 @@ export default function ProfilePage() {
   };
 
   const getUserInitials = () => {
-    if (!userProfile) return "U";
-    return getUserDisplayName()
-      .split(" ")
-      .map((w) => w.charAt(0))
-      .join("")
-      .toUpperCase()
-      .slice(0, 2);
-  };
+  if (!userProfile) return "U";
+  return getUserDisplayName()
+    .split(" ")
+    .map((w: string) => w.charAt(0))
+    .join("")
+    .toUpperCase()
+    .slice(0, 2);
+};
 
   const handleLogout = () => {
     apiService.logout();
