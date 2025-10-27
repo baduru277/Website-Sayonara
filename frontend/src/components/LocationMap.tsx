@@ -3,17 +3,32 @@
 import React, { useState } from "react";
 
 interface LocationMapProps {
-  onLocationSelect: React.Dispatch<
+  selectedLocation?: { lat: number; lng: number; address: string } | null;
+  setSelectedLocation?: React.Dispatch<
+    React.SetStateAction<{ lat: number; lng: number; address: string } | null>
+  >;
+  onLocationSelect?: React.Dispatch<
     React.SetStateAction<{ lat: number; lng: number; address: string } | null>
   >;
   height?: string;
 }
 
 export default function LocationMap({
+  selectedLocation,
+  setSelectedLocation,
   onLocationSelect,
   height = "400px",
 }: LocationMapProps) {
   const [mapError, setMapError] = useState<string | null>(null);
+
+  // Support both callback patterns
+  const handleLocationChange = (newLocation: { lat: number; lng: number; address: string }) => {
+    if (setSelectedLocation) {
+      setSelectedLocation(newLocation);
+    } else if (onLocationSelect) {
+      onLocationSelect(newLocation);
+    }
+  };
 
   const handleMapClick = (e: React.MouseEvent<HTMLDivElement>) => {
     // Simulated map click handler
@@ -26,7 +41,7 @@ export default function LocationMap({
     const lat = 17.3569 + (x - rect.width / 2) / 10000;
     const lng = 78.4753 + (y - rect.height / 2) / 10000;
 
-    onLocationSelect({
+    handleLocationChange({
       lat: parseFloat(lat.toFixed(4)),
       lng: parseFloat(lng.toFixed(4)),
       address: `Location: ${lat.toFixed(4)}, ${lng.toFixed(4)}`,
@@ -38,7 +53,7 @@ export default function LocationMap({
       navigator.geolocation.getCurrentPosition(
         (position) => {
           const { latitude, longitude } = position.coords;
-          onLocationSelect({
+          handleLocationChange({
             lat: parseFloat(latitude.toFixed(4)),
             lng: parseFloat(longitude.toFixed(4)),
             address: `Location: ${latitude.toFixed(4)}, ${longitude.toFixed(4)}`,
@@ -121,6 +136,30 @@ export default function LocationMap({
       >
         📍 Use Current Location
       </button>
+
+      {selectedLocation && (
+        <div
+          style={{
+            background: "#f3eaff",
+            borderRadius: 12,
+            padding: 16,
+            marginBottom: 18,
+            color: "#924DAC",
+            fontSize: 14,
+            border: "1px solid #e0bfff",
+          }}
+        >
+          <p>
+            <strong>Latitude:</strong> {selectedLocation.lat}
+          </p>
+          <p>
+            <strong>Longitude:</strong> {selectedLocation.lng}
+          </p>
+          <p>
+            <strong>Address:</strong> {selectedLocation.address}
+          </p>
+        </div>
+      )}
     </div>
   );
 }
