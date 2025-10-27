@@ -41,8 +41,12 @@ export default function ProfilePage() {
         if (user.location) {
           setSelectedLocation(user.location);
         } else {
-          const saved = localStorage.getItem("userLocation");
-          if (saved) setSelectedLocation(JSON.parse(saved));
+          try {
+            const saved = localStorage.getItem("userLocation");
+            if (saved) setSelectedLocation(JSON.parse(saved));
+          } catch (e) {
+            console.warn("Could not parse saved location");
+          }
         }
       } catch (err) {
         console.error("Error fetching user profile:", err);
@@ -88,11 +92,13 @@ export default function ProfilePage() {
         borderRadius: 12,
         boxShadow: "0 2px 12px rgba(146,77,172,0.06)",
         padding: 0,
-        minWidth: 180,
+        minWidth: 200,
         marginRight: 32,
         marginTop: 24,
         marginBottom: 24,
         overflow: "hidden",
+        maxHeight: "90vh",
+        overflowY: "auto",
       }}
     >
       {sidebarItems.map((item) => (
@@ -127,12 +133,77 @@ export default function ProfilePage() {
       case "profile":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 28 }}>
-              Welcome to your Profile, {getUserDisplayName()}!
-            </h2>
-            <p style={{ color: "#444", marginTop: 12 }}>
-              Manage your posts, orders, notifications, subscriptions, and settings here.
-            </p>
+            <div style={{ marginBottom: 32 }}>
+              <div
+                style={{
+                  display: "flex",
+                  alignItems: "center",
+                  gap: 24,
+                  background: "linear-gradient(135deg, #924DAC 0%, #d97ef6 100%)",
+                  borderRadius: 16,
+                  padding: 32,
+                  color: "#fff",
+                }}
+              >
+                <div
+                  style={{
+                    width: 100,
+                    height: 100,
+                    borderRadius: "50%",
+                    background: "rgba(255,255,255,0.3)",
+                    display: "flex",
+                    alignItems: "center",
+                    justifyContent: "center",
+                    fontSize: 48,
+                    fontWeight: 700,
+                    border: "3px solid rgba(255,255,255,0.5)",
+                  }}
+                >
+                  {getUserInitials()}
+                </div>
+                <div>
+                  <h1 style={{ fontSize: 32, fontWeight: 700, marginBottom: 8 }}>
+                    Welcome, {getUserDisplayName()}!
+                  </h1>
+                  <p style={{ fontSize: 16, opacity: 0.95 }}>
+                    Email: {userProfile?.email || "No email"}
+                  </p>
+                  <p style={{ fontSize: 14, opacity: 0.85, marginTop: 4 }}>
+                    Member since {userProfile?.createdAt ? new Date(userProfile.createdAt).toLocaleDateString() : "Recently"}
+                  </p>
+                </div>
+              </div>
+            </div>
+
+            <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 24 }}>
+              {[
+                { icon: "📝", title: "My Posts", count: "0", color: "#f3eaff" },
+                { icon: "📦", title: "Orders", count: "0", color: "#eafff3" },
+                { icon: "🔔", title: "Notifications", count: "0", color: "#fff3ea" },
+                { icon: "⭐", title: "Subscription", count: "Free", color: "#f0e7ff" },
+              ].map((card) => (
+                <div
+                  key={card.title}
+                  style={{
+                    background: card.color,
+                    borderRadius: 12,
+                    padding: 24,
+                    boxShadow: "0 2px 8px rgba(146,77,172,0.06)",
+                    textAlign: "center",
+                  }}
+                >
+                  <div style={{ fontSize: 32, marginBottom: 12 }}>{card.icon}</div>
+                  <div style={{ fontSize: 14, color: "#666", marginBottom: 8 }}>{card.title}</div>
+                  <div style={{ fontSize: 24, fontWeight: 700, color: "#924DAC" }}>{card.count}</div>
+                </div>
+              ))}
+            </div>
+
+            <div style={{ marginTop: 32 }}>
+              <p style={{ color: "#666", lineHeight: 1.6 }}>
+                Manage your posts, orders, notifications, subscriptions, and settings from the sidebar menu.
+              </p>
+            </div>
           </div>
         );
 
@@ -151,12 +222,12 @@ export default function ProfilePage() {
             >
               <thead>
                 <tr style={{ background: "#f3eaff", color: "#924DAC" }}>
-                  <th style={{ padding: 12 }}>ITEM</th>
-                  <th style={{ padding: 12 }}>STATUS</th>
-                  <th style={{ padding: 12 }}>VIEWS</th>
-                  <th style={{ padding: 12 }}>LIKES</th>
-                  <th style={{ padding: 12 }}>POSTED DATE</th>
-                  <th style={{ padding: 12 }}>ACTION</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>ITEM</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>STATUS</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>VIEWS</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>LIKES</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>POSTED DATE</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -185,11 +256,11 @@ export default function ProfilePage() {
             >
               <thead>
                 <tr style={{ background: "#f3eaff", color: "#924DAC" }}>
-                  <th style={{ padding: 12 }}>ORDER ID</th>
-                  <th style={{ padding: 12 }}>STATUS</th>
-                  <th style={{ padding: 12 }}>DATE</th>
-                  <th style={{ padding: 12 }}>TOTAL</th>
-                  <th style={{ padding: 12 }}>ACTION</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>ORDER ID</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>STATUS</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>DATE</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>TOTAL</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>ACTION</th>
                 </tr>
               </thead>
               <tbody>
@@ -225,57 +296,15 @@ export default function ProfilePage() {
       case "subscription":
         return (
           <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Subscription Plans</h2>
+            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
+              Subscription Plans
+            </h2>
             <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
               {[
-                {
-                  name: "Starter",
-                  price: 99,
-                  duration: "1 Month",
-                  benefits: ["Post up to 5 items", "Exchange items", "Resell options", "Bid on items"],
-                  color: "#f3eaff",
-                },
-                {
-                  name: "Standard",
-                  price: 199,
-                  duration: "3 Months",
-                  benefits: [
-                    "Post up to 15 items",
-                    "Exchange items",
-                    "Resell options",
-                    "Bid on items",
-                    "Priority support",
-                  ],
-                  color: "#eafff3",
-                },
-                {
-                  name: "Pro",
-                  price: 399,
-                  duration: "6 Months",
-                  benefits: [
-                    "Post up to 50 items",
-                    "Exchange items",
-                    "Resell options",
-                    "Bid on items",
-                    "Analytics & Insights",
-                  ],
-                  color: "#fff3ea",
-                },
-                {
-                  name: "Premium",
-                  price: 699,
-                  duration: "12 Months",
-                  benefits: [
-                    "Unlimited posts",
-                    "Exchange items",
-                    "Resell options",
-                    "Bid on items",
-                    "Priority support",
-                    "Analytics & Insights",
-                    "Feature priority",
-                  ],
-                  color: "#f0e7ff",
-                },
+                { name: "Starter", price: 99, duration: "1 Month", benefits: ["Post up to 5 items", "Exchange items", "Resell options", "Bid on items"], color: "#f3eaff" },
+                { name: "Standard", price: 199, duration: "3 Months", benefits: ["Post up to 15 items", "Exchange items", "Resell options", "Bid on items", "Priority support"], color: "#eafff3" },
+                { name: "Pro", price: 399, duration: "6 Months", benefits: ["Post up to 50 items", "Exchange items", "Resell options", "Bid on items", "Analytics & Insights"], color: "#fff3ea" },
+                { name: "Premium", price: 699, duration: "12 Months", benefits: ["Unlimited posts", "Exchange items", "Resell options", "Bid on items", "Priority support", "Analytics & Insights", "Feature priority"], color: "#f0e7ff" },
               ].map((plan) => (
                 <div
                   key={plan.name}
@@ -300,7 +329,27 @@ export default function ProfilePage() {
                       <li key={b}>{b}</li>
                     ))}
                   </ul>
-                  <button style={{ fontSize: 14, padding: "8px 16px" }}>Subscribe</button>
+                  <button
+                    style={{
+                      fontSize: 14,
+                      padding: "8px 16px",
+                      background: "#924DAC",
+                      color: "#fff",
+                      border: "none",
+                      borderRadius: 6,
+                      cursor: "pointer",
+                      fontWeight: 600,
+                      transition: "background 0.2s",
+                    }}
+                    onMouseOver={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.background = "#7a3a8a";
+                    }}
+                    onMouseOut={(e) => {
+                      (e.currentTarget as HTMLButtonElement).style.background = "#924DAC";
+                    }}
+                  >
+                    Subscribe
+                  </button>
                 </div>
               ))}
             </div>
@@ -319,7 +368,11 @@ export default function ProfilePage() {
                   onClick={async () => {
                     try {
                       await apiService.updateProfile({ ...userProfile, location: selectedLocation });
-                      localStorage.setItem("userLocation", JSON.stringify(selectedLocation));
+                      try {
+                        localStorage.setItem("userLocation", JSON.stringify(selectedLocation));
+                      } catch (e) {
+                        console.warn("Could not save to localStorage");
+                      }
                       alert("Location saved successfully!");
                     } catch (err) {
                       console.error("Error saving location:", err);
@@ -334,6 +387,14 @@ export default function ProfilePage() {
                     color: "#fff",
                     border: "none",
                     cursor: "pointer",
+                    fontWeight: 600,
+                    transition: "background 0.2s",
+                  }}
+                  onMouseOver={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = "#7a3a8a";
+                  }}
+                  onMouseOut={(e) => {
+                    (e.currentTarget as HTMLButtonElement).style.background = "#924DAC";
                   }}
                 >
                   💾 Save Location
@@ -347,33 +408,83 @@ export default function ProfilePage() {
         return (
           <div style={{ padding: 32 }}>
             <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>Settings</h2>
-            <div style={{ marginBottom: 16 }}>
-              <label>Name:</label>
-              <input
-                type="text"
-                value={getUserDisplayName()}
-                onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
-                style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc", marginLeft: 12 }}
-              />
-            </div>
-            <div style={{ marginBottom: 16 }}>
-              <label>Email:</label>
-              <input
-                type="text"
-                value={userProfile?.email || ""}
-                readOnly
-                style={{ padding: 8, borderRadius: 6, border: "1px solid #ccc", marginLeft: 12 }}
-              />
-            </div>
-            <button
-              onClick={async () => {
-                await apiService.updateProfile(userProfile);
-                alert("Profile updated!");
+            <div
+              style={{
+                background: "#fff",
+                borderRadius: 12,
+                boxShadow: "0 2px 12px rgba(146,77,172,0.06)",
+                padding: 24,
               }}
-              style={{ padding: "8px 16px", borderRadius: 6, background: "#924DAC", color: "#fff" }}
             >
-              Update Profile
-            </button>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: "block", color: "#666", fontSize: 14, marginBottom: 8, fontWeight: 600 }}>
+                  Name
+                </label>
+                <input
+                  type="text"
+                  value={getUserDisplayName()}
+                  onChange={(e) => setUserProfile({ ...userProfile, name: e.target.value })}
+                  style={{
+                    width: "100%",
+                    maxWidth: 400,
+                    padding: 12,
+                    borderRadius: 6,
+                    border: "1px solid #ddd",
+                    fontSize: 14,
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: "block", color: "#666", fontSize: 14, marginBottom: 8, fontWeight: 600 }}>
+                  Email
+                </label>
+                <input
+                  type="text"
+                  value={userProfile?.email || ""}
+                  readOnly
+                  style={{
+                    width: "100%",
+                    maxWidth: 400,
+                    padding: 12,
+                    borderRadius: 6,
+                    border: "1px solid #ddd",
+                    fontSize: 14,
+                    background: "#f9f9f9",
+                    boxSizing: "border-box",
+                  }}
+                />
+              </div>
+              <button
+                onClick={async () => {
+                  try {
+                    await apiService.updateProfile(userProfile);
+                    alert("Profile updated!");
+                  } catch (err) {
+                    alert("Failed to update profile");
+                  }
+                }}
+                style={{
+                  padding: "10px 24px",
+                  borderRadius: 6,
+                  background: "#924DAC",
+                  color: "#fff",
+                  border: "none",
+                  cursor: "pointer",
+                  fontWeight: 600,
+                  fontSize: 14,
+                  transition: "background 0.2s",
+                }}
+                onMouseOver={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "#7a3a8a";
+                }}
+                onMouseOut={(e) => {
+                  (e.currentTarget as HTMLButtonElement).style.background = "#924DAC";
+                }}
+              >
+                Update Profile
+              </button>
+            </div>
           </div>
         );
 
@@ -382,7 +493,12 @@ export default function ProfilePage() {
     }
   };
 
-  if (loading) return <div style={{ padding: 32 }}>Loading...</div>;
+  if (loading)
+    return (
+      <div style={{ padding: 32, textAlign: "center", color: "#924DAC", fontSize: 18 }}>
+        Loading your profile...
+      </div>
+    );
 
   return (
     <div
@@ -394,7 +510,7 @@ export default function ProfilePage() {
       }}
     >
       <Sidebar />
-      <div style={{ flex: 1 }}>{renderContent()}</div>
+      <div style={{ flex: 1, overflowY: "auto" }}>{renderContent()}</div>
     </div>
   );
 }
