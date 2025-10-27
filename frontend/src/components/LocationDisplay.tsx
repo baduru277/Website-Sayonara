@@ -1,125 +1,88 @@
-'use client';
+"use client";
 
-import React, { useState, useEffect } from 'react';
+import React from "react";
 
 interface LocationDisplayProps {
-  onLocationUpdate?: (location: string) => void;
-  showUpdateButton?: boolean;
+  location: { lat: number; lng: number; address: string } | null;
 }
 
-export default function LocationDisplay({ 
-  onLocationUpdate, 
-  showUpdateButton = true 
-}: LocationDisplayProps) {
-  const [location, setLocation] = useState<string>('Loading location...');
-  const [loading, setLoading] = useState(true);
-
-  useEffect(() => {
-    // Try to get location from localStorage first
-    const savedLocation = localStorage.getItem('userLocation');
-    if (savedLocation) {
-      setLocation(savedLocation);
-      setLoading(false);
-      return;
-    }
-
-    // Fallback to IP-based location
-    fetch('https://ip-api.com/json')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (data && data.city) {
-          const locationText = `${data.city}, ${data.country}`;
-          setLocation(locationText);
-          localStorage.setItem('userLocation', locationText);
-          if (onLocationUpdate) {
-            onLocationUpdate(locationText);
-          }
-        } else {
-          setLocation('Location not available');
-        }
-      })
-      .catch((error) => {
-        console.warn('Location service error:', error);
-        setLocation('Location not available');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  }, [onLocationUpdate]);
-
-  const updateLocation = () => {
-    setLoading(true);
-    setLocation('Updating location...');
-    
-    // Clear saved location to force refresh
-    localStorage.removeItem('userLocation');
-    
-    fetch('https://ip-api.com/json')
-      .then(res => {
-        if (!res.ok) {
-          throw new Error(`HTTP ${res.status}: ${res.statusText}`);
-        }
-        return res.json();
-      })
-      .then(data => {
-        if (data && data.city) {
-          const locationText = `${data.city}, ${data.country}`;
-          setLocation(locationText);
-          localStorage.setItem('userLocation', locationText);
-          if (onLocationUpdate) {
-            onLocationUpdate(locationText);
-          }
-        } else {
-          setLocation('Location not available');
-        }
-      })
-      .catch((error) => {
-        console.warn('Location service error:', error);
-        setLocation('Location not available');
-      })
-      .finally(() => {
-        setLoading(false);
-      });
-  };
+export default function LocationDisplay({ location }: LocationDisplayProps) {
+  if (!location) {
+    return null;
+  }
 
   return (
-    <div style={{ 
-      display: 'flex', 
-      alignItems: 'center', 
-      gap: '8px',
-      fontSize: '14px',
-      color: '#666'
-    }}>
-      <span style={{ fontSize: '16px' }}>📍</span>
-      <span style={{ 
-        color: loading ? '#999' : '#666',
-        fontStyle: loading ? 'italic' : 'normal'
-      }}>
-        {location}
-      </span>
-      {showUpdateButton && !loading && (
-        <button
-          onClick={updateLocation}
+    <div
+      style={{
+        background: "#fff",
+        borderRadius: 12,
+        boxShadow: "0 2px 12px rgba(146,77,172,0.06)",
+        padding: 24,
+        marginBottom: 18,
+      }}
+    >
+      <h3 style={{ color: "#924DAC", fontWeight: 700, marginBottom: 16, fontSize: 18 }}>
+        Selected Location Details
+      </h3>
+
+      <div
+        style={{
+          display: "grid",
+          gridTemplateColumns: "1fr 1fr",
+          gap: 16,
+        }}
+      >
+        <div>
+          <label style={{ display: "block", color: "#666", fontSize: 12, marginBottom: 4, fontWeight: 600 }}>
+            Latitude
+          </label>
+          <div
+            style={{
+              padding: 12,
+              background: "#f9f9f9",
+              borderRadius: 6,
+              color: "#222",
+              fontFamily: "monospace",
+            }}
+          >
+            {location.lat}
+          </div>
+        </div>
+
+        <div>
+          <label style={{ display: "block", color: "#666", fontSize: 12, marginBottom: 4, fontWeight: 600 }}>
+            Longitude
+          </label>
+          <div
+            style={{
+              padding: 12,
+              background: "#f9f9f9",
+              borderRadius: 6,
+              color: "#222",
+              fontFamily: "monospace",
+            }}
+          >
+            {location.lng}
+          </div>
+        </div>
+      </div>
+
+      <div style={{ marginTop: 16 }}>
+        <label style={{ display: "block", color: "#666", fontSize: 12, marginBottom: 4, fontWeight: 600 }}>
+          Address
+        </label>
+        <div
           style={{
-            background: 'none',
-            border: 'none',
-            color: '#924DAC',
-            cursor: 'pointer',
-            fontSize: '12px',
-            textDecoration: 'underline',
-            padding: '0',
-            marginLeft: '4px'
+            padding: 12,
+            background: "#f9f9f9",
+            borderRadius: 6,
+            color: "#222",
+            wordBreak: "break-word",
           }}
-          title="Update location"
         >
-          🔄
-        </button>
-      )}
+          {location.address}
+        </div>
+      </div>
     </div>
   );
-} 
+}
