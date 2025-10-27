@@ -22,7 +22,10 @@ export default function Header() {
       setIsLoggedIn(true);
       // Fetch user data
       apiService.getCurrentUser()
-        .then(userData => {
+        .then(response => {
+          // Extract user from response - backend returns { user: {...} }
+          const userData = response?.user || response;
+          console.log("User data from API:", userData);
           setUser(userData);
         })
         .catch(error => {
@@ -56,7 +59,8 @@ export default function Header() {
     const handleAuthStateChange = (event: CustomEvent) => {
       if (event.detail.isLoggedIn) {
         setIsLoggedIn(true);
-        setUser(event.detail.userData);
+        const userData = event.detail.userData?.user || event.detail.userData;
+        setUser(userData);
         // If user was trying to post, redirect them now
         if (pendingPostAction) {
           setPendingPostAction(false);
@@ -76,6 +80,7 @@ export default function Header() {
   }, [pendingPostAction]);
 
   const handleLogout = () => {
+    apiService.logout();
     localStorage.removeItem('token');
     localStorage.removeItem('isLoggedIn');
     setIsLoggedIn(false);
@@ -83,8 +88,40 @@ export default function Header() {
     setShowDropdown(false);
   };
 
-  const getInitials = (firstName: string, lastName: string) => {
-    return `${firstName?.charAt(0) || ''}${lastName?.charAt(0) || ''}`.toUpperCase();
+  const getInitials = () => {
+    if (!user) return 'U';
+    
+    // Try to get from name field first
+    if (user.name) {
+      const nameParts = user.name.split(' ');
+      if (nameParts.length >= 2) {
+        return `${nameParts[0].charAt(0)}${nameParts[1].charAt(0)}`.toUpperCase();
+      }
+      return user.name.charAt(0).toUpperCase();
+    }
+    
+    // Fallback to firstName and lastName
+    const firstInitial = user.firstName?.charAt(0) || '';
+    const lastInitial = user.lastName?.charAt(0) || '';
+    const initials = `${firstInitial}${lastInitial}`.toUpperCase();
+    
+    return initials || 'U';
+  };
+
+  const getUserDisplayName = () => {
+    if (!user) return 'User';
+    
+    // Try name field first
+    if (user.name) return user.name;
+    
+    // Fallback to firstName and lastName
+    if (user.firstName && user.lastName) {
+      return `${user.firstName} ${user.lastName}`;
+    }
+    if (user.firstName) return user.firstName;
+    if (user.lastName) return user.lastName;
+    
+    return 'User';
   };
 
   const toggleDropdown = (e: React.MouseEvent) => {
@@ -142,7 +179,7 @@ export default function Header() {
                         onMouseEnter={(e) => (e.target as HTMLElement).style.transform = 'scale(1.05)'}
                         onMouseLeave={(e) => (e.target as HTMLElement).style.transform = 'scale(1)'}
                       >
-                        {getInitials(user.firstName, user.lastName)}
+                        {getInitials()}
                       </div>
 
                       {/* Dropdown Menu */}
@@ -167,10 +204,10 @@ export default function Header() {
                             backgroundColor: '#f9fafb'
                           }}>
                             <div style={{ fontWeight: 600, color: '#374151', fontSize: 14 }}>
-                              {user.firstName} {user.lastName}
+                              {getUserDisplayName()}
                             </div>
                             <div style={{ color: '#6b7280', fontSize: 12, marginTop: 2 }}>
-                              {user.email}
+                              {user.email || 'No email'}
                             </div>
                           </div>
 
@@ -187,21 +224,18 @@ export default function Header() {
                                 gap: 12,
                                 transition: 'background-color 0.2s ease'
                               }}
-                            onMouseEnter={(e) => {
-                             (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
-                              }}
-                            onMouseLeave={(e) => {
-                             (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                              }}
-
-                              onClick={() => setShowDropdown(false)}
+                                onMouseEnter={(e) => {
+                                  (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
+                                }}
+                                onMouseLeave={(e) => {
+                                  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                                }}
+                                onClick={() => setShowDropdown(false)}
                               >
                                 <span style={{ fontSize: 16 }}>📊</span>
                                 Dashboard
                               </div>
                             </Link>
-
-
 
                             <Link href="/messages" style={{ textDecoration: 'none' }}>
                               <div style={{
@@ -214,14 +248,13 @@ export default function Header() {
                                 gap: 12,
                                 transition: 'background-color 0.2s ease'
                               }}
-                            onMouseEnter={(e) => {
-                                (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
-                            }}
-                            onMouseLeave={(e) => {
-                             (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-                               }}
-
-                              onClick={() => setShowDropdown(false)}
+                                onMouseEnter={(e) => {
+                                  (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
+                                }}
+                                onMouseLeave={(e) => {
+                                  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                                }}
+                                onClick={() => setShowDropdown(false)}
                               >
                                 <span style={{ fontSize: 16 }}>💬</span>
                                 Messages
@@ -243,13 +276,12 @@ export default function Header() {
                                 transition: 'background-color 0.2s ease'
                               }}
                               onMouseEnter={(e) => {
-  (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
-}}
-onMouseLeave={(e) => {
-  (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
-}}
-
-                              >
+                                (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6';
+                              }}
+                              onMouseLeave={(e) => {
+                                (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent';
+                              }}
+                            >
                               <span style={{ fontSize: 16 }}>🚪</span>
                               Logout
                             </div>
@@ -268,48 +300,47 @@ onMouseLeave={(e) => {
                 onChange={e => setLocation(e.target.value)}
               >
                 <option value={location}>{location}</option>
-                  <option value="Andhra Pradesh">Andhra Pradesh</option>
-                  <option value="Arunachal Pradesh">Arunachal Pradesh</option>
-                  <option value="Assam">Assam</option>
-                  <option value="Bihar">Bihar</option>
-                  <option value="Chhattisgarh">Chhattisgarh</option>
-                  <option value="Goa">Goa</option>
-                  <option value="Gujarat">Gujarat</option>
-                  <option value="Haryana">Haryana</option>
-                  <option value="Himachal Pradesh">Himachal Pradesh</option>
-                  <option value="Jharkhand">Jharkhand</option>
-                  <option value="Karnataka">Karnataka</option>
-                  <option value="Kerala">Kerala</option>
-                  <option value="Madhya Pradesh">Madhya Pradesh</option>
-                  <option value="Maharashtra">Maharashtra</option>
-                  <option value="Manipur">Manipur</option>
-                  <option value="Meghalaya">Meghalaya</option>
-                  <option value="Mizoram">Mizoram</option>
-                  <option value="Nagaland">Nagaland</option>
-                  <option value="Odisha">Odisha</option>
-                  <option value="Punjab">Punjab</option>
-                  <option value="Rajasthan">Rajasthan</option>
-                  <option value="Sikkim">Sikkim</option>
-                  <option value="Tamil Nadu">Tamil Nadu</option>
-                  <option value="Telangana">Telangana</option>
-                  <option value="Tripura">Tripura</option>
-                  <option value="Uttar Pradesh">Uttar Pradesh</option>
-                  <option value="Uttarakhand">Uttarakhand</option>
-                  <option value="West Bengal">West Bengal</option>
-                  <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
-                  <option value="Chandigarh">Chandigarh</option>
-                  <option value="Dadra and Nagar Haveli and Daman & Diu">Dadra and Nagar Haveli and Daman & Diu</option>
-                  <option value="Delhi">Delhi</option>
-                  <option value="Jammu and Kashmir">Jammu and Kashmir</option>
-                  <option value="Ladakh">Ladakh</option>
-                  <option value="Lakshadweep">Lakshadweep</option>
-                  <option value="Puducherry">Puducherry</option>
-
-                  </select>
-                </div>
-              </div>
+                <option value="Andhra Pradesh">Andhra Pradesh</option>
+                <option value="Arunachal Pradesh">Arunachal Pradesh</option>
+                <option value="Assam">Assam</option>
+                <option value="Bihar">Bihar</option>
+                <option value="Chhattisgarh">Chhattisgarh</option>
+                <option value="Goa">Goa</option>
+                <option value="Gujarat">Gujarat</option>
+                <option value="Haryana">Haryana</option>
+                <option value="Himachal Pradesh">Himachal Pradesh</option>
+                <option value="Jharkhand">Jharkhand</option>
+                <option value="Karnataka">Karnataka</option>
+                <option value="Kerala">Kerala</option>
+                <option value="Madhya Pradesh">Madhya Pradesh</option>
+                <option value="Maharashtra">Maharashtra</option>
+                <option value="Manipur">Manipur</option>
+                <option value="Meghalaya">Meghalaya</option>
+                <option value="Mizoram">Mizoram</option>
+                <option value="Nagaland">Nagaland</option>
+                <option value="Odisha">Odisha</option>
+                <option value="Punjab">Punjab</option>
+                <option value="Rajasthan">Rajasthan</option>
+                <option value="Sikkim">Sikkim</option>
+                <option value="Tamil Nadu">Tamil Nadu</option>
+                <option value="Telangana">Telangana</option>
+                <option value="Tripura">Tripura</option>
+                <option value="Uttar Pradesh">Uttar Pradesh</option>
+                <option value="Uttarakhand">Uttarakhand</option>
+                <option value="West Bengal">West Bengal</option>
+                <option value="Andaman and Nicobar Islands">Andaman and Nicobar Islands</option>
+                <option value="Chandigarh">Chandigarh</option>
+                <option value="Dadra and Nagar Haveli and Daman & Diu">Dadra and Nagar Haveli and Daman & Diu</option>
+                <option value="Delhi">Delhi</option>
+                <option value="Jammu and Kashmir">Jammu and Kashmir</option>
+                <option value="Ladakh">Ladakh</option>
+                <option value="Lakshadweep">Lakshadweep</option>
+                <option value="Puducherry">Puducherry</option>
+              </select>
             </div>
-          </header>
+          </div>
+        </div>
+      </header>
       <AuthModal open={showAuth} onClose={() => {
         setShowAuth(false);
         // Clear pending action if user closes modal without logging in
