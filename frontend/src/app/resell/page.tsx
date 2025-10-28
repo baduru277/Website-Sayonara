@@ -3,277 +3,399 @@
 import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import Image from 'next/image';
-import ProductGrid from '@/components/ProductGrid';
+import { useRouter } from 'next/navigation';
+import apiService from '@/services/api';
+
+interface SellerInfo {
+  id: string;
+  name: string;
+  rating: number;
+  totalReviews: number;
+  isVerified: boolean;
+  isPrime: boolean;
+}
 
 interface ResellItem {
   id: string;
   title: string;
   description: string;
-  image: string;
   images: string[];
   category: string;
   condition: string;
-  price: number;
-  originalPrice: number;
-  discount: number;
-  shipping: string;
+  type: string;
+  priority: string;
   location: string;
-  postedDate: string;
-  userRating: number;
-  userReviews: number;
-  isVerified: boolean;
-  priority: 'high' | 'medium' | 'low';
+  isActive: boolean;
+  isFeatured: boolean;
+  views: number;
+  price: number;
+  originalPrice: number | null;
+  discount: number | null;
+  stock: number;
+  shipping: string | null;
+  isPrime: boolean;
   fastShipping: boolean;
   tags: string[];
+  createdAt: string;
+  updatedAt: string;
+  userId: string;
+  seller: SellerInfo;
 }
 
-const mockResellItems: ResellItem[] = [
-  {
-    id: '4',
-    title: 'The Legend of Zelda: Tears of the Kingdom (Nintendo Switch)',
-    description: 'Brand new, sealed copy of the latest Zelda game for Nintendo Switch.',
-    image: '/images/zelda.jpg',
-    images: ['/images/zelda.jpg', '/images/zelda-2.jpg'],
-    category: 'Games',
-    condition: 'New',
-    price: 59.99,
-    originalPrice: 69.99,
-    discount: 15,
-    shipping: 'Free Shipping',
-    location: 'Tokyo, Japan',
-    postedDate: '2025-08-25',
-    userRating: 4.9,
-    userReviews: 120,
-    isVerified: true,
-    priority: 'high',
-    fastShipping: true,
-    tags: ['Game', 'Nintendo', 'Switch'],
-  }, // 👈 comma if more items follow; remove if it's the only one
-  // { ...another item... },
-];
 export default function ResellPage() {
-  const [resellItems, setResellItems] = useState<ResellItem[]>(mockResellItems);
-  const [selectedItem, setSelectedItem] = useState<ResellItem | null>(mockResellItems[0]);
+  const [items, setItems] = useState<ResellItem[]>([]);
+  const [selectedItem, setSelectedItem] = useState<ResellItem | null>(null);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const router = useRouter();
 
-  // Get 3 suggested items (excluding the selected item)
-  const getSuggestedItems = (currentItem: ResellItem) => {
-    return resellItems
-      .filter(item => item.id !== currentItem.id)
-      .slice(0, 3);
+  useEffect(() => {
+    const fetchItems = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.getItems({ type: 'resell', limit: 50 });
+        const fetchedItems = response.items || [];
+        setItems(fetchedItems);
+        if (fetchedItems.length > 0) setSelectedItem(fetchedItems[0]);
+      } catch (err) {
+        console.error('Error fetching items:', err);
+        setError('Failed to load items');
+      } finally {
+        setLoading(false);
+      }
+    };
+    fetchItems();
+  }, []);
+
+  const handleChatClick = () => {
+    if (selectedItem?.seller?.id) {
+      router.push(`/messages?sellerId=${selectedItem.seller.id}`);
+    }
   };
 
-  if (!selectedItem) {
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex items-center justify-center">
+        <p className="text-gray-600">Loading items...</p>
+      </div>
+    );
+  }
+
+  if (error || items.length === 0) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
-          <h3 className="text-lg font-medium text-gray-900 mb-2">No items available</h3>
-          <p className="text-gray-600">There are currently no items available for purchase.</p>
+          <h3 className="text-lg font-bold text-gray-900 mb-2">No Items Available</h3>
+          <p className="text-gray-600">{error || 'No resell items found'}</p>
         </div>
       </div>
     );
   }
 
-  const suggestedItems = getSuggestedItems(selectedItem);
-
   return (
     <div className="min-h-screen bg-gray-50">
       {/* Header */}
-      <div className="bg-white border-b border-gray-200">
-        <div className="max-w-6xl mx-auto px-4 py-6">
-          <h1 className="text-2xl font-bold text-gray-900">Direct Purchase</h1>
-          <p className="text-gray-600 mt-1">Buy items directly from verified sellers</p>
+      <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
+        <div className="max-w-7xl mx-auto px-4 py-4">
+          <div className="flex items-center justify-between">
+            <div>
+              <h1 className="text-3xl font-bold text-gray-900">Direct Purchase</h1>
+              <p className="text-gray-600 text-sm">Buy directly from verified sellers</p>
+            </div>
+            <div className="text-right">
+              <p className="text-sm text-gray-600">{items.length} items available</p>
+            </div>
+          </div>
         </div>
       </div>
 
       {/* Main Content */}
-      <div className="max-w-6xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-          {/* Left Side - Main Item */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <div className="mb-4">
-              <div className="relative w-full h-64 rounded-lg overflow-hidden mb-4">
-                <Image
-                  src={selectedItem.image}
-                  alt={selectedItem.title}
-                  fill
-                  className="object-cover"
-                  onError={(e) => {
-                    const target = e.target as HTMLImageElement;
-                    target.src = 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Item+Image';
-                  }}
-                />
-                {selectedItem.discount > 0 && (
-                  <div className="absolute top-4 right-4">
-                    <div className="px-3 py-1 rounded-full text-xs font-bold bg-red-600 text-white">
+      <div className="max-w-7xl mx-auto px-4 py-8">
+        {selectedItem && (
+          <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
+            {/* Left: Product Images */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-lg shadow-sm p-4 sticky top-24">
+                {/* Main Image */}
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100 mb-4 flex items-center justify-center">
+                  {selectedItem.images && selectedItem.images.length > 0 ? (
+                    <Image
+                      src={selectedItem.images[0]}
+                      alt={selectedItem.title}
+                      fill
+                      className="object-cover"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://via.placeholder.com/500x500/924DAC/FFFFFF?text=No+Image';
+                      }}
+                    />
+                  ) : (
+                    <div className="text-center">
+                      <p className="text-gray-400 text-sm">No image available</p>
+                    </div>
+                  )}
+                  {selectedItem.discount && selectedItem.discount > 0 && (
+                    <div className="absolute top-3 right-3 bg-red-600 text-white px-3 py-1 rounded-full font-bold text-sm">
                       -{selectedItem.discount}%
                     </div>
+                  )}
+                  {selectedItem.isFeatured && (
+                    <div className="absolute top-3 left-3 bg-yellow-600 text-white px-3 py-1 rounded-full font-bold text-xs">
+                      ⭐ Featured
+                    </div>
+                  )}
+                </div>
+
+                {/* Thumbnail Images */}
+                {selectedItem.images && selectedItem.images.length > 1 && (
+                  <div className="flex gap-2 overflow-x-auto pb-2">
+                    {selectedItem.images.slice(0, 4).map((img, idx) => (
+                      <div key={idx} className="flex-shrink-0 w-16 h-16 rounded border border-gray-300 overflow-hidden cursor-pointer hover:border-purple-500 bg-gray-100">
+                        <Image
+                          src={img}
+                          alt={`Thumbnail ${idx}`}
+                          width={64}
+                          height={64}
+                          className="w-full h-full object-cover"
+                        />
+                      </div>
+                    ))}
                   </div>
                 )}
-              </div>
-              
-              <h2 className="text-xl font-semibold text-gray-900 mb-2">
-                {selectedItem.title}
-              </h2>
-              
-              <p className="text-gray-600 text-sm mb-4">
-                {selectedItem.description}
-              </p>
 
-              <div className="flex items-center gap-4 mb-4">
-                <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                  {selectedItem.category}
-                </span>
-                <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                  {selectedItem.condition}
-                </span>
-                <span className="bg-purple-100 text-purple-800 text-xs px-2 py-1 rounded">
-                  {selectedItem.priority} priority
-                </span>
+                {/* Views Counter */}
+                <div className="text-xs text-gray-500 mt-2">
+                  👁️ {selectedItem.views} views
+                </div>
               </div>
+            </div>
 
-              <div className="mb-4 p-4 bg-green-50 rounded-lg border border-green-200">
-                <div className="flex items-baseline gap-2 mb-2">
-                  <span className="text-2xl font-bold text-gray-900">
-                    ${selectedItem.price.toFixed(2)}
+            {/* Center: Product Info */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-lg shadow-sm p-6">
+                {/* Rating & Reviews */}
+                <div className="flex items-center gap-2 mb-3 pb-3 border-b">
+                  <div className="flex text-yellow-400">
+                    {selectedItem.seller.rating > 0 ? (
+                      '★★★★★'.split('').slice(0, Math.round(selectedItem.seller.rating)).map((star, i) => (
+                        <span key={i}>{star}</span>
+                      ))
+                    ) : (
+                      <span className="text-gray-400">★ New Seller</span>
+                    )}
+                  </div>
+                  <span className="text-sm text-gray-600">
+                    {selectedItem.seller.rating > 0 ? `${selectedItem.seller.rating.toFixed(1)}` : 'No'} ({selectedItem.seller.totalReviews} reviews)
                   </span>
-                  {selectedItem.originalPrice > selectedItem.price && (
-                    <span className="text-sm text-gray-500 line-through">
-                      ${selectedItem.originalPrice.toFixed(2)}
+                </div>
+
+                {/* Title */}
+                <h1 className="text-2xl font-bold text-gray-900 mb-2">
+                  {selectedItem.title}
+                </h1>
+
+                {/* Description */}
+                <p className="text-gray-600 text-sm mb-4 leading-relaxed">
+                  {selectedItem.description}
+                </p>
+
+                {/* Badges */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-medium">
+                    {selectedItem.category}
+                  </span>
+                  <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-medium">
+                    {selectedItem.condition}
+                  </span>
+                  {selectedItem.fastShipping && (
+                    <span className="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full font-medium">
+                      ⚡ Fast Shipping
+                    </span>
+                  )}
+                  {selectedItem.seller.isVerified && (
+                    <span className="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full font-medium">
+                      ✓ Verified Seller
+                    </span>
+                  )}
+                  {selectedItem.isPrime && (
+                    <span className="bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded-full font-medium">
+                      Prime
                     </span>
                   )}
                 </div>
-                <div className="text-sm text-gray-600 mb-2">
-                  {selectedItem.shipping === 'Free' ? '🚚 Free shipping' : `🚚 ${selectedItem.shipping} shipping`}
-                </div>
-                {selectedItem.fastShipping && (
-                  <div className="text-sm font-medium text-green-600">
-                    ⚡ Fast delivery
+
+                {/* Tags */}
+                {selectedItem.tags && selectedItem.tags.length > 0 && (
+                  <div className="mb-4 pb-4 border-b">
+                    <p className="text-xs text-gray-500 mb-2 font-semibold">Tags:</p>
+                    <div className="flex flex-wrap gap-2">
+                      {selectedItem.tags.map(tag => (
+                        <span key={tag} className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full">
+                          {tag}
+                        </span>
+                      ))}
+                    </div>
                   </div>
                 )}
-              </div>
 
-              <div className="flex items-center justify-between text-sm text-gray-500 mb-4">
-                <span>Rating: {selectedItem.userRating} ({selectedItem.userReviews} reviews)</span>
-                <span>{selectedItem.location}</span>
-              </div>
+                {/* Location */}
+                <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b">
+                  <span>📍</span>
+                  <span>{selectedItem.location}</span>
+                </div>
 
-              <div className="flex flex-wrap gap-2 mb-4">
-                {selectedItem.tags.map(tag => (
-                  <span key={tag} className="bg-gray-100 text-gray-700 text-xs px-2 py-1 rounded">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-
-              <div className="flex gap-2">
-                <Link
-                  href="/messages"
-                  className="flex-1 bg-green-600 hover:bg-green-700 text-white px-4 py-2 rounded-lg font-medium transition-colors text-center"
-                >
-                  Chat with Seller
-                </Link>
-                <Link
-                  href={`/resell/${selectedItem.id}`}
-                  className="flex-1 border border-green-600 text-green-600 hover:bg-green-600 hover:text-white px-4 py-2 rounded-lg font-medium transition-colors text-center"
-                >
-                  View Details
-                </Link>
+                {/* Posted Date */}
+                <div className="text-xs text-gray-500">
+                  Posted: {new Date(selectedItem.createdAt).toLocaleDateString('en-US', {
+                    year: 'numeric',
+                    month: 'short',
+                    day: 'numeric'
+                  })}
+                </div>
               </div>
             </div>
-          </div>
 
-          {/* Right Side - Suggested Items */}
-          <div className="bg-white rounded-lg shadow-sm border border-gray-200 p-6">
-            <h3 className="text-lg font-semibold text-gray-900 mb-4">Similar Items</h3>
-            
-            <div className="space-y-4">
-              {suggestedItems.map((item) => (
-                <div 
-                  key={item.id} 
-                  className="border border-gray-200 rounded-lg p-4 cursor-pointer hover:bg-gray-50 transition-colors"
-                  onClick={() => setSelectedItem(item)}
+            {/* Right: Price & Action */}
+            <div className="lg:col-span-1">
+              <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
+                {/* Price Section */}
+                <div className="mb-6 pb-6 border-b">
+                  <div className="flex items-baseline gap-3 mb-2">
+                    <span className="text-4xl font-bold text-gray-900">
+                      ₹{selectedItem.price.toLocaleString()}
+                    </span>
+                  </div>
+                </div>
+
+
+
+                {/* Shipping Info */}
+                <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
+                  <p className="text-xs text-blue-700 mb-1">🚚 <strong>Shipping</strong></p>
+                  <p className="text-sm text-blue-900">
+                    {selectedItem.shipping || 'Standard Shipping'}
+                  </p>
+                  <p className="text-xs text-blue-700 mt-1">Estimated delivery: 3-5 business days</p>
+                </div>
+
+                {/* Priority Badge */}
+                <div className="mb-6 p-3 bg-purple-50 border border-purple-200 rounded-lg text-center">
+                  <p className="text-xs text-purple-700">Priority: <strong>{selectedItem.priority}</strong></p>
+                </div>
+
+                {/* Action Button */}
+                <button
+                  onClick={handleChatClick}
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors text-lg"
                 >
-                  <div className="flex gap-4">
-                    <div className="relative w-20 h-20 rounded-lg overflow-hidden flex-shrink-0">
-                      <Image
-                        src={item.image}
-                        alt={item.title}
-                        fill
-                        className="object-cover"
-                        onError={(e) => {
-                          const target = e.target as HTMLImageElement;
-                          target.src = 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=Item+Image';
-                        }}
-                      />
-                      {item.discount > 0 && (
-                        <div className="absolute top-1 right-1">
-                          <div className="px-1 py-0.5 rounded text-xs font-bold bg-red-600 text-white">
-                            -{item.discount}%
-                          </div>
-                        </div>
+                  💬 Chat with Seller
+                </button>
+
+                {/* Seller Info */}
+                <div className="border-t mt-6 pt-4">
+                  <p className="text-xs text-gray-600 mb-3">Sold by</p>
+                  <div className="flex items-center justify-between">
+                    <div>
+                      <p className="font-bold text-gray-900">{selectedItem.seller.name}</p>
+                      <p className="text-xs text-gray-600">
+                        {selectedItem.seller.totalReviews} transactions
+                      </p>
+                      {selectedItem.seller.isVerified && (
+                        <p className="text-xs text-green-600 font-medium mt-1">✓ Verified</p>
                       )}
-                    </div>
-                    
-                    <div className="flex-1 min-w-0">
-                      <h4 className="font-medium text-gray-900 mb-1 line-clamp-2">
-                        {item.title}
-                      </h4>
-                      
-                      <div className="flex items-center gap-2 mb-2">
-                        <span className="bg-blue-100 text-blue-800 text-xs px-2 py-1 rounded">
-                          {item.category}
-                        </span>
-                        <span className="bg-green-100 text-green-800 text-xs px-2 py-1 rounded">
-                          {item.condition}
-                        </span>
-                      </div>
-                      
-                      <div className="mb-2">
-                        <span className="text-sm font-bold text-gray-900">
-                          ${item.price.toFixed(2)}
-                        </span>
-                        {item.originalPrice > item.price && (
-                          <span className="text-xs text-gray-500 line-through ml-1">
-                            ${item.originalPrice.toFixed(2)}
-                          </span>
-                        )}
-                      </div>
-                      
-                      <div className="flex items-center justify-between text-xs text-gray-500">
-                        <span>Rating: {item.userRating}</span>
-                        <span>{item.location}</span>
-                      </div>
                     </div>
                   </div>
                 </div>
-              ))}
-            </div>
-
-            {suggestedItems.length === 0 && (
-              <div className="text-center py-8 text-gray-500">
-                <p>No similar items available</p>
               </div>
-            )}
+            </div>
+          </div>
+        )}
+
+        {/* Related Products / More Items */}
+        <div className="bg-white rounded-lg shadow-sm p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">More Items for Sale</h2>
+          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
+            {items.map(item => (
+              <div
+                key={item.id}
+                className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
+                onClick={() => setSelectedItem(item)}
+              >
+                {/* Image */}
+                <div className="relative w-full aspect-square bg-gray-100 overflow-hidden flex items-center justify-center">
+                  {item.images && item.images.length > 0 ? (
+                    <Image
+                      src={item.images[0]}
+                      alt={item.title}
+                      fill
+                      className="object-cover hover:scale-110 transition-transform"
+                      onError={(e) => {
+                        const target = e.target as HTMLImageElement;
+                        target.src = 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=No+Image';
+                      }}
+                    />
+                  ) : (
+                    <p className="text-gray-400 text-xs">No image</p>
+                  )}
+                  {item.discount && item.discount > 0 && (
+                    <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
+                      -{item.discount}%
+                    </div>
+                  )}
+                  {item.stock === 0 && (
+                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
+                      <span className="text-white font-bold">Out of Stock</span>
+                    </div>
+                  )}
+                </div>
+
+                {/* Info */}
+                <div className="p-3">
+                  <h3 className="font-medium text-gray-900 text-sm line-clamp-2 mb-2">
+                    {item.title}
+                  </h3>
+                  
+                  {/* Price */}
+                  <div className="flex items-baseline gap-1 mb-2">
+                    <span className="font-bold text-gray-900">
+                      ₹{item.price.toLocaleString()}
+                    </span>
+                    {item.originalPrice && item.originalPrice > item.price && (
+                      <span className="text-xs text-gray-500 line-through">
+                        ₹{item.originalPrice.toLocaleString()}
+                      </span>
+                    )}
+                  </div>
+
+                  {/* Location */}
+                  <p className="text-xs text-gray-600 mb-2">📍 {item.location}</p>
+
+                  {/* Rating */}
+                  <div className="flex items-center gap-1 text-xs">
+                    {item.seller.rating > 0 ? (
+                      <>
+                        <span className="text-yellow-400">★</span>
+                        <span className="text-gray-600">
+                          {item.seller.rating.toFixed(1)} ({item.seller.totalReviews})
+                        </span>
+                      </>
+                    ) : (
+                      <span className="text-gray-600">New seller</span>
+                    )}
+                  </div>
+
+                  {/* Stock Status */}
+                  <p className="text-xs mt-2 font-medium" style={{
+                    color: item.stock > 0 ? '#16a34a' : '#dc2626'
+                  }}>
+                    {item.stock > 0 ? `${item.stock} in stock` : 'Out of stock'}
+                  </p>
+                </div>
+              </div>
+            ))}
           </div>
         </div>
-
-                 {/* Product Grid */}
-         <div className="mt-8">
-           <h3 className="text-lg font-semibold text-gray-900 mb-6">All Available Items</h3>
-           <ProductGrid
-             items={resellItems.map(item => ({
-               ...item,
-               type: 'resell' as const,
-               isPrime: item.fastShipping,
-               deliveryDate: 'Monday 11 August',
-               limitedTimeDeal: item.discount > 30
-             }))}
-             onItemClick={(selectedItem) => {
-               setSelectedItem(selectedItem as any);
-             }}
-           />
-         </div>
       </div>
     </div>
   );
-} 
+}
