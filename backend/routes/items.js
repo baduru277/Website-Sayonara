@@ -128,7 +128,8 @@ router.post('/', auth, async (req, res) => {
       itemCondition,
       damageInfo,
       usageHistory,
-      originalBox
+      originalBox,
+      location
     } = req.body;
 
     // Validate required fields
@@ -160,7 +161,7 @@ router.post('/', auth, async (req, res) => {
 
     console.log('✅ All validations passed');
 
-    // Create the item
+    // Create the item - IMPORTANT: Pass location field
     const itemData = {
       title,
       description,
@@ -180,6 +181,7 @@ router.post('/', auth, async (req, res) => {
       damageInfo: damageInfo || null,
       usageHistory: usageHistory || null,
       originalBox: originalBox || null,
+      location: location || 'Not specified', // IMPORTANT: Include location
       userId: req.user.id,
       isActive: true,
       views: 0,
