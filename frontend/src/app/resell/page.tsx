@@ -158,7 +158,7 @@ export default function ResellPage() {
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Posted:</span>
-                  <span className="font-semibold text-gray-900">{new Date(selectedItem.createdAt).toLocaleDateString()}</span>
+                  <span className="font-semibold text-gray-900">{new Date(selectedItem.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
                 </div>
                 <div className="flex justify-between">
                   <span className="text-gray-600">Views:</span>
@@ -243,11 +243,7 @@ export default function ResellPage() {
             {items.map(item => (
               <div
                 key={item.id}
-                onClick={() => {
-                  setSelectedItem(item);
-                  setMainImage(0);
-                  window.scrollTo({ top: 0, behavior: 'smooth' });
-                }}
+                onClick={() => router.push(`/resell/${item.id}`)}
                 className="border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition"
               >
                 <div className="relative w-full aspect-square bg-gray-100">
