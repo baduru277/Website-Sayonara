@@ -1,7 +1,6 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import Link from 'next/link';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import apiService from '@/services/api';
@@ -42,9 +41,79 @@ interface ResellItem {
   seller: SellerInfo;
 }
 
+// Dummy data for preview
+const DUMMY_ITEMS: ResellItem[] = [
+  {
+    id: 'dummy1',
+    title: 'iPhone 13 Pro Max - Silver',
+    description: 'Barely used iPhone 13 Pro Max in perfect condition. Original box and accessories included. No scratches or damage.',
+    images: ['https://images.unsplash.com/photo-1592286927505-1def25115558?w=800', 'https://images.unsplash.com/photo-1511707267537-b85faf00021e?w=800'],
+    category: 'Smartphones',
+    condition: 'Like New',
+    type: 'resell',
+    priority: 'high',
+    location: 'Mumbai, Maharashtra',
+    isActive: true,
+    isFeatured: true,
+    views: 245,
+    price: 75000,
+    originalPrice: 99999,
+    discount: 25,
+    stock: 1,
+    shipping: 'Free Standard Shipping',
+    isPrime: true,
+    fastShipping: true,
+    tags: ['Apple', 'Smartphone', 'Premium'],
+    createdAt: '2025-10-20T10:30:00Z',
+    updatedAt: '2025-10-20T10:30:00Z',
+    userId: 'seller1',
+    seller: {
+      id: 'seller1',
+      name: 'Tech Store Mumbai',
+      rating: 4.8,
+      totalReviews: 324,
+      isVerified: true,
+      isPrime: true
+    }
+  },
+  {
+    id: 'dummy2',
+    title: 'MacBook Air M1 - Space Gray',
+    description: '8GB RAM, 256GB SSD. Very light usage, screen protector applied. Includes charger.',
+    images: ['https://images.unsplash.com/photo-1517336714731-489689fd1ca8?w=800'],
+    category: 'Computers',
+    condition: 'Excellent',
+    type: 'resell',
+    priority: 'high',
+    location: 'Bangalore, Karnataka',
+    isActive: true,
+    isFeatured: false,
+    views: 189,
+    price: 65000,
+    originalPrice: 89999,
+    discount: 27,
+    stock: 1,
+    shipping: 'Free Shipping',
+    isPrime: true,
+    fastShipping: true,
+    tags: ['Apple', 'Laptop', 'M1'],
+    createdAt: '2025-10-22T14:20:00Z',
+    updatedAt: '2025-10-22T14:20:00Z',
+    userId: 'seller2',
+    seller: {
+      id: 'seller2',
+      name: 'ElectroHub',
+      rating: 4.6,
+      totalReviews: 156,
+      isVerified: true,
+      isPrime: false
+    }
+  },
+];
+
 export default function ResellPage() {
-  const [items, setItems] = useState<ResellItem[]>([]);
-  const [selectedItem, setSelectedItem] = useState<ResellItem | null>(null);
+  const [items, setItems] = useState<ResellItem[]>(DUMMY_ITEMS);
+  const [selectedItem, setSelectedItem] = useState<ResellItem | null>(DUMMY_ITEMS[0]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
@@ -53,14 +122,19 @@ export default function ResellPage() {
     const fetchItems = async () => {
       try {
         setLoading(true);
-        const response = await apiService.getItems({ type: 'resell', limit: 50 });
-        const fetchedItems = response.items || [];
-        setItems(fetchedItems);
-        if (fetchedItems.length > 0) setSelectedItem(fetchedItems[0]);
+        // TODO: Comment out dummy data and uncomment API call below
+        // const response = await apiService.getItems({ type: 'resell', limit: 50 });
+        // const fetchedItems = response.items || [];
+        // setItems(fetchedItems);
+        // if (fetchedItems.length > 0) setSelectedItem(fetchedItems[0]);
+        
+        // For now, using dummy data
+        setTimeout(() => {
+          setLoading(false);
+        }, 500);
       } catch (err) {
         console.error('Error fetching items:', err);
         setError('Failed to load items');
-      } finally {
         setLoading(false);
       }
     };
@@ -81,7 +155,7 @@ export default function ResellPage() {
     );
   }
 
-  if (error || items.length === 0) {
+  if (error || !items.length) {
     return (
       <div className="min-h-screen bg-gray-50 flex items-center justify-center">
         <div className="text-center">
@@ -97,15 +171,8 @@ export default function ResellPage() {
       {/* Header */}
       <div className="bg-white border-b border-gray-200 sticky top-0 z-40 shadow-sm">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          <div className="flex items-center justify-between">
-            <div>
-              <h1 className="text-3xl font-bold text-gray-900">Direct Purchase</h1>
-              <p className="text-gray-600 text-sm">Buy directly from verified sellers</p>
-            </div>
-            <div className="text-right">
-              <p className="text-sm text-gray-600">{items.length} items available</p>
-            </div>
-          </div>
+          <h1 className="text-3xl font-bold text-gray-900">Direct Purchase</h1>
+          <p className="text-gray-600 text-sm">Buy directly from verified sellers</p>
         </div>
       </div>
 
@@ -115,46 +182,31 @@ export default function ResellPage() {
           <div className="grid grid-cols-1 lg:grid-cols-3 gap-8 mb-12">
             {/* Left: Product Images */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm p-4 sticky top-24">
+              <div className="bg-white rounded-lg shadow p-4 sticky top-24">
                 {/* Main Image */}
-                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100 mb-4 flex items-center justify-center">
-                  {selectedItem.images && selectedItem.images.length > 0 ? (
-                    <Image
-                      src={selectedItem.images[0]}
-                      alt={selectedItem.title}
-                      fill
-                      className="object-cover"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = 'https://via.placeholder.com/500x500/e5e7eb/6b7280?text=No+Image';
-                      }}
-                    />
-                  ) : (
-                    <div className="text-center">
-                      <p className="text-gray-400 text-xs">📷 No image available</p>
-                      <p className="text-gray-300 text-xs mt-1">Image not uploaded</p>
-                    </div>
-                  )}
-                  {selectedItem.discount && selectedItem.discount > 0 && (
-                    <div className="absolute top-3 right-3 bg-red-600 text-white px-3 py-1 rounded-full font-bold text-sm">
-                      -{selectedItem.discount}%
-                    </div>
-                  )}
+                <div className="relative w-full aspect-square rounded-lg overflow-hidden bg-gray-100 mb-4">
+                  <Image
+                    src={selectedItem.images[0]}
+                    alt={selectedItem.title}
+                    fill
+                    className="object-cover"
+                    priority
+                  />
                   {selectedItem.isFeatured && (
-                    <div className="absolute top-3 left-3 bg-yellow-600 text-white px-3 py-1 rounded-full font-bold text-xs">
+                    <div className="absolute top-3 left-3 bg-yellow-500 text-white px-3 py-1 rounded-full font-bold text-xs">
                       ⭐ Featured
                     </div>
                   )}
                 </div>
 
-                {/* Thumbnail Images */}
-                {selectedItem.images && selectedItem.images.length > 1 && (
-                  <div className="flex gap-2 overflow-x-auto pb-2">
-                    {selectedItem.images.slice(0, 4).map((img, idx) => (
-                      <div key={idx} className="flex-shrink-0 w-16 h-16 rounded border border-gray-300 overflow-hidden cursor-pointer hover:border-purple-500 bg-gray-100">
+                {/* Thumbnails */}
+                {selectedItem.images.length > 1 && (
+                  <div className="flex gap-2">
+                    {selectedItem.images.map((img, idx) => (
+                      <div key={idx} className="w-16 h-16 rounded border-2 border-gray-200 overflow-hidden cursor-pointer hover:border-blue-500 transition">
                         <Image
                           src={img}
-                          alt={`Thumbnail ${idx}`}
+                          alt={`View ${idx + 1}`}
                           width={64}
                           height={64}
                           className="w-full h-full object-cover"
@@ -163,146 +215,111 @@ export default function ResellPage() {
                     ))}
                   </div>
                 )}
-
-                {/* Views Counter */}
-                <div className="text-xs text-gray-500 mt-2">
-                  👁️ {selectedItem.views} views
-                </div>
               </div>
             </div>
 
-            {/* Center: Product Info */}
+            {/* Center: Product Details */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm p-6">
-                {/* Rating & Reviews */}
-                <div className="flex items-center gap-2 mb-3 pb-3 border-b">
-                  <div className="flex text-yellow-400">
-                    {selectedItem.seller.rating > 0 ? (
-                      '★★★★★'.split('').slice(0, Math.round(selectedItem.seller.rating)).map((star, i) => (
-                        <span key={i}>{star}</span>
-                      ))
-                    ) : (
-                      <span className="text-gray-400">★ New Seller</span>
-                    )}
+              <div className="bg-white rounded-lg shadow p-6">
+                {/* Title */}
+                <h1 className="text-2xl font-bold text-gray-900 mb-3">{selectedItem.title}</h1>
+
+                {/* Rating */}
+                <div className="flex items-center gap-2 mb-4 pb-4 border-b">
+                  <div className="flex">
+                    {[...Array(5)].map((_, i) => (
+                      <span key={i} className={`text-lg ${i < Math.round(selectedItem.seller.rating) ? 'text-yellow-400' : 'text-gray-300'}`}>
+                        ★
+                      </span>
+                    ))}
                   </div>
                   <span className="text-sm text-gray-600">
-                    {selectedItem.seller.rating > 0 ? `${selectedItem.seller.rating.toFixed(1)}` : 'No'} ({selectedItem.seller.totalReviews} reviews)
+                    {selectedItem.seller.rating} ({selectedItem.seller.totalReviews} reviews)
                   </span>
                 </div>
 
-                {/* Title */}
-                <h1 className="text-2xl font-bold text-gray-900 mb-2">
-                  {selectedItem.title}
-                </h1>
-
                 {/* Description */}
-                <p className="text-gray-600 text-sm mb-4 leading-relaxed">
-                  {selectedItem.description}
-                </p>
+                <p className="text-gray-600 mb-4">{selectedItem.description}</p>
 
-                {/* Badges */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="bg-blue-100 text-blue-800 text-xs px-3 py-1 rounded-full font-medium">
+                {/* Tags */}
+                <div className="mb-4 flex flex-wrap gap-2">
+                  <span className="bg-blue-100 text-blue-700 px-3 py-1 rounded-full text-sm font-medium">
                     {selectedItem.category}
                   </span>
-                  <span className="bg-green-100 text-green-800 text-xs px-3 py-1 rounded-full font-medium">
+                  <span className="bg-green-100 text-green-700 px-3 py-1 rounded-full text-sm font-medium">
                     {selectedItem.condition}
                   </span>
                   {selectedItem.fastShipping && (
-                    <span className="bg-purple-100 text-purple-800 text-xs px-3 py-1 rounded-full font-medium">
+                    <span className="bg-purple-100 text-purple-700 px-3 py-1 rounded-full text-sm font-medium">
                       ⚡ Fast Shipping
                     </span>
                   )}
-                  {selectedItem.seller.isVerified && (
-                    <span className="bg-yellow-100 text-yellow-800 text-xs px-3 py-1 rounded-full font-medium">
-                      ✓ Verified Seller
-                    </span>
-                  )}
-                  {selectedItem.isPrime && (
-                    <span className="bg-indigo-100 text-indigo-800 text-xs px-3 py-1 rounded-full font-medium">
-                      Prime
-                    </span>
-                  )}
                 </div>
 
-                {/* Tags */}
-                {selectedItem.tags && selectedItem.tags.length > 0 && (
-                  <div className="mb-4 pb-4 border-b">
-                    <p className="text-xs text-gray-500 mb-2 font-semibold">Tags:</p>
-                    <div className="flex flex-wrap gap-2">
-                      {selectedItem.tags.map(tag => (
-                        <span key={tag} className="bg-gray-200 text-gray-700 text-xs px-3 py-1 rounded-full">
-                          {tag}
-                        </span>
-                      ))}
-                    </div>
-                  </div>
-                )}
-
-                {/* Location */}
-                <div className="flex items-center gap-2 text-sm text-gray-600 mb-4 pb-4 border-b">
-                  <span>📍</span>
-                  <span>{selectedItem.location}</span>
+                {/* Product Tags */}
+                <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b">
+                  {selectedItem.tags.map(tag => (
+                    <span key={tag} className="bg-gray-200 text-gray-700 px-2 py-1 rounded text-xs">
+                      {tag}
+                    </span>
+                  ))}
                 </div>
 
-                {/* Posted Date */}
-                <div className="text-xs text-gray-500">
-                  Posted: {new Date(selectedItem.createdAt).toLocaleDateString('en-US', {
-                    year: 'numeric',
-                    month: 'short',
-                    day: 'numeric'
-                  })}
+                {/* Location & Date */}
+                <div className="text-sm text-gray-600">
+                  <p className="mb-2">📍 {selectedItem.location}</p>
+                  <p>📅 Posted on {new Date(selectedItem.createdAt).toLocaleDateString()}</p>
                 </div>
               </div>
             </div>
 
             {/* Right: Price & Action */}
             <div className="lg:col-span-1">
-              <div className="bg-white rounded-lg shadow-sm p-6 sticky top-24">
-                {/* Price Section */}
+              <div className="bg-white rounded-lg shadow p-6 sticky top-24">
+                {/* Price */}
                 <div className="mb-6 pb-6 border-b">
-                  <div className="flex items-baseline gap-3 mb-2">
-                    <span className="text-4xl font-bold text-gray-900">
-                      ₹{selectedItem.price.toLocaleString()}
-                    </span>
+                  <div className="text-4xl font-bold text-gray-900 mb-2">
+                    ₹{selectedItem.price.toLocaleString()}
                   </div>
+                  {selectedItem.originalPrice && selectedItem.discount && (
+                    <p className="text-sm text-gray-600">
+                      <span className="line-through">₹{selectedItem.originalPrice.toLocaleString()}</span>
+                      <span className="ml-2 text-green-600 font-semibold">{selectedItem.discount}% off</span>
+                    </p>
+                  )}
                 </div>
 
+                {/* Shipping */}
+                <div className="mb-6 p-4 bg-blue-50 rounded-lg border border-blue-200">
+                  <p className="text-sm font-semibold text-blue-900 mb-1">🚚 Shipping</p>
+                  <p className="text-sm text-blue-800">{selectedItem.shipping || 'Standard Shipping'}</p>
+                  <p className="text-xs text-blue-700 mt-1">Estimated: 3-5 business days</p>
+                </div>
 
-
-                {/* Shipping Info */}
-                <div className="mb-6 p-3 bg-blue-50 border border-blue-200 rounded-lg">
-                  <p className="text-xs text-blue-700 mb-1">🚚 <strong>Shipping</strong></p>
-                  <p className="text-sm text-blue-900">
-                    {selectedItem.shipping || 'Standard Shipping'}
+                {/* Priority */}
+                <div className="mb-6 p-4 bg-gray-100 rounded-lg">
+                  <p className="text-sm text-gray-600">
+                    <span className="font-semibold">Priority:</span> <span className="capitalize font-medium">{selectedItem.priority}</span>
                   </p>
-                  <p className="text-xs text-blue-700 mt-1">Estimated delivery: 3-5 business days</p>
                 </div>
 
-                {/* Priority Badge */}
-                <div className="mb-6 p-3 bg-purple-50 border border-purple-200 rounded-lg text-center">
-                  <p className="text-xs text-purple-700">Priority: <strong>{selectedItem.priority}</strong></p>
-                </div>
-
-                {/* Action Button */}
+                {/* Chat Button */}
                 <button
                   onClick={handleChatClick}
-                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition-colors text-lg"
+                  className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition mb-4 text-lg"
                 >
                   💬 Chat with Seller
                 </button>
 
                 {/* Seller Info */}
-                <div className="border-t mt-6 pt-4">
+                <div className="pt-4 border-t">
                   <p className="text-xs text-gray-600 mb-3">Sold by</p>
                   <div className="flex items-center justify-between">
                     <div>
                       <p className="font-bold text-gray-900">{selectedItem.seller.name}</p>
-                      <p className="text-xs text-gray-600">
-                        {selectedItem.seller.totalReviews} transactions
-                      </p>
+                      <p className="text-xs text-gray-600">{selectedItem.seller.totalReviews} transactions</p>
                       {selectedItem.seller.isVerified && (
-                        <p className="text-xs text-green-600 font-medium mt-1">✓ Verified</p>
+                        <p className="text-xs text-green-600 font-semibold mt-1">✓ Verified Seller</p>
                       )}
                     </div>
                   </div>
@@ -312,85 +329,44 @@ export default function ResellPage() {
           </div>
         )}
 
-        {/* Related Products / More Items */}
-        <div className="bg-white rounded-lg shadow-sm p-6">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">More Items for Sale</h2>
+        {/* More Items Grid */}
+        <div className="bg-white rounded-lg shadow p-6">
+          <h2 className="text-2xl font-bold text-gray-900 mb-6">More Items ({items.length})</h2>
           <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
             {items.map(item => (
               <div
                 key={item.id}
-                className="border border-gray-200 rounded-lg overflow-hidden hover:shadow-lg transition-shadow cursor-pointer"
                 onClick={() => setSelectedItem(item)}
+                className="bg-white border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition-shadow"
               >
                 {/* Image */}
-                <div className="relative w-full aspect-square bg-gray-100 overflow-hidden flex items-center justify-center">
-                  {item.images && item.images.length > 0 ? (
-                    <Image
-                      src={item.images[0]}
-                      alt={item.title}
-                      fill
-                      className="object-cover hover:scale-110 transition-transform"
-                      onError={(e) => {
-                        const target = e.target as HTMLImageElement;
-                        target.src = 'https://via.placeholder.com/300x300/e5e7eb/6b7280?text=No+Image';
-                      }}
-                    />
-                  ) : (
-                    <p className="text-gray-400 text-xs">📷 No image</p>
-                  )}
-                  {item.discount && item.discount > 0 && (
-                    <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
-                      -{item.discount}%
-                    </div>
-                  )}
-                  {item.stock === 0 && (
-                    <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                      <span className="text-white font-bold text-xs">Out of Stock</span>
-                    </div>
-                  )}
+                <div className="relative w-full aspect-square bg-gray-100 overflow-hidden">
+                  <Image
+                    src={item.images[0]}
+                    alt={item.title}
+                    fill
+                    className="object-cover hover:scale-110 transition-transform duration-300"
+                  />
                 </div>
 
                 {/* Info */}
                 <div className="p-3">
-                  <h3 className="font-medium text-gray-900 text-sm line-clamp-2 mb-2">
+                  <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-2">
                     {item.title}
                   </h3>
-                  
-                  {/* Price */}
-                  <div className="flex items-baseline gap-1 mb-2">
-                    <span className="font-bold text-gray-900">
-                      ₹{item.price.toLocaleString()}
-                    </span>
-                    {item.originalPrice && item.originalPrice > item.price && (
-                      <span className="text-xs text-gray-500 line-through">
-                        ₹{item.originalPrice.toLocaleString()}
-                      </span>
-                    )}
+
+                  <div className="text-lg font-bold text-gray-900 mb-2">
+                    ₹{item.price.toLocaleString()}
                   </div>
 
-                  {/* Location */}
-                  <p className="text-xs text-gray-600 mb-2">📍 {item.location}</p>
+                  <div className="text-xs text-gray-600 mb-2">
+                    📍 {item.location}
+                  </div>
 
-                  {/* Rating */}
                   <div className="flex items-center gap-1 text-xs">
-                    {item.seller.rating > 0 ? (
-                      <>
-                        <span className="text-yellow-400">★</span>
-                        <span className="text-gray-600">
-                          {item.seller.rating.toFixed(1)} ({item.seller.totalReviews})
-                        </span>
-                      </>
-                    ) : (
-                      <span className="text-gray-600">New seller</span>
-                    )}
+                    <span className="text-yellow-400">★</span>
+                    <span className="text-gray-600">{item.seller.rating} ({item.seller.totalReviews})</span>
                   </div>
-
-                  {/* Stock Status */}
-                  <p className="text-xs mt-2 font-medium" style={{
-                    color: item.stock > 0 ? '#16a34a' : '#dc2626'
-                  }}>
-                    {item.stock > 0 ? `${item.stock} in stock` : 'Out of stock'}
-                  </p>
                 </div>
               </div>
             ))}
