@@ -166,6 +166,7 @@ export default function AddItemPage() {
         stock: 1,
         images: [],
         tags: selectedCategories,
+        location: 'Andhra Pradesh', // Add default location
         ...(formData.warrantyStatus && { warrantyStatus: formData.warrantyStatus }),
         ...(formData.itemCondition && { itemCondition: formData.itemCondition }),
         ...(formData.damageInfo && { damageInfo: formData.damageInfo }),
