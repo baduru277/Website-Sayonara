@@ -1,8 +1,5 @@
 'use client';
-console.log('ENV:', {
-  API_URL: process.env.NEXT_PUBLIC_API_URL,
-  NODE_ENV: process.env.NODE_ENV
-});
+
 import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
@@ -152,6 +149,12 @@ export default function AddItemPage() {
   const handleSubmitItem = async () => {
     if (!actionType) return;
     
+    // DEBUG LOGGING
+    console.log('🔍 DEBUG: Starting handleSubmitItem');
+    console.log('🔍 actionType:', actionType);
+    console.log('🔍 API_URL from env:', process.env.NEXT_PUBLIC_API_URL);
+    console.log('🔍 Full URL will be:', `${process.env.NEXT_PUBLIC_API_URL}/items`);
+    
     setLoading(true);
     try {
       const itemData = {
@@ -161,7 +164,7 @@ export default function AddItemPage() {
         condition: condition,
         type: actionType,
         stock: 1,
-        images: imagePreviews,
+        images: [],
         tags: selectedCategories,
         ...(formData.warrantyStatus && { warrantyStatus: formData.warrantyStatus }),
         ...(formData.itemCondition && { itemCondition: formData.itemCondition }),
@@ -176,6 +179,11 @@ export default function AddItemPage() {
         })
       };
 
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      console.log('🔗 API_BASE_URL:', apiUrl);
+      console.log('📤 Full request URL:', `${apiUrl}/items`);
+      console.log('📦 Request payload:', itemData);
+
       const token = localStorage.getItem('token');
       if (!token) {
         alert('You must be logged in to create an item');
@@ -183,7 +191,13 @@ export default function AddItemPage() {
         return;
       }
 
-      const response = await fetch('/api/items', {
+      console.log('🔐 Token found:', token.substring(0, 20) + '...');
+
+      // Make direct fetch to debug
+      const fullUrl = `${apiUrl}/items`;
+      console.log('🚀 Making fetch request to:', fullUrl);
+
+      const response = await fetch(fullUrl, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -192,12 +206,31 @@ export default function AddItemPage() {
         body: JSON.stringify(itemData)
       });
 
-      const responseData = await response.json();
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response headers:', {
+        'content-type': response.headers.get('content-type'),
+        'content-length': response.headers.get('content-length')
+      });
+
+      const responseText = await response.text();
+      console.log('📥 Raw response (first 500 chars):', responseText.substring(0, 500));
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+        console.log('✅ Response parsed as JSON:', responseData);
+      } catch (parseError) {
+        console.error('❌ Failed to parse as JSON');
+        console.error('Parse error:', parseError);
+        throw new Error(`Server returned HTML/non-JSON. First 200 chars: ${responseText.substring(0, 200)}`);
+      }
 
       if (!response.ok) {
         const errorMessage = responseData?.error || responseData?.message || `HTTP ${response.status}`;
         throw new Error(errorMessage);
       }
+
+      console.log('✅ Item created successfully:', responseData);
 
       if (responseData.item || responseData.message) {
         setStep(5);
@@ -218,8 +251,9 @@ export default function AddItemPage() {
         }, 2000);
       }
     } catch (error) {
+      console.error('❌ Error creating item:', error);
       const errorMsg = error instanceof Error ? error.message : 'Failed to create item. Please try again.';
-      alert(`Error: ${errorMsg}`);
+      alert(`Error: ${errorMsg}\n\nCheck browser console (F12) for debugging details.`);
     } finally {
       setLoading(false);
     }
