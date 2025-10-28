@@ -126,12 +126,13 @@ export default function ResellPage() {
                       className="object-cover"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = 'https://via.placeholder.com/500x500/924DAC/FFFFFF?text=No+Image';
+                        target.src = 'https://via.placeholder.com/500x500/e5e7eb/6b7280?text=No+Image';
                       }}
                     />
                   ) : (
                     <div className="text-center">
-                      <p className="text-gray-400 text-sm">No image available</p>
+                      <p className="text-gray-400 text-xs">📷 No image available</p>
+                      <p className="text-gray-300 text-xs mt-1">Image not uploaded</p>
                     </div>
                   )}
                   {selectedItem.discount && selectedItem.discount > 0 && (
@@ -331,11 +332,11 @@ export default function ResellPage() {
                       className="object-cover hover:scale-110 transition-transform"
                       onError={(e) => {
                         const target = e.target as HTMLImageElement;
-                        target.src = 'https://via.placeholder.com/300x300/924DAC/FFFFFF?text=No+Image';
+                        target.src = 'https://via.placeholder.com/300x300/e5e7eb/6b7280?text=No+Image';
                       }}
                     />
                   ) : (
-                    <p className="text-gray-400 text-xs">No image</p>
+                    <p className="text-gray-400 text-xs">📷 No image</p>
                   )}
                   {item.discount && item.discount > 0 && (
                     <div className="absolute top-2 right-2 bg-red-600 text-white px-2 py-1 rounded text-xs font-bold">
@@ -344,7 +345,7 @@ export default function ResellPage() {
                   )}
                   {item.stock === 0 && (
                     <div className="absolute inset-0 bg-black bg-opacity-50 flex items-center justify-center">
-                      <span className="text-white font-bold">Out of Stock</span>
+                      <span className="text-white font-bold text-xs">Out of Stock</span>
                     </div>
                   )}
                 </div>
