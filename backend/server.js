@@ -18,8 +18,9 @@ app.use(cors({
   credentials: false
 }));
 
-app.use(express.json());
-app.use(express.urlencoded({ extended: true }));
+// IMPORTANT: Increase request size limit to handle images
+app.use(express.json({ limit: '50mb' }));
+app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
 console.log('🔧 Loading routes...');
 
