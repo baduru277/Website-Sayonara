@@ -30,43 +30,34 @@ interface ResellItem {
   seller: SellerInfo;
 }
 
-const DUMMY_ITEMS: ResellItem[] = [
-  {
-    id: 'dummy1',
-    title: 'iPhone 15 (128 GB) - Green',
-    description: 'Apple iPhone 15 in excellent condition. Perfect working order with original charger and accessories. Minor signs of use.',
-    images: ['https://images.unsplash.com/photo-1592286927505-1def25115558?w=800', 'https://images.unsplash.com/photo-1511707267537-b85faf00021e?w=800', 'https://images.unsplash.com/photo-1592286927505-1def25115558?w=800'],
-    category: 'Smartphones',
-    condition: 'Like New',
-    type: 'resell',
-    location: 'Mumbai, Maharashtra',
-    isActive: true,
-    views: 245,
-    price: 50990,
-    tags: ['Apple', 'Smartphone', 'iPhone'],
-    createdAt: '2025-10-20T10:30:00Z',
-    seller: {
-      id: 'seller1',
-      name: 'Tech Store Mumbai',
-      rating: 4.5,
-      totalReviews: 324,
-      isVerified: true
-    }
-  },
-];
-
 export default function ResellPage() {
-  const [items, setItems] = useState<ResellItem[]>(DUMMY_ITEMS);
-  const [selectedItem, setSelectedItem] = useState<ResellItem | null>(DUMMY_ITEMS[0]);
+  const [items, setItems] = useState<ResellItem[]>([]);
+  const [selectedItem, setSelectedItem] = useState<ResellItem | null>(null);
   const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
   const [mainImage, setMainImage] = useState(0);
   const router = useRouter();
 
   useEffect(() => {
-    setLoading(false);
-    // TODO: Uncomment for real API
-    // const response = await apiService.getItems({ type: 'resell', limit: 50 });
-    // setItems(response.items || []);
+    const fetchItems = async () => {
+      try {
+        setLoading(true);
+        const response = await apiService.getItems({ type: 'resell', limit: 50 });
+        const fetchedItems = response.items || [];
+        setItems(fetchedItems);
+        if (fetchedItems.length > 0) {
+          setSelectedItem(fetchedItems[0]);
+          setMainImage(0);
+        }
+      } catch (err) {
+        setError(err instanceof Error ? err.message : 'Failed to load items');
+        console.error('Error fetching items:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchItems();
   }, []);
 
   const handleChatClick = () => {
@@ -75,7 +66,9 @@ export default function ResellPage() {
     }
   };
 
-  if (!selectedItem) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
+  if (error) return <div className="min-h-screen flex items-center justify-center text-red-600">Error: {error}</div>;
+  if (!selectedItem) return <div className="min-h-screen flex items-center justify-center">No items available</div>;
 
   return (
     <div className="min-h-screen bg-white">
