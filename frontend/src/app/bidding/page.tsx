@@ -31,7 +31,6 @@ export default function BiddingPage() {
   const [error, setError] = useState<string | null>(null);
   const [bidAmount, setBidAmount] = useState('');
   const [liked, setLiked] = useState(false);
-  const [carouselScroll, setCarouselScroll] = useState(0);
 
   useEffect(() => {
     const fetchBiddingItems = async () => {
@@ -147,145 +146,45 @@ export default function BiddingPage() {
             <h1 className="text-2xl font-black text-white">LiveBid</h1>
           </div>
           <div className="flex items-center gap-4">
-            <button className="px-4 py-2 rounded-lg bg-purple-600/20 text-purple-300 hover:bg-purple-600/40 transition font-medium">
+            <button className="px-4 py-2 rounded-lg bg-purple-600/20 text-purple-300 hover:bg-purple-600/40 transition font-medium text-sm">
               All Auctions
             </button>
-            <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold hover:shadow-lg hover:shadow-purple-500/50 transition">
+            <button className="px-6 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold hover:shadow-lg hover:shadow-purple-500/50 transition text-sm">
               My Bids
             </button>
           </div>
         </div>
       </header>
 
-      <main className="max-w-7xl mx-auto px-4 py-8">
-        {/* Featured Auction */}
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 mb-12">
-          {/* Left: Image */}
-          <div className="lg:col-span-2">
-            <div className="group relative rounded-xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/20">
-              <div className="relative h-96 overflow-hidden">
-                <img
-                  src={selectedItem?.image}
-                  alt={selectedItem?.title}
-                  className="w-full h-full object-cover group-hover:scale-110 transition-transform duration-500"
-                />
-                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent"></div>
-
-                <div className="absolute top-4 right-4 flex gap-2">
-                  <div className="px-3 py-1 rounded-full bg-gradient-to-r from-red-600 to-pink-600 text-white text-xs font-bold flex items-center gap-1 shadow-lg">
-                    <Clock className="w-3 h-3" />
-                    {selectedItem?.timeLeft}
-                  </div>
-                  {selectedItem?.priority === 'high' && (
-                    <div className="px-3 py-1 rounded-full bg-yellow-500 text-black text-xs font-bold">🔥 HOT</div>
-                  )}
-                </div>
-
-                <div className="absolute top-4 left-4 flex gap-2">
-                  <button 
-                    onClick={() => setLiked(!liked)}
-                    className={`p-2 rounded-full backdrop-blur-md transition-all ${
-                      liked 
-                        ? 'bg-red-600/80 text-white shadow-lg shadow-red-500/50' 
-                        : 'bg-white/10 text-white hover:bg-white/20'
-                    }`}
-                  >
-                    <Heart className={`w-4 h-4 ${liked ? 'fill-current' : ''}`} />
-                  </button>
-                  <button className="p-2 rounded-full bg-white/10 text-white hover:bg-white/20 backdrop-blur-md transition">
-                    <Share2 className="w-4 h-4" />
-                  </button>
-                </div>
-              </div>
-
-              {/* Details */}
-              <div className="p-6">
-                <h2 className="text-xl font-black text-white mb-2 line-clamp-2">{selectedItem?.title}</h2>
-                <p className="text-gray-400 text-xs leading-relaxed mb-4">{selectedItem?.description}</p>
-
-                <div className="flex flex-wrap gap-2 mb-4 pb-4 border-b border-purple-500/20">
-                  <span className="px-2 py-1 rounded text-xs font-bold bg-blue-600/30 text-blue-300">{selectedItem?.category}</span>
-                  <span className="px-2 py-1 rounded text-xs font-bold bg-green-600/30 text-green-300">{selectedItem?.condition}</span>
-                  <span className="px-2 py-1 rounded text-xs font-bold bg-purple-600/30 text-purple-300">{selectedItem?.totalBids} Bids</span>
-                </div>
-
-                <div className="flex items-center justify-between text-xs">
-                  <span className="text-yellow-400">★ {selectedItem?.userRating}</span>
-                  <span className="text-gray-400">📍 {selectedItem?.location}</span>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          {/* Right: Bidding Panel */}
-          <div className="lg:col-span-1">
-            <div className="sticky top-24 space-y-4">
-              {/* Current Bid */}
-              <div className="p-5 rounded-xl bg-gradient-to-br from-purple-600 to-pink-600 border border-purple-400/50 shadow-2xl shadow-purple-500/50">
-                <p className="text-purple-100 text-xs font-bold mb-1 uppercase">Current Bid</p>
-                <div className="text-3xl font-black text-white">{formatCurrency(selectedItem?.currentBid || 0)}</div>
-                <p className="text-purple-100 text-xs mt-1">Start: {formatCurrency(selectedItem?.startingBid || 0)}</p>
-              </div>
-
-              {/* Bid Input */}
-              <div className="p-5 rounded-xl bg-slate-800/80 backdrop-blur-xl border border-purple-500/30">
-                <p className="text-gray-300 text-xs font-bold mb-2 uppercase">Your Bid</p>
-                <input
-                  type="number"
-                  value={bidAmount}
-                  onChange={(e) => setBidAmount(e.target.value)}
-                  placeholder={formatCurrency(minBid)}
-                  className="w-full px-3 py-2 rounded-lg bg-slate-900/50 border border-purple-500/30 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500"
-                />
-                <p className="text-xs text-gray-400 mt-2">Min: {formatCurrency(minBid)}</p>
-
-                <button className="w-full mt-3 px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm hover:shadow-lg hover:shadow-purple-500/50 transition">
-                  🔨 Place Bid
-                </button>
-
-                {selectedItem?.buyNowPrice ? (
-                  <button className="w-full mt-2 px-4 py-2 rounded-lg border border-green-500 text-green-400 font-bold text-sm hover:bg-green-500/10 transition">
-                    ⚡ Buy Now: {formatCurrency(selectedItem.buyNowPrice)}
-                  </button>
-                ) : null}
-              </div>
-
-              {/* Seller Info */}
-              <div className="p-4 rounded-lg bg-slate-800/50 border border-green-500/30">
-                <div className="flex items-center gap-2 text-green-400 text-xs font-bold mb-1">
-                  <Shield className="w-4 h-4" />
-                  Verified Seller
-                </div>
-                <p className="text-xs text-gray-400">✓ Trusted by community</p>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        {/* Carousel - Other Auctions */}
+      <main className="max-w-7xl mx-auto px-4 py-6">
+        {/* Carousel - Tiles Only */}
         <div>
           <h2 className="text-xl font-black text-white mb-4 flex items-center gap-2">
             <TrendingUp className="w-5 h-5 text-purple-500" />
-            Other Hot Auctions
+            Live Auctions
           </h2>
 
           <div className="relative group">
             {/* Previous Button */}
-            <button className="absolute -left-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-purple-600 text-white opacity-0 group-hover:opacity-100 transition flex items-center justify-center hover:bg-purple-700">
+            <button className="absolute -left-5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-purple-600 text-white opacity-0 group-hover:opacity-100 transition flex items-center justify-center hover:bg-purple-700 shadow-lg">
               <ChevronLeft className="w-4 h-4" />
             </button>
 
-            {/* Carousel */}
+            {/* Carousel Container */}
             <div className="overflow-x-auto pb-2 scrollbar-hide">
-              <div className="flex gap-4 min-w-max">
+              <div className="flex gap-3 min-w-max px-1">
                 {items.map((item) => (
                   <button
                     key={item.id}
                     onClick={() => setSelectedItem(item)}
-                    className="flex-shrink-0 w-48 group/card cursor-pointer rounded-lg overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/20 hover:border-purple-500/60 transition-all hover:shadow-lg hover:shadow-purple-500/30 hover:scale-105"
+                    className={`flex-shrink-0 w-44 group/card cursor-pointer rounded-lg overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 border-2 transition-all duration-300 ${
+                      selectedItem?.id === item.id
+                        ? 'border-purple-500 shadow-lg shadow-purple-500/50'
+                        : 'border-purple-500/20 hover:border-purple-500/60 hover:shadow-lg hover:shadow-purple-500/30 hover:scale-105'
+                    }`}
                   >
                     {/* Image */}
-                    <div className="relative h-40 overflow-hidden">
+                    <div className="relative h-32 overflow-hidden bg-gray-700">
                       <img
                         src={item.image}
                         alt={item.title}
@@ -294,25 +193,37 @@ export default function BiddingPage() {
                           e.currentTarget.src = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=300&h=300&fit=crop';
                         }}
                       />
-                      <div className="absolute inset-0 bg-gradient-to-t from-black/60 to-transparent"></div>
+                      <div className="absolute inset-0 bg-gradient-to-t from-black/70 to-transparent"></div>
                       
-                      <div className="absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold bg-red-600 text-white flex items-center gap-1">
+                      {/* Time Badge */}
+                      <div className="absolute top-2 right-2 px-2 py-1 rounded text-xs font-bold bg-red-600 text-white flex items-center gap-1 shadow-md">
                         <Clock className="w-3 h-3" /> {item.timeLeft}
                       </div>
+
+                      {/* Hot Badge */}
+                      {item.priority === 'high' && (
+                        <div className="absolute top-2 left-2 px-2 py-1 rounded text-xs font-bold bg-yellow-500 text-black shadow-md">
+                          🔥 HOT
+                        </div>
+                      )}
                     </div>
 
-                    {/* Info */}
+                    {/* Info Section */}
                     <div className="p-3">
-                      <h3 className="text-white font-bold text-xs line-clamp-2 mb-2">{item.title}</h3>
+                      <h3 className="text-white font-bold text-xs line-clamp-2 mb-2 text-left">{item.title}</h3>
                       
-                      <div className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-400 mb-1">
+                      {/* Price */}
+                      <div className="text-sm font-black text-transparent bg-clip-text bg-gradient-to-r from-green-400 to-cyan-400 mb-1 text-left">
                         {formatCurrency(item.currentBid)}
                       </div>
-                      <p className="text-xs text-gray-500">{item.totalBids} bids</p>
                       
-                      <div className="flex items-center justify-between text-xs text-gray-400 mt-2 pt-2 border-t border-gray-700">
+                      {/* Bids Count */}
+                      <p className="text-xs text-gray-400 mb-2 text-left">{item.totalBids} bids</p>
+                      
+                      {/* Footer Info */}
+                      <div className="flex items-center justify-between text-xs text-gray-400 pt-2 border-t border-gray-700">
                         <span className="text-yellow-400">★ {item.userRating}</span>
-                        <span>{item.location}</span>
+                        <span className="truncate">{item.location}</span>
                       </div>
                     </div>
                   </button>
@@ -321,11 +232,121 @@ export default function BiddingPage() {
             </div>
 
             {/* Next Button */}
-            <button className="absolute -right-4 top-1/2 -translate-y-1/2 z-10 w-8 h-8 rounded-full bg-purple-600 text-white opacity-0 group-hover:opacity-100 transition flex items-center justify-center hover:bg-purple-700">
+            <button className="absolute -right-5 top-1/2 -translate-y-1/2 z-20 w-8 h-8 rounded-full bg-purple-600 text-white opacity-0 group-hover:opacity-100 transition flex items-center justify-center hover:bg-purple-700 shadow-lg">
               <ChevronRight className="w-4 h-4" />
             </button>
           </div>
         </div>
+
+        {/* Selected Item Details */}
+        {selectedItem && (
+          <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30">
+            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+              
+              {/* Left: Product Image */}
+              <div className="md:col-span-1">
+                <div className="relative rounded-lg overflow-hidden bg-gray-700 h-64">
+                  <img
+                    src={selectedItem.image}
+                    alt={selectedItem.title}
+                    className="w-full h-full object-cover"
+                    onError={(e) => {
+                      e.currentTarget.src = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop';
+                    }}
+                  />
+                </div>
+                
+                <div className="flex gap-2 mt-3">
+                  <button 
+                    onClick={() => setLiked(!liked)}
+                    className={`flex-1 py-2 rounded-lg transition-all font-bold text-sm ${
+                      liked 
+                        ? 'bg-red-600 text-white' 
+                        : 'bg-slate-700 text-white hover:bg-slate-600'
+                    }`}
+                  >
+                    <Heart className={`w-4 h-4 inline mr-1 ${liked ? 'fill-current' : ''}`} />
+                    {liked ? 'Liked' : 'Like'}
+                  </button>
+                  <button className="flex-1 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition font-bold text-sm">
+                    <Share2 className="w-4 h-4 inline mr-1" />
+                    Share
+                  </button>
+                </div>
+              </div>
+
+              {/* Middle: Product Details */}
+              <div className="md:col-span-1">
+                <h2 className="text-2xl font-black text-white mb-3">{selectedItem.title}</h2>
+                <p className="text-gray-400 text-sm mb-4">{selectedItem.description}</p>
+
+                {/* Tags */}
+                <div className="flex flex-wrap gap-2 mb-4">
+                  <span className="px-2 py-1 rounded text-xs font-bold bg-blue-600/30 text-blue-300">{selectedItem.category}</span>
+                  <span className="px-2 py-1 rounded text-xs font-bold bg-green-600/30 text-green-300">{selectedItem.condition}</span>
+                </div>
+
+                {/* Location & Rating */}
+                <div className="mb-4 pb-4 border-b border-gray-700">
+                  <p className="text-sm text-gray-400 mb-2">📍 {selectedItem.location}</p>
+                  <div className="flex items-center gap-2">
+                    <span className="text-yellow-400 font-bold">★ {selectedItem.userRating}</span>
+                    <span className="text-gray-500 text-xs">({selectedItem.userReviews} reviews)</span>
+                    {selectedItem.isVerified && (
+                      <Shield className="w-4 h-4 text-green-400" />
+                    )}
+                  </div>
+                </div>
+
+                {/* Seller Info */}
+                <div className="p-3 rounded-lg bg-slate-900/50 border border-green-500/30">
+                  <p className="text-green-400 text-xs font-bold">✓ Verified Seller</p>
+                  <p className="text-gray-400 text-xs">Trusted by community</p>
+                </div>
+              </div>
+
+              {/* Right: Bidding Panel */}
+              <div className="md:col-span-1">
+                <div className="space-y-3">
+                  {/* Current Bid */}
+                  <div className="p-4 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 border border-purple-400/50 shadow-lg shadow-purple-500/50">
+                    <p className="text-purple-100 text-xs font-bold mb-1 uppercase">Current Bid</p>
+                    <div className="text-3xl font-black text-white">{formatCurrency(selectedItem.currentBid)}</div>
+                    <p className="text-purple-100 text-xs mt-1">Start: {formatCurrency(selectedItem.startingBid)}</p>
+                  </div>
+
+                  {/* Bid Input */}
+                  <div className="p-4 rounded-lg bg-slate-800 border border-purple-500/30">
+                    <p className="text-gray-300 text-xs font-bold mb-2 uppercase">Your Bid</p>
+                    <input
+                      type="number"
+                      value={bidAmount}
+                      onChange={(e) => setBidAmount(e.target.value)}
+                      placeholder={formatCurrency(minBid)}
+                      className="w-full px-3 py-2 rounded-lg bg-slate-900/50 border border-purple-500/30 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 mb-2"
+                    />
+                    <p className="text-xs text-gray-400 mb-3">Min: {formatCurrency(minBid)}</p>
+
+                    <button className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm hover:shadow-lg hover:shadow-purple-500/50 transition mb-2">
+                      🔨 Place Bid
+                    </button>
+
+                    {selectedItem.buyNowPrice ? (
+                      <button className="w-full px-4 py-2 rounded-lg border border-green-500 text-green-400 font-bold text-sm hover:bg-green-500/10 transition">
+                        ⚡ Buy Now: {formatCurrency(selectedItem.buyNowPrice)}
+                      </button>
+                    ) : null}
+                  </div>
+
+                  {/* Auction Ends */}
+                  <div className="p-3 rounded-lg bg-slate-800 border border-red-500/30 text-center">
+                    <p className="text-red-400 font-bold text-sm">Ends in {selectedItem.timeLeft}</p>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+        )}
       </main>
 
       <style jsx>{`
