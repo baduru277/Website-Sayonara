@@ -1,4 +1,6 @@
-import { useState, useEffect } from 'react';
+'use client';
+
+import { useState } from 'react';
 import { Clock, TrendingUp, Award, Shield, Heart, Share2, ChevronRight } from 'lucide-react';
 
 interface BiddingItem {
