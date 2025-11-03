@@ -1,7 +1,8 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { Clock, TrendingUp, Award, Shield, Heart, Share2, ChevronRight, ChevronLeft } from 'lucide-react';
+import { useRouter } from 'next/navigation';
+import { Clock, TrendingUp, Award, ChevronRight, ChevronLeft } from 'lucide-react';
 import apiService from '@/services/api';
 
 interface BiddingItem {
@@ -25,12 +26,10 @@ interface BiddingItem {
 }
 
 export default function BiddingPage() {
+  const router = useRouter();
   const [items, setItems] = useState<BiddingItem[]>([]);
-  const [selectedItem, setSelectedItem] = useState<BiddingItem | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const [bidAmount, setBidAmount] = useState('');
-  const [liked, setLiked] = useState(false);
 
   useEffect(() => {
     const fetchBiddingItems = async () => {
@@ -176,12 +175,8 @@ export default function BiddingPage() {
                 {items.map((item) => (
                   <button
                     key={item.id}
-                    onClick={() => setSelectedItem(item)}
-                    className={`flex-shrink-0 w-44 group/card cursor-pointer rounded-lg overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 border-2 transition-all duration-300 ${
-                      selectedItem?.id === item.id
-                        ? 'border-purple-500 shadow-lg shadow-purple-500/50'
-                        : 'border-purple-500/20 hover:border-purple-500/60 hover:shadow-lg hover:shadow-purple-500/30 hover:scale-105'
-                    }`}
+                    onClick={() => router.push(`/bidding/${item.id}`)}
+                    className="flex-shrink-0 w-44 group/card cursor-pointer rounded-lg overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 border-2 border-purple-500/20 transition-all duration-300 hover:border-purple-500/60 hover:shadow-lg hover:shadow-purple-500/30 hover:scale-105"
                   >
                     {/* Image */}
                     <div className="relative h-32 overflow-hidden bg-gray-700">
@@ -237,116 +232,6 @@ export default function BiddingPage() {
             </button>
           </div>
         </div>
-
-        {/* Selected Item Details */}
-        {selectedItem && (
-          <div className="mt-8 p-6 rounded-xl bg-gradient-to-br from-slate-800 to-slate-900 border border-purple-500/30">
-            <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-              
-              {/* Left: Product Image */}
-              <div className="md:col-span-1">
-                <div className="relative rounded-lg overflow-hidden bg-gray-700 h-64">
-                  <img
-                    src={selectedItem.image}
-                    alt={selectedItem.title}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      e.currentTarget.src = 'https://images.unsplash.com/photo-1505740420928-5e560c06d30e?w=500&h=500&fit=crop';
-                    }}
-                  />
-                </div>
-                
-                <div className="flex gap-2 mt-3">
-                  <button 
-                    onClick={() => setLiked(!liked)}
-                    className={`flex-1 py-2 rounded-lg transition-all font-bold text-sm ${
-                      liked 
-                        ? 'bg-red-600 text-white' 
-                        : 'bg-slate-700 text-white hover:bg-slate-600'
-                    }`}
-                  >
-                    <Heart className={`w-4 h-4 inline mr-1 ${liked ? 'fill-current' : ''}`} />
-                    {liked ? 'Liked' : 'Like'}
-                  </button>
-                  <button className="flex-1 py-2 rounded-lg bg-slate-700 text-white hover:bg-slate-600 transition font-bold text-sm">
-                    <Share2 className="w-4 h-4 inline mr-1" />
-                    Share
-                  </button>
-                </div>
-              </div>
-
-              {/* Middle: Product Details */}
-              <div className="md:col-span-1">
-                <h2 className="text-2xl font-black text-white mb-3">{selectedItem.title}</h2>
-                <p className="text-gray-400 text-sm mb-4">{selectedItem.description}</p>
-
-                {/* Tags */}
-                <div className="flex flex-wrap gap-2 mb-4">
-                  <span className="px-2 py-1 rounded text-xs font-bold bg-blue-600/30 text-blue-300">{selectedItem.category}</span>
-                  <span className="px-2 py-1 rounded text-xs font-bold bg-green-600/30 text-green-300">{selectedItem.condition}</span>
-                </div>
-
-                {/* Location & Rating */}
-                <div className="mb-4 pb-4 border-b border-gray-700">
-                  <p className="text-sm text-gray-400 mb-2">📍 {selectedItem.location}</p>
-                  <div className="flex items-center gap-2">
-                    <span className="text-yellow-400 font-bold">★ {selectedItem.userRating}</span>
-                    <span className="text-gray-500 text-xs">({selectedItem.userReviews} reviews)</span>
-                    {selectedItem.isVerified && (
-                      <Shield className="w-4 h-4 text-green-400" />
-                    )}
-                  </div>
-                </div>
-
-                {/* Seller Info */}
-                <div className="p-3 rounded-lg bg-slate-900/50 border border-green-500/30">
-                  <p className="text-green-400 text-xs font-bold">✓ Verified Seller</p>
-                  <p className="text-gray-400 text-xs">Trusted by community</p>
-                </div>
-              </div>
-
-              {/* Right: Bidding Panel */}
-              <div className="md:col-span-1">
-                <div className="space-y-3">
-                  {/* Current Bid */}
-                  <div className="p-4 rounded-lg bg-gradient-to-br from-purple-600 to-pink-600 border border-purple-400/50 shadow-lg shadow-purple-500/50">
-                    <p className="text-purple-100 text-xs font-bold mb-1 uppercase">Current Bid</p>
-                    <div className="text-3xl font-black text-white">{formatCurrency(selectedItem.currentBid)}</div>
-                    <p className="text-purple-100 text-xs mt-1">Start: {formatCurrency(selectedItem.startingBid)}</p>
-                  </div>
-
-                  {/* Bid Input */}
-                  <div className="p-4 rounded-lg bg-slate-800 border border-purple-500/30">
-                    <p className="text-gray-300 text-xs font-bold mb-2 uppercase">Your Bid</p>
-                    <input
-                      type="number"
-                      value={bidAmount}
-                      onChange={(e) => setBidAmount(e.target.value)}
-                      placeholder={formatCurrency(minBid)}
-                      className="w-full px-3 py-2 rounded-lg bg-slate-900/50 border border-purple-500/30 text-white text-sm placeholder-gray-500 focus:outline-none focus:border-purple-500 mb-2"
-                    />
-                    <p className="text-xs text-gray-400 mb-3">Min: {formatCurrency(minBid)}</p>
-
-                    <button className="w-full px-4 py-2 rounded-lg bg-gradient-to-r from-purple-600 to-pink-600 text-white font-bold text-sm hover:shadow-lg hover:shadow-purple-500/50 transition mb-2">
-                      🔨 Place Bid
-                    </button>
-
-                    {selectedItem.buyNowPrice ? (
-                      <button className="w-full px-4 py-2 rounded-lg border border-green-500 text-green-400 font-bold text-sm hover:bg-green-500/10 transition">
-                        ⚡ Buy Now: {formatCurrency(selectedItem.buyNowPrice)}
-                      </button>
-                    ) : null}
-                  </div>
-
-                  {/* Auction Ends */}
-                  <div className="p-3 rounded-lg bg-slate-800 border border-red-500/30 text-center">
-                    <p className="text-red-400 font-bold text-sm">Ends in {selectedItem.timeLeft}</p>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        )}
       </main>
 
       <style jsx>{`
