@@ -95,7 +95,7 @@ export default function BiddingPage() {
     return 'Ending Soon!';
   };
 
-  const calculatePriority = (auctionEndDate: string, totalBids: number) => {
+  const calculatePriority = (auctionEndDate: string, totalBids: number): 'high' | 'medium' | 'low' => {
     const end = new Date(auctionEndDate);
     const now = new Date();
     const diff = end.getTime() - now.getTime();
@@ -161,8 +161,8 @@ export default function BiddingPage() {
           </h2>
         </div>
 
-        {/* Previous Button */}
         <div className="relative">
+          {/* Previous Button */}
           <button
             onClick={() => {
               const container = document.getElementById('carousel-container');
