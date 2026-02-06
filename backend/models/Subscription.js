@@ -26,18 +26,42 @@ const Subscription = sequelize.define('Subscription', {
     defaultValue: 99.00
   },
   status: {
-    type: DataTypes.ENUM('active', 'expired', 'cancelled'),
+    type: DataTypes.ENUM('pending', 'active', 'expired', 'cancelled', 'rejected'),
     allowNull: false,
-    defaultValue: 'active'
+    defaultValue: 'pending'  // ✅ Changed from 'active' to 'pending'
+  },
+  paymentMethod: {
+    type: DataTypes.STRING,
+    allowNull: true,
+    defaultValue: 'offline'
+  },
+  transactionId: {
+    type: DataTypes.STRING,
+    allowNull: true
+  },
+  paymentProof: {
+    type: DataTypes.TEXT,  // Store image URL or path
+    allowNull: true
+  },
+  agentName: {
+    type: DataTypes.STRING,
+    allowNull: true  // ✅ Agent who approved/processed
+  },
+  approvedAt: {
+    type: DataTypes.DATE,
+    allowNull: true
+  },
+  rejectedReason: {
+    type: DataTypes.TEXT,
+    allowNull: true
   },
   startDate: {
     type: DataTypes.DATE,
-    allowNull: false,
-    defaultValue: DataTypes.NOW
+    allowNull: true  // Set when approved
   },
   expiryDate: {
     type: DataTypes.DATE,
-    allowNull: false
+    allowNull: true  // Set when approved
   }
 }, {
   timestamps: true,
@@ -52,3 +76,4 @@ Subscription.associate = (models) => {
 };
 
 module.exports = Subscription;
+EOF
