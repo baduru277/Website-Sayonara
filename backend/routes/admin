@@ -1,0 +1,77 @@
+const express = require('express');
+const { Subscription, User } = require('../models');
+const router = express.Router();
+
+// Get all pending subscriptions
+router.get('/subscriptions/pending', async (req, res) => {
+  try {
+    const pending = await Subscription.findAll({
+      where: { status: 'pending' },
+      include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email', 'phone'] }],
+      order: [['createdAt', 'DESC']]
+    });
+    res.json({ subscriptions: pending });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Approve subscription
+router.post('/subscriptions/:id/approve', async (req, res) => {
+  try {
+    const { agentName, transactionId } = req.body;
+    const subscription = await Subscription.findByPk(req.params.id);
+    
+    if (!subscription) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+
+    const startDate = new Date();
+    const expiryDate = new Date();
+    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+
+    await subscription.update({
+      status: 'active',
+      agentName: agentName || 'Admin',
+      transactionId: transactionId || null,
+      approvedAt: new Date(),
+      startDate: startDate,
+      expiryDate: expiryDate
+    });
+
+    res.json({ 
+      message: 'Subscription approved successfully',
+      subscription 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// Reject subscription
+router.post('/subscriptions/:id/reject', async (req, res) => {
+  try {
+    const { agentName, reason } = req.body;
+    const subscription = await Subscription.findByPk(req.params.id);
+    
+    if (!subscription) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+
+    await subscription.update({
+      status: 'rejected',
+      agentName: agentName || 'Admin',
+      rejectedReason: reason || 'Payment not verified',
+      approvedAt: new Date()
+    });
+
+    res.json({ 
+      message: 'Subscription rejected',
+      subscription 
+    });
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+});
+
+module.exports = router;
