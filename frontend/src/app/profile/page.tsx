@@ -22,6 +22,8 @@ export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
+  // ✅ NEW: Add subscription state
+  const [subscription, setSubscription] = useState<any>(null);
 
   const router = useRouter();
 
@@ -53,6 +55,16 @@ export default function ProfilePage() {
           } catch (e) {
             console.warn("Could not parse saved location");
           }
+        }
+
+        // ✅ NEW: Fetch subscription data
+        try {
+          const subResponse = await apiService.getSubscription();
+          console.log("Subscription response:", subResponse);
+          setSubscription(subResponse?.subscription || null);
+        } catch (err) {
+          console.error("Error fetching subscription:", err);
+          // If no subscription found, that's okay - user might not have one
         }
       } catch (err) {
         console.error("Error fetching user profile:", err);
@@ -89,6 +101,26 @@ export default function ProfilePage() {
     apiService.logout();
     router.push("/");
     window.location.reload();
+  };
+
+  // ✅ NEW: Function to get subscription display info
+  const getSubscriptionDisplay = () => {
+    if (!subscription) return { text: "Free", color: "#f0e7ff", status: "No active plan" };
+    
+    const isExpired = subscription.isExpired || new Date() > new Date(subscription.expiryDate);
+    
+    if (isExpired) {
+      return { text: "Expired", color: "#ffe7e7", status: "Plan expired" };
+    }
+    
+    return {
+      text: `₹${subscription.amount}`,
+      color: "#e7ffe7",
+      status: subscription.status === "active" ? "Active" : subscription.status,
+      planName: subscription.planName || "Basic Plan",
+      expiryDate: new Date(subscription.expiryDate).toLocaleDateString(),
+      daysRemaining: subscription.daysRemaining || 0
+    };
   };
 
   // Sidebar component
@@ -136,6 +168,8 @@ export default function ProfilePage() {
 
   // Main content render
   const renderContent = () => {
+    const subDisplay = getSubscriptionDisplay();
+
     switch (selected) {
       case "profile":
         return (
@@ -187,7 +221,7 @@ export default function ProfilePage() {
                 { icon: "📝", title: "My Posts", count: "0", color: "#f3eaff" },
                 { icon: "📦", title: "Orders", count: "0", color: "#eafff3" },
                 { icon: "🔔", title: "Notifications", count: "0", color: "#fff3ea" },
-                { icon: "⭐", title: "Subscription", count: "Free", color: "#f0e7ff" },
+                { icon: "⭐", title: "Subscription", count: subDisplay.text, color: subDisplay.color },
               ].map((card) => (
                 <div
                   key={card.title}
@@ -306,6 +340,51 @@ export default function ProfilePage() {
             <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
               Subscription Plans
             </h2>
+
+            {/* ✅ NEW: Current Subscription Status */}
+            {subscription && (
+              <div
+                style={{
+                  background: subDisplay.color,
+                  borderRadius: 12,
+                  padding: 24,
+                  marginBottom: 32,
+                  boxShadow: "0 2px 12px rgba(146,77,172,0.08)",
+                }}
+              >
+                <h3 style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 12 }}>
+                  Your Current Plan
+                </h3>
+                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
+                  <div>
+                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Plan Name</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.planName}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Amount</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>₹{subscription.amount}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Status</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: subscription.status === "active" ? "#2d7a2d" : "#d32f2f" }}>
+                      {subDisplay.status}
+                    </div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Expires On</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.expiryDate}</div>
+                  </div>
+                  <div>
+                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Days Remaining</div>
+                    <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.daysRemaining} days</div>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <h3 style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 16 }}>
+              Available Plans
+            </h3>
             <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
               {[
                 { name: "Starter", price: 99, duration: "1 Month", benefits: ["Post up to 5 items", "Exchange items", "Resell options", "Bid on items"], color: "#f3eaff" },
