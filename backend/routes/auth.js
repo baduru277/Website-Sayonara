@@ -3,7 +3,7 @@ const jwt = require('jsonwebtoken');
 const bcrypt = require('bcryptjs');
 const models = require('../models');
 const User = models.User;
-
+const Subscription = models.Subscription; // ✅ ADD THIS LINE
 console.log('Auth: User model loaded:', typeof User);
 
 const router = express.Router();
@@ -14,7 +14,6 @@ const authenticate = (req, res, next) => {
   if (!authHeader || !authHeader.startsWith('Bearer ')) {
     return res.status(401).json({ error: 'Unauthorized' });
   }
-
   const token = authHeader.split(' ')[1];
   try {
     const decoded = jwt.verify(token, process.env.JWT_SECRET || 'fallback-secret');
@@ -29,7 +28,7 @@ const authenticate = (req, res, next) => {
 router.post('/register', async (req, res) => {
   try {
     const { name, email, password, avatar, phone, location, bio } = req.body;
-
+    
     if (!name || !email || !password) {
       return res.status(400).json({ error: 'Name, email, and password are required' });
     }
@@ -40,7 +39,7 @@ router.post('/register', async (req, res) => {
     }
 
     const hashedPassword = await bcrypt.hash(password, 12);
-
+    
     const user = await User.create({
       name,
       email: email.toLowerCase(),
@@ -56,13 +55,33 @@ router.post('/register', async (req, res) => {
       lastActive: new Date()
     });
 
-    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '7d' });
-    const { password: _, ...userData } = user.toJSON();
+    // ✅ AUTOMATICALLY CREATE ₹99 SUBSCRIPTION FOR 1 YEAR
+    const expiryDate = new Date();
+    expiryDate.setFullYear(expiryDate.getFullYear() + 1); // 1 year from now
 
+    await Subscription.create({
+      userId: user.id,
+      planName: 'Basic Plan',
+      amount: 99.00,
+      status: 'active',
+      startDate: new Date(),
+      expiryDate: expiryDate
+    });
+
+    const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '7d' });
+    
+    const { password: _, ...userData } = user.toJSON();
+    
     res.status(201).json({
-      message: 'User created successfully',
+      message: 'User created successfully with active ₹99 plan',
       user: userData,
-      token
+      token,
+      subscription: {
+        planName: 'Basic Plan',
+        amount: 99,
+        status: 'active',
+        expiryDate: expiryDate
+      }
     });
   } catch (error) {
     console.error('Registration error:', error);
@@ -74,7 +93,7 @@ router.post('/register', async (req, res) => {
 router.post('/login', async (req, res) => {
   try {
     const { email, password } = req.body;
-
+    
     if (!email || !password) {
       return res.status(400).json({ error: 'Email and password are required' });
     }
@@ -88,8 +107,9 @@ router.post('/login', async (req, res) => {
     await user.update({ lastActive: new Date() });
 
     const token = jwt.sign({ id: user.id }, process.env.JWT_SECRET || 'fallback-secret', { expiresIn: '7d' });
+    
     const { password: _, ...userData } = user.toJSON();
-
+    
     res.json({
       message: 'Login successful',
       user: userData,
@@ -106,7 +126,7 @@ router.get('/me', authenticate, async (req, res) => {
   try {
     const user = await User.findByPk(req.userId);
     if (!user) return res.status(404).json({ error: 'User not found' });
-
+    
     const { password: _, ...userData } = user.toJSON();
     res.json({ user: userData });
   } catch (err) {
