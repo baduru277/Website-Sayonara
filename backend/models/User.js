@@ -78,9 +78,15 @@ User.associate = (models) => {
     foreignKey: 'userId',
     onDelete: 'CASCADE'
   });
-
   User.hasMany(models.Bid, {
     as: 'bids',
+    foreignKey: 'userId',
+    onDelete: 'CASCADE'
+  });
+  
+  // ✅ ADD THIS - Subscription relationship
+  User.hasMany(models.Subscription, {
+    as: 'subscriptions',
     foreignKey: 'userId',
     onDelete: 'CASCADE'
   });
