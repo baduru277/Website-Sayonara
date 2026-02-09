@@ -91,6 +91,13 @@ class ApiService {
     return this.request('/auth/profile', { method: 'PUT', body: JSON.stringify(profileData) });
   }
 
+  // ✅ NEW: Get user subscription
+  async getSubscription() {
+    const token = this.getAuthToken();
+    if (!token) return null;
+    return this.request('/users/subscription');
+  }
+
   logout() {
     this.removeAuthToken();
   }
