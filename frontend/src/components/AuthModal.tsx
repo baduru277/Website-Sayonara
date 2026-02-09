@@ -19,6 +19,9 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
   const [errorMsg, setErrorMsg] = useState<string | null>(null);
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
+  const [showConfirmPassword, setShowConfirmPassword] = useState(false);
+  // ✅ NEW: Store subscription info
+  const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null);
 
   if (!open) return null;
 
@@ -45,7 +48,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
     }
   }
 
-  // Signup handler (direct to basic info now)
+  // ✅ UPDATED: Signup handler with subscription info
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
@@ -53,8 +56,10 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
     try {
       const res = await apiService.register({ name, email, password });
       if (res.token || res.user) {
+        // ✅ Store subscription info
+        setSubscriptionInfo(res.subscription);
         setLoading(false);
-        setStep('basic-info'); // directly go to basic info
+        setStep('subscription-pending'); // ✅ Show subscription pending step
       } else {
         setErrorMsg(res.error || res.message || 'Signup failed.');
         setLoading(false);
@@ -156,7 +161,33 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                   <label>Email Address</label>
                   <input type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} />
                   <label>Password</label>
-                  <input type="password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} />
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder="Enter your password" 
+                      value={password} 
+                      onChange={e => setPassword(e.target.value)}
+                      style={{ paddingRight: '45px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '18px',
+                        color: '#924DAC',
+                        padding: '4px 8px'
+                      }}
+                    >
+                      {showPassword ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
                   <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 18, fontSize: 18 }} disabled={loading}>
                     {loading ? 'Signing In...' : 'SIGN IN'}
                   </button>
@@ -164,15 +195,69 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
               ) : (
                 <form onSubmit={handleSignup}>
                   <label>Name</label>
-                  <input type="text" placeholder="Enter your name" value={name} onChange={e => setName(e.target.value)} />
+                  <input type="text" placeholder="Enter your name" value={name} onChange={e => setName(e.target.value)} required />
                   <label>Email Address</label>
-                  <input type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} />
+                  <input type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} required />
                   <label>Password</label>
-                  <input type="password" placeholder="Create a password" value={password} onChange={e => setPassword(e.target.value)} />
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type={showPassword ? "text" : "password"} 
+                      placeholder="Create a password" 
+                      value={password} 
+                      onChange={e => setPassword(e.target.value)} 
+                      required
+                      style={{ paddingRight: '45px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowPassword(!showPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '18px',
+                        color: '#924DAC',
+                        padding: '4px 8px'
+                      }}
+                    >
+                      {showPassword ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
                   <label>Confirm Password</label>
-                  <input type="password" placeholder="Confirm your password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                  <div style={{ position: 'relative' }}>
+                    <input 
+                      type={showConfirmPassword ? "text" : "password"} 
+                      placeholder="Confirm your password" 
+                      value={confirmPassword} 
+                      onChange={e => setConfirmPassword(e.target.value)} 
+                      required
+                      style={{ paddingRight: '45px' }}
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setShowConfirmPassword(!showConfirmPassword)}
+                      style={{
+                        position: 'absolute',
+                        right: '12px',
+                        top: '50%',
+                        transform: 'translateY(-50%)',
+                        background: 'none',
+                        border: 'none',
+                        cursor: 'pointer',
+                        fontSize: '18px',
+                        color: '#924DAC',
+                        padding: '4px 8px'
+                      }}
+                    >
+                      {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
+                    </button>
+                  </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 12 }}>
-                    <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} style={{ marginRight: 8 }} />
+                    <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} style={{ marginRight: 8 }} required />
                     <span style={{ fontSize: 13, color: '#666', textAlign: 'center' }}>
                       I agree to the <a href="#" style={{ color: '#924DAC' }}>Terms</a> & <a href="#" style={{ color: '#924DAC' }}>Privacy Policy</a>.
                     </span>
@@ -185,7 +270,73 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
             </>
           )}
 
-          {/* Step: Basic Info (directly after signup) */}
+          {/* ✅ NEW: Subscription Pending Step */}
+          {step === "subscription-pending" && (
+            <div style={{ textAlign: 'center' }}>
+              <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
+              <h3 style={{ fontWeight: 700, fontSize: 22, color: '#924DAC', marginBottom: 12 }}>
+                Account Created Successfully!
+              </h3>
+              <p style={{ color: '#666', fontSize: 15, marginBottom: 24, lineHeight: 1.6 }}>
+                Welcome to Sayonara! Your account has been created.
+              </p>
+
+              {/* Subscription Info Card */}
+              <div style={{
+                background: '#fff7e6',
+                border: '2px solid #ffd666',
+                borderRadius: 12,
+                padding: 20,
+                marginBottom: 24
+              }}>
+                <div style={{ fontSize: 32, marginBottom: 8 }}>⏳</div>
+                <h4 style={{ fontSize: 16, fontWeight: 700, color: '#d46b08', marginBottom: 8 }}>
+                  Subscription Pending Approval
+                </h4>
+                <p style={{ fontSize: 14, color: '#ad6800', marginBottom: 12 }}>
+                  {subscriptionInfo?.message || 'Please contact admin for payment approval'}
+                </p>
+                <div style={{ 
+                  display: 'grid', 
+                  gridTemplateColumns: '1fr 1fr', 
+                  gap: 12,
+                  marginTop: 16,
+                  fontSize: 13
+                }}>
+                  <div style={{ background: 'rgba(255,255,255,0.5)', padding: 10, borderRadius: 8 }}>
+                    <div style={{ color: '#666', marginBottom: 4 }}>Plan</div>
+                    <div style={{ fontWeight: 700, color: '#924DAC' }}>
+                      {subscriptionInfo?.planName || 'Basic Plan'}
+                    </div>
+                  </div>
+                  <div style={{ background: 'rgba(255,255,255,0.5)', padding: 10, borderRadius: 8 }}>
+                    <div style={{ color: '#666', marginBottom: 4 }}>Amount</div>
+                    <div style={{ fontWeight: 700, color: '#924DAC' }}>
+                      ₹{subscriptionInfo?.amount || 99}
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <p style={{ fontSize: 13, color: '#999', marginBottom: 20 }}>
+                💡 Contact support with your payment details to activate your subscription
+              </p>
+
+              <button 
+                onClick={() => {
+                  localStorage.setItem('isLoggedIn', 'true');
+                  onClose();
+                  window.location.reload();
+                }}
+                className="sayonara-btn" 
+                style={{ width: '100%', fontSize: 16 }}
+              >
+                Go to Dashboard
+              </button>
+            </div>
+          )}
+
+          {/* Step: Basic Info (if needed later) */}
           {step === "basic-info" && (
             <form onSubmit={e => {
               e.preventDefault();
@@ -194,7 +345,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                 setSuccessMsg(null);
                 setStep('login-signup');
                 setTab('login');
-              }, 2500); // show message 2.5s
+              }, 2500);
             }}>
               {successMsg && (
                 <div style={{
