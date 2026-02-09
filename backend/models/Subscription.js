@@ -76,4 +76,4 @@ Subscription.associate = (models) => {
 };
 
 module.exports = Subscription;
-EOF
+
