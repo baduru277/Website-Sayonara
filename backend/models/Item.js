@@ -34,6 +34,8 @@ const Item = sequelize.define('Item', {
     type: DataTypes.ENUM('high', 'medium', 'low'),
     defaultValue: 'medium'
   },
+
+  // -------------------- Images --------------------
   images: {
     type: DataTypes.TEXT,
     defaultValue: '[]',
@@ -49,6 +51,8 @@ const Item = sequelize.define('Item', {
       this.setDataValue('images', JSON.stringify(value || []));
     }
   },
+
+  // -------------------- Tags --------------------
   tags: {
     type: DataTypes.TEXT,
     defaultValue: '[]',
@@ -64,6 +68,8 @@ const Item = sequelize.define('Item', {
       this.setDataValue('tags', JSON.stringify(value || []));
     }
   },
+
+  // -------------------- Location & Status --------------------
   location: {
     type: DataTypes.STRING,
     allowNull: false
@@ -76,14 +82,32 @@ const Item = sequelize.define('Item', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   },
+
+  // ✅ NEW: Item sold/completed status
+  status: {
+    type: DataTypes.ENUM('available', 'sold', 'exchanged', 'pending', 'cancelled'),
+    defaultValue: 'available'
+  },
+
+  // -------------------- Stats --------------------
   views: {
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
+
+  // ✅ NEW: Likes count
+  likes: {
+    type: DataTypes.INTEGER,
+    defaultValue: 0
+  },
+
+  // -------------------- Exchange Fields --------------------
   lookingFor: {
     type: DataTypes.TEXT,
     allowNull: true
   },
+
+  // -------------------- Bidding Fields --------------------
   startingBid: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
@@ -104,6 +128,14 @@ const Item = sequelize.define('Item', {
     type: DataTypes.INTEGER,
     defaultValue: 0
   },
+
+  // ✅ NEW: Auction winner
+  winnerId: {
+    type: DataTypes.UUID,
+    allowNull: true
+  },
+
+  // -------------------- Resell Fields --------------------
   price: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
@@ -124,6 +156,8 @@ const Item = sequelize.define('Item', {
     type: DataTypes.STRING,
     allowNull: true
   },
+
+  // -------------------- Flags --------------------
   isPrime: {
     type: DataTypes.BOOLEAN,
     defaultValue: false
@@ -132,12 +166,15 @@ const Item = sequelize.define('Item', {
     type: DataTypes.BOOLEAN,
     defaultValue: false
   }
+
 }, {
+  timestamps: true,
   indexes: [
     { fields: ['type'] },
     { fields: ['category'] },
     { fields: ['priority'] },
     { fields: ['isActive'] },
+    { fields: ['status'] },
     { fields: ['createdAt'] },
     { fields: ['userId'] }
   ]
