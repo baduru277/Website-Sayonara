@@ -25,12 +25,28 @@ const Bid = sequelize.define('Bid', {
   maxAmount: {
     type: DataTypes.DECIMAL(10, 2),
     allowNull: true
+  },
+
+  // ✅ NEW: Bid status
+  status: {
+    type: DataTypes.ENUM('active', 'won', 'lost', 'cancelled'),
+    defaultValue: 'active'
+  },
+
+  // ✅ NEW: Optional message from bidder
+  message: {
+    type: DataTypes.TEXT,
+    allowNull: true
   }
+
 }, {
+  timestamps: true,
   indexes: [
     { fields: ['itemId'] },
     { fields: ['userId'] },
-    { fields: ['createdAt'] }
+    { fields: ['createdAt'] },
+    { fields: ['isWinning'] },  // ✅ NEW: Fast lookup for winning bid
+    { fields: ['status'] }       // ✅ NEW: Fast lookup by status
   ]
 });
 
