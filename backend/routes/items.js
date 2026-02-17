@@ -5,272 +5,68 @@ const { auth, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
-// Test route
-router.get('/test', (req, res) => {
-  res.json({ message: 'Items API is working!' });
-});
-
-// Clear all items
-router.delete('/clear', async (req, res) => {
-  try {
-    await Item.destroy({ where: {} });
-    res.json({ message: 'All items cleared successfully' });
-  } catch (error) {
-    console.error('Clear items error:', error);
-    res.status(500).json({ error: 'Failed to clear items' });
-  }
-});
-
-// Get all items
+// -------------------- Get All Items --------------------
 router.get('/', optionalAuth, async (req, res) => {
   try {
     const {
       type, category, priority, condition, search,
       sortBy = 'createdAt', order = 'DESC',
-      page = 1, limit = 20, tags
+      page = 1, limit = 20, tags, status
     } = req.query;
-    
-    const offset = (page - 1) * limit;
+
+    const offset = (parseInt(page) - 1) * parseInt(limit);
     const where = { isActive: true };
-    
+
     if (type) where.type = type;
     if (category && category !== 'All') where.category = category;
     if (priority && priority !== 'All') where.priority = priority;
     if (condition && condition !== 'All') where.condition = condition;
-    
+    if (status && status !== 'All') where.status = status;
+
+    // ✅ FIXED: Use Op.like instead of Op.iLike (SQLite doesn't support iLike)
     if (search) {
       where[Op.or] = [
-        { title: { [Op.iLike]: `%${search}%` } },
-        { description: { [Op.iLike]: `%${search}%` } },
-        { lookingFor: { [Op.iLike]: `%${search}%` } }
+        { title: { [Op.like]: `%${search}%` } },
+        { description: { [Op.like]: `%${search}%` } },
+        { lookingFor: { [Op.like]: `%${search}%` } }
       ];
     }
-    
+
+    // ✅ FIXED: tags stored as JSON string, use like instead of overlap
     if (tags) {
-      where.tags = { [Op.overlap]: tags.split(',') };
+      where.tags = { [Op.like]: `%${tags}%` };
     }
-    
+
+    const validSortFields = ['createdAt', 'price', 'views', 'likes', 'currentBid', 'startingBid'];
+    const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
+    const sortOrder = order.toUpperCase() === 'ASC' ? 'ASC' : 'DESC';
+
     const items = await Item.findAndCountAll({
       where,
       include: [{
         model: User,
         as: 'seller',
-        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime']
+        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar']
       }],
-      order: [[sortBy, order]],
+      order: [[sortField, sortOrder]],
       limit: parseInt(limit) || 20,
       offset: parseInt(offset) || 0
     });
-    
+
     res.json({
       items: items.rows,
       total: items.count,
       page: parseInt(page) || 1,
-      totalPages: Math.ceil(items.count / (limit || 20))
+      totalPages: Math.ceil(items.count / (parseInt(limit) || 20))
     });
   } catch (error) {
     console.error('Get items error:', error);
-    res.status(500).json({ error: 'Server error' });
+    res.status(500).json({ error: error.message || 'Server error' });
   }
 });
 
-// Get single item by ID
-router.get('/:id', optionalAuth, async (req, res) => {
-  try {
-    const item = await Item.findByPk(req.params.id, {
-      include: [{
-        model: User,
-        as: 'seller',
-        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'location']
-      }]
-    });
-    
-    if (!item) return res.status(404).json({ error: 'Item not found' });
-    
-    await item.increment('views');
-    
-    const bids = await Bid.findAll({
-      where: { itemId: item.id },
-      include: [{ model: User, as: 'bidder', attributes: ['id', 'name'] }],
-      order: [['amount', 'DESC']],
-      limit: 10
-    });
-    
-    res.json({ item, bids });
-  } catch (error) {
-    console.error('Get item error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Create new item
-router.post('/', auth, async (req, res) => {
-  try {
-    console.log('📨 POST /items - Creating new item');
-    console.log('User ID:', req.user?.id);
-    console.log('Request body keys:', Object.keys(req.body));
-    console.log('Request body:', req.body);
-
-    const {
-      title,
-      description,
-      category,
-      condition,
-      type,
-      price,
-      startingBid,
-      lookingFor,
-      auctionEndDate,
-      images = [],
-      tags = [],
-      stock = 1,
-      warrantyStatus,
-      itemCondition,
-      damageInfo,
-      usageHistory,
-      originalBox,
-      location
-    } = req.body;
-
-    // Validate required fields
-    if (!title || !description) {
-      console.error('❌ Missing required fields: title or description');
-      return res.status(400).json({ error: 'Title and description are required' });
-    }
-
-    if (!type) {
-      console.error('❌ Missing required field: type (bidding, exchange, resell)');
-      return res.status(400).json({ error: 'Type is required (bidding, exchange, or resell)' });
-    }
-
-    // Validate type-specific requirements
-    if (type === 'resell' && !price) {
-      console.error('❌ Resell items require price');
-      return res.status(400).json({ error: 'Resell items require a price' });
-    }
-
-    if (type === 'bidding' && !startingBid) {
-      console.error('❌ Bidding items require startingBid');
-      return res.status(400).json({ error: 'Bidding items require a starting bid' });
-    }
-
-    if (type === 'exchange' && !lookingFor) {
-      console.error('❌ Exchange items require lookingFor');
-      return res.status(400).json({ error: 'Exchange items require what you are looking for' });
-    }
-
-    console.log('✅ All validations passed');
-
-    // Create the item - IMPORTANT: Pass location field
-    const itemData = {
-      title,
-      description,
-      category: category || 'Other',
-      condition: condition || 'Used',
-      type,
-      price: price || null,
-      startingBid: startingBid || null,
-      currentBid: startingBid || null,
-      lookingFor: lookingFor || null,
-      auctionEndDate: auctionEndDate || null,
-      images: Array.isArray(images) ? images : [],
-      tags: Array.isArray(tags) ? tags : [],
-      stock: stock || 1,
-      warrantyStatus: warrantyStatus || null,
-      itemCondition: itemCondition || null,
-      damageInfo: damageInfo || null,
-      usageHistory: usageHistory || null,
-      originalBox: originalBox || null,
-      location: location || 'Not specified', // IMPORTANT: Include location
-      userId: req.user.id,
-      isActive: true,
-      views: 0,
-      totalBids: 0
-    };
-
-    console.log('📝 Creating item with data:', itemData);
-
-    const item = await Item.create(itemData);
-    console.log('✅ Item created with ID:', item.id);
-
-    const createdItem = await Item.findByPk(item.id, {
-      include: [{
-        model: User,
-        as: 'seller',
-        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime']
-      }]
-    });
-
-    console.log('✅ Item retrieved with seller info');
-    res.status(201).json({ message: 'Item created successfully', item: createdItem });
-
-  } catch (error) {
-    console.error('❌ Create item error:', error);
-    console.error('Error details:', {
-      name: error.name,
-      message: error.message,
-      stack: error.stack
-    });
-    res.status(500).json({ error: error.message || 'Failed to create item' });
-  }
-});
-
-// Update item
-router.put('/:id', auth, async (req, res) => {
-  try {
-    const item = await Item.findByPk(req.params.id);
-    if (!item) return res.status(404).json({ error: 'Item not found' });
-    if (item.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
-
-    await item.update(req.body);
-    res.json({ message: 'Item updated successfully', item });
-  } catch (error) {
-    console.error('Update item error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Delete item
-router.delete('/:id', auth, async (req, res) => {
-  try {
-    const item = await Item.findByPk(req.params.id);
-    if (!item) return res.status(404).json({ error: 'Item not found' });
-    if (item.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
-
-    await item.update({ isActive: false });
-    res.json({ message: 'Item deleted successfully' });
-  } catch (error) {
-    console.error('Delete item error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Place bid
-router.post('/:id/bid', auth, async (req, res) => {
-  try {
-    const { amount } = req.body;
-    const item = await Item.findByPk(req.params.id);
-    
-    if (!item) return res.status(404).json({ error: 'Item not found' });
-    if (item.type !== 'bidding') return res.status(400).json({ error: 'This item is not available for bidding' });
-    if (item.userId === req.user.id) return res.status(400).json({ error: 'You cannot bid on your own item' });
-    if (new Date() > new Date(item.auctionEndDate)) return res.status(400).json({ error: 'Auction has ended' });
-    if (amount <= item.currentBid) return res.status(400).json({ error: 'Bid must be higher than current bid' });
-
-    await Bid.create({ amount, userId: req.user.id, itemId: item.id });
-    await item.update({ currentBid: amount, totalBids: item.totalBids + 1 });
-
-    await Bid.update({ isWinning: false }, { where: { itemId: item.id } });
-    await Bid.update({ isWinning: true }, { where: { itemId: item.id, amount } });
-
-    res.json({ message: 'Bid placed successfully', currentBid: amount });
-  } catch (error) {
-    console.error('Place bid error:', error);
-    res.status(500).json({ error: 'Server error' });
-  }
-});
-
-// Get featured items
+// -------------------- Get Featured Items --------------------
+// ✅ FIXED: Moved before /:id to prevent route conflict
 router.get('/featured/items', async (req, res) => {
   try {
     const items = await Item.findAll({
@@ -278,7 +74,7 @@ router.get('/featured/items', async (req, res) => {
       include: [{
         model: User,
         as: 'seller',
-        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime']
+        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar']
       }],
       order: [['createdAt', 'DESC']],
       limit: 12
@@ -290,7 +86,8 @@ router.get('/featured/items', async (req, res) => {
   }
 });
 
-// Get categories
+// -------------------- Get Categories --------------------
+// ✅ FIXED: Moved before /:id to prevent route conflict
 router.get('/categories/list', async (req, res) => {
   try {
     const categories = await Item.findAll({
@@ -305,6 +102,263 @@ router.get('/categories/list', async (req, res) => {
     res.json({ categories });
   } catch (error) {
     console.error('Get categories error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// -------------------- Get My Items --------------------
+router.get('/my/items', auth, async (req, res) => {
+  try {
+    const items = await Item.findAll({
+      where: { userId: req.user.id, isActive: true },
+      order: [['createdAt', 'DESC']]
+    });
+    res.json({ items, total: items.length });
+  } catch (error) {
+    console.error('Get my items error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// -------------------- Get Single Item --------------------
+router.get('/:id', optionalAuth, async (req, res) => {
+  try {
+    const item = await Item.findByPk(req.params.id, {
+      include: [{
+        model: User,
+        as: 'seller',
+        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'location', 'avatar']
+      }]
+    });
+
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    // Increment views
+    await item.increment('views');
+
+    // Get bids if bidding item
+    let bids = [];
+    if (item.type === 'bidding') {
+      bids = await Bid.findAll({
+        where: { itemId: item.id },
+        include: [{ model: User, as: 'bidder', attributes: ['id', 'name', 'avatar'] }],
+        order: [['amount', 'DESC']],
+        limit: 10
+      });
+    }
+
+    res.json({ item, bids });
+  } catch (error) {
+    console.error('Get item error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// -------------------- Create Item --------------------
+router.post('/', auth, async (req, res) => {
+  try {
+    const {
+      title, description, category, condition, type,
+      price, originalPrice, discount, stock,
+      startingBid, buyNowPrice, auctionEndDate,
+      lookingFor, images = [], tags = [],
+      location, shipping, priority,
+      warrantyStatus, damageInfo, usageHistory, originalBox,
+      fastShipping
+    } = req.body;
+
+    // -------------------- Validation --------------------
+    if (!title || !description) {
+      return res.status(400).json({ error: 'Title and description are required' });
+    }
+    if (!type) {
+      return res.status(400).json({ error: 'Type is required (bidding, exchange, or resell)' });
+    }
+    if (!category) {
+      return res.status(400).json({ error: 'Category is required' });
+    }
+    if (!condition) {
+      return res.status(400).json({ error: 'Condition is required' });
+    }
+    if (!location) {
+      return res.status(400).json({ error: 'Location is required' });
+    }
+    if (type === 'resell' && !price) {
+      return res.status(400).json({ error: 'Resell items require a price' });
+    }
+    if (type === 'bidding' && !startingBid) {
+      return res.status(400).json({ error: 'Bidding items require a starting bid' });
+    }
+    if (type === 'exchange' && !lookingFor) {
+      return res.status(400).json({ error: 'Exchange items require what you are looking for' });
+    }
+
+    // -------------------- Create Item --------------------
+    const item = await Item.create({
+      title,
+      description,
+      category,
+      condition,
+      type,
+      priority: priority || 'medium',
+      images: Array.isArray(images) ? images : [],
+      tags: Array.isArray(tags) ? tags : [],
+      location,
+      userId: req.user.id,
+      isActive: true,
+      status: 'available',
+      views: 0,
+      likes: 0,
+
+      // Resell fields
+      price: price || null,
+      originalPrice: originalPrice || null,
+      discount: discount || null,
+      stock: stock || 1,
+      shipping: shipping || null,
+      fastShipping: fastShipping || false,
+
+      // Bidding fields
+      startingBid: startingBid || null,
+      currentBid: startingBid || null,
+      buyNowPrice: buyNowPrice || null,
+      auctionEndDate: auctionEndDate || null,
+      totalBids: 0,
+
+      // Exchange fields
+      lookingFor: lookingFor || null,
+
+      // Extra fields
+      warrantyStatus: warrantyStatus || null,
+      damageInfo: damageInfo || null,
+      usageHistory: usageHistory || null,
+      originalBox: originalBox || false,
+    });
+
+    // Return item with seller info
+    const createdItem = await Item.findByPk(item.id, {
+      include: [{
+        model: User,
+        as: 'seller',
+        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar']
+      }]
+    });
+
+    console.log(`✅ Item created: ${item.id} by user ${req.user.id}`);
+    res.status(201).json({ message: 'Item created successfully', item: createdItem });
+
+  } catch (error) {
+    console.error('Create item error:', error);
+    res.status(500).json({ error: error.message || 'Failed to create item' });
+  }
+});
+
+// -------------------- Update Item --------------------
+router.put('/:id', auth, async (req, res) => {
+  try {
+    const item = await Item.findByPk(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    if (item.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
+
+    // ✅ Prevent updating sensitive fields directly
+    const { userId, views, totalBids, currentBid, likes, ...updateData } = req.body;
+
+    await item.update(updateData);
+
+    const updatedItem = await Item.findByPk(item.id, {
+      include: [{
+        model: User,
+        as: 'seller',
+        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar']
+      }]
+    });
+
+    res.json({ message: 'Item updated successfully', item: updatedItem });
+  } catch (error) {
+    console.error('Update item error:', error);
+    res.status(500).json({ error: error.message || 'Server error' });
+  }
+});
+
+// -------------------- Delete Item --------------------
+router.delete('/:id', auth, async (req, res) => {
+  try {
+    const item = await Item.findByPk(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    if (item.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
+
+    // ✅ Soft delete - just set isActive to false
+    await item.update({ isActive: false, status: 'cancelled' });
+    res.json({ message: 'Item deleted successfully' });
+  } catch (error) {
+    console.error('Delete item error:', error);
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// -------------------- Place Bid --------------------
+router.post('/:id/bid', auth, async (req, res) => {
+  try {
+    const { amount, message } = req.body;
+    const item = await Item.findByPk(req.params.id);
+
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    if (item.type !== 'bidding') return res.status(400).json({ error: 'This item is not available for bidding' });
+    if (item.userId === req.user.id) return res.status(400).json({ error: 'You cannot bid on your own item' });
+    if (!item.isActive) return res.status(400).json({ error: 'This item is no longer active' });
+    if (item.auctionEndDate && new Date() > new Date(item.auctionEndDate)) {
+      return res.status(400).json({ error: 'Auction has ended' });
+    }
+    if (parseFloat(amount) <= parseFloat(item.currentBid || item.startingBid)) {
+      return res.status(400).json({ error: `Bid must be higher than current bid of ₹${item.currentBid || item.startingBid}` });
+    }
+
+    // ✅ Set previous winning bid to not winning
+    await Bid.update(
+      { isWinning: false, status: 'lost' },
+      { where: { itemId: item.id, isWinning: true } }
+    );
+
+    // Create new bid
+    const bid = await Bid.create({
+      amount: parseFloat(amount),
+      userId: req.user.id,
+      itemId: item.id,
+      isWinning: true,
+      status: 'active',
+      message: message || null
+    });
+
+    // Update item current bid
+    await item.update({
+      currentBid: parseFloat(amount),
+      totalBids: item.totalBids + 1
+    });
+
+    console.log(`✅ Bid placed: ₹${amount} on item ${item.id} by user ${req.user.id}`);
+
+    res.json({
+      message: 'Bid placed successfully',
+      currentBid: amount,
+      totalBids: item.totalBids + 1,
+      bid
+    });
+  } catch (error) {
+    console.error('Place bid error:', error);
+    res.status(500).json({ error: error.message || 'Server error' });
+  }
+});
+
+// -------------------- Like Item --------------------
+router.post('/:id/like', auth, async (req, res) => {
+  try {
+    const item = await Item.findByPk(req.params.id);
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+
+    await item.increment('likes');
+    res.json({ message: 'Item liked', likes: item.likes + 1 });
+  } catch (error) {
+    console.error('Like item error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
