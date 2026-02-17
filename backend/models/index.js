@@ -2,12 +2,13 @@ const sequelize = require('../config/database');
 const User = require('./User');
 const Item = require('./Item');
 const Bid = require('./Bid');
-const Subscription = require('./Subscription'); // ✅ ADD THIS LINE
+const Subscription = require('./Subscription');
+const PaymentProof = require('./PaymentProof'); // ✅ ADD THIS
 
-// Define associations
-const models = { User, Item, Bid, Subscription, sequelize }; // ✅ ADD Subscription HERE
+// Define all models
+const models = { User, Item, Bid, Subscription, PaymentProof, sequelize }; // ✅ ADD PaymentProof
 
-// Call associate functions to set up relationships
+// Call associate functions to set up all relationships
 Object.values(models).forEach(model => {
   if (model.associate) {
     model.associate(models);
