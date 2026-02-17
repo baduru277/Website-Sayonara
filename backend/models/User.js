@@ -41,6 +41,12 @@ const User = sequelize.define('User', {
     allowNull: false,
     defaultValue: false,
   },
+  // ✅ NEW: Admin flag
+  isAdmin: {
+    type: DataTypes.BOOLEAN,
+    allowNull: false,
+    defaultValue: false,
+  },
   rating: {
     type: DataTypes.FLOAT,
     allowNull: false,
@@ -78,15 +84,22 @@ User.associate = (models) => {
     foreignKey: 'userId',
     onDelete: 'CASCADE'
   });
+
   User.hasMany(models.Bid, {
     as: 'bids',
     foreignKey: 'userId',
     onDelete: 'CASCADE'
   });
-  
-  // ✅ ADD THIS - Subscription relationship
+
   User.hasMany(models.Subscription, {
     as: 'subscriptions',
+    foreignKey: 'userId',
+    onDelete: 'CASCADE'
+  });
+
+  // ✅ NEW: PaymentProof association
+  User.hasMany(models.PaymentProof, {
+    as: 'paymentProofs',
     foreignKey: 'userId',
     onDelete: 'CASCADE'
   });
