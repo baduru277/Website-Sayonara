@@ -1,75 +1,333 @@
 const express = require('express');
 const { Subscription, User } = require('../models');
+const { adminAuth } = require('../middleware/auth');
 const router = express.Router();
 
-// Get all pending subscriptions
-router.get('/subscriptions/pending', async (req, res) => {
+// -------------------- Get Dashboard Statistics --------------------
+router.get('/dashboard/stats', adminAuth, async (req, res) => {
   try {
-    const pending = await Subscription.findAll({
-      where: { status: 'pending' },
-      include: [{ model: User, as: 'user', attributes: ['id', 'name', 'email', 'phone'] }],
-      order: [['createdAt', 'DESC']]
+    const totalUsers = await User.count();
+    const totalSubscriptions = await Subscription.count();
+    const pendingSubscriptions = await Subscription.count({ where: { status: 'pending' } });
+    const activeSubscriptions = await Subscription.count({ where: { status: 'active' } });
+    const expiredSubscriptions = await Subscription.count({ where: { status: 'expired' } });
+    const rejectedSubscriptions = await Subscription.count({ where: { status: 'rejected' } });
+    
+    // Calculate total revenue from active subscriptions
+    const revenueData = await Subscription.findAll({
+      where: { status: 'active' },
+      attributes: ['amount']
     });
-    res.json({ subscriptions: pending });
+    const totalRevenue = revenueData.reduce((sum, sub) => sum + parseFloat(sub.amount || 0), 0);
+    
+    res.json({
+      stats: {
+        totalUsers,
+        totalSubscriptions,
+        pendingSubscriptions,
+        activeSubscriptions,
+        expiredSubscriptions,
+        rejectedSubscriptions,
+        totalRevenue
+      }
+    });
   } catch (error) {
+    console.error('Get stats error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Approve subscription
-router.post('/subscriptions/:id/approve', async (req, res) => {
+// -------------------- Get All Subscriptions --------------------
+router.get('/subscriptions', adminAuth, async (req, res) => {
   try {
-    const { agentName, transactionId } = req.body;
-    const subscription = await Subscription.findByPk(req.params.id);
+    const { status, page = 1, limit = 20 } = req.query;
+    const offset = (page - 1) * limit;
+    
+    const where = status ? { status } : {};
+    
+    const subscriptions = await Subscription.findAndCountAll({
+      where,
+      include: [{ 
+        model: User, 
+        as: 'user', 
+        attributes: ['id', 'name', 'email', 'phone'] 
+      }],
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+    res.json({
+      subscriptions: subscriptions.rows,
+      total: subscriptions.count,
+      page: parseInt(page),
+      totalPages: Math.ceil(subscriptions.count / limit)
+    });
+  } catch (error) {
+    console.error('Get subscriptions error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// -------------------- Get Pending Subscriptions --------------------
+router.get('/subscriptions/pending', adminAuth, async (req, res) => {
+  try {
+    const pending = await Subscription.findAll({
+      where: { status: 'pending' },
+      include: [{ 
+        model: User, 
+        as: 'user', 
+        attributes: ['id', 'name', 'email', 'phone', 'createdAt'] 
+      }],
+      order: [['createdAt', 'ASC']] // Oldest first
+    });
+    
+    res.json({ subscriptions: pending });
+  } catch (error) {
+    console.error('Get pending subscriptions error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// -------------------- Get Subscription by ID --------------------
+router.get('/subscriptions/:id', adminAuth, async (req, res) => {
+  try {
+    const subscription = await Subscription.findByPk(req.params.id, {
+      include: [{ 
+        model: User, 
+        as: 'user', 
+        attributes: ['id', 'name', 'email', 'phone', 'location', 'createdAt'] 
+      }]
+    });
     
     if (!subscription) {
       return res.status(404).json({ error: 'Subscription not found' });
     }
+    
+    res.json({ subscription });
+  } catch (error) {
+    console.error('Get subscription error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// -------------------- Approve Subscription --------------------
+router.post('/subscriptions/:id/approve', adminAuth, async (req, res) => {
+  try {
+    const { agentName, transactionId, notes } = req.body;
+    
+    const subscription = await Subscription.findByPk(req.params.id, {
+      include: [{ model: User, as: 'user' }]
+    });
+    
+    if (!subscription) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+    
+    if (subscription.status !== 'pending') {
+      return res.status(400).json({ error: 'Only pending subscriptions can be approved' });
+    }
 
     const startDate = new Date();
     const expiryDate = new Date();
-    expiryDate.setFullYear(expiryDate.getFullYear() + 1);
+    expiryDate.setFullYear(expiryDate.getFullYear() + 1); // 1 year from now
 
     await subscription.update({
       status: 'active',
       agentName: agentName || 'Admin',
       transactionId: transactionId || null,
+      rejectedReason: null, // Clear any previous rejection
       approvedAt: new Date(),
       startDate: startDate,
       expiryDate: expiryDate
     });
 
+    console.log(`✅ Subscription approved for user ${subscription.user.email} by ${agentName || 'Admin'}`);
+
     res.json({ 
       message: 'Subscription approved successfully',
-      subscription 
+      subscription: await Subscription.findByPk(subscription.id, {
+        include: [{ model: User, as: 'user' }]
+      })
     });
   } catch (error) {
+    console.error('Approve subscription error:', error);
     res.status(500).json({ error: error.message });
   }
 });
 
-// Reject subscription
-router.post('/subscriptions/:id/reject', async (req, res) => {
+// -------------------- Reject Subscription --------------------
+router.post('/subscriptions/:id/reject', adminAuth, async (req, res) => {
   try {
     const { agentName, reason } = req.body;
-    const subscription = await Subscription.findByPk(req.params.id);
+    
+    const subscription = await Subscription.findByPk(req.params.id, {
+      include: [{ model: User, as: 'user' }]
+    });
     
     if (!subscription) {
       return res.status(404).json({ error: 'Subscription not found' });
+    }
+    
+    if (subscription.status !== 'pending') {
+      return res.status(400).json({ error: 'Only pending subscriptions can be rejected' });
     }
 
     await subscription.update({
       status: 'rejected',
       agentName: agentName || 'Admin',
       rejectedReason: reason || 'Payment not verified',
-      approvedAt: new Date()
+      approvedAt: new Date() // Track when decision was made
     });
+
+    console.log(`❌ Subscription rejected for user ${subscription.user.email} by ${agentName || 'Admin'}`);
 
     res.json({ 
       message: 'Subscription rejected',
-      subscription 
+      subscription: await Subscription.findByPk(subscription.id, {
+        include: [{ model: User, as: 'user' }]
+      })
     });
   } catch (error) {
+    console.error('Reject subscription error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// -------------------- Extend Subscription --------------------
+router.post('/subscriptions/:id/extend', adminAuth, async (req, res) => {
+  try {
+    const { months, agentName } = req.body;
+    
+    if (!months || months < 1 || months > 24) {
+      return res.status(400).json({ error: 'Invalid months value (1-24)' });
+    }
+    
+    const subscription = await Subscription.findByPk(req.params.id, {
+      include: [{ model: User, as: 'user' }]
+    });
+    
+    if (!subscription) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+    
+    if (subscription.status !== 'active') {
+      return res.status(400).json({ error: 'Only active subscriptions can be extended' });
+    }
+
+    const currentExpiry = new Date(subscription.expiryDate);
+    currentExpiry.setMonth(currentExpiry.getMonth() + parseInt(months));
+
+    await subscription.update({
+      expiryDate: currentExpiry,
+      agentName: agentName || 'Admin'
+    });
+
+    console.log(`📅 Subscription extended by ${months} months for user ${subscription.user.email}`);
+
+    res.json({ 
+      message: `Subscription extended by ${months} month(s)`,
+      subscription: await Subscription.findByPk(subscription.id, {
+        include: [{ model: User, as: 'user' }]
+      })
+    });
+  } catch (error) {
+    console.error('Extend subscription error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// -------------------- Cancel Subscription --------------------
+router.post('/subscriptions/:id/cancel', adminAuth, async (req, res) => {
+  try {
+    const { agentName, reason } = req.body;
+    
+    const subscription = await Subscription.findByPk(req.params.id, {
+      include: [{ model: User, as: 'user' }]
+    });
+    
+    if (!subscription) {
+      return res.status(404).json({ error: 'Subscription not found' });
+    }
+
+    await subscription.update({
+      status: 'cancelled',
+      agentName: agentName || 'Admin',
+      rejectedReason: reason || 'Cancelled by admin'
+    });
+
+    console.log(`🚫 Subscription cancelled for user ${subscription.user.email}`);
+
+    res.json({ 
+      message: 'Subscription cancelled',
+      subscription: await Subscription.findByPk(subscription.id, {
+        include: [{ model: User, as: 'user' }]
+      })
+    });
+  } catch (error) {
+    console.error('Cancel subscription error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// -------------------- Get All Users --------------------
+router.get('/users', adminAuth, async (req, res) => {
+  try {
+    const { page = 1, limit = 20, search } = req.query;
+    const offset = (page - 1) * limit;
+    
+    const where = search ? {
+      [require('sequelize').Op.or]: [
+        { name: { [require('sequelize').Op.like]: `%${search}%` } },
+        { email: { [require('sequelize').Op.like]: `%${search}%` } }
+      ]
+    } : {};
+    
+    const users = await User.findAndCountAll({
+      where,
+      attributes: { exclude: ['password'] },
+      include: [{
+        model: Subscription,
+        as: 'subscriptions',
+        order: [['createdAt', 'DESC']],
+        limit: 1
+      }],
+      order: [['createdAt', 'DESC']],
+      limit: parseInt(limit),
+      offset: parseInt(offset)
+    });
+    
+    res.json({
+      users: users.rows,
+      total: users.count,
+      page: parseInt(page),
+      totalPages: Math.ceil(users.count / limit)
+    });
+  } catch (error) {
+    console.error('Get users error:', error);
+    res.status(500).json({ error: error.message });
+  }
+});
+
+// -------------------- Get User by ID --------------------
+router.get('/users/:id', adminAuth, async (req, res) => {
+  try {
+    const user = await User.findByPk(req.params.id, {
+      attributes: { exclude: ['password'] },
+      include: [{
+        model: Subscription,
+        as: 'subscriptions',
+        order: [['createdAt', 'DESC']]
+      }]
+    });
+    
+    if (!user) {
+      return res.status(404).json({ error: 'User not found' });
+    }
+    
+    res.json({ user });
+  } catch (error) {
+    console.error('Get user error:', error);
     res.status(500).json({ error: error.message });
   }
 });
