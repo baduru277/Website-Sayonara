@@ -28,7 +28,7 @@ const Subscription = sequelize.define('Subscription', {
   status: {
     type: DataTypes.ENUM('pending', 'active', 'expired', 'cancelled', 'rejected'),
     allowNull: false,
-    defaultValue: 'pending'  // ✅ Changed from 'active' to 'pending'
+    defaultValue: 'pending'
   },
   paymentMethod: {
     type: DataTypes.STRING,
@@ -40,32 +40,43 @@ const Subscription = sequelize.define('Subscription', {
     allowNull: true
   },
   paymentProof: {
-    type: DataTypes.TEXT,  // Store image URL or path
-    allowNull: true
+    type: DataTypes.TEXT,
+    allowNull: true,
+    comment: 'Image URL or path to payment proof'
   },
   agentName: {
     type: DataTypes.STRING,
-    allowNull: true  // ✅ Agent who approved/processed
+    allowNull: true,
+    comment: 'Admin/agent who approved or rejected'
   },
   approvedAt: {
     type: DataTypes.DATE,
-    allowNull: true
+    allowNull: true,
+    comment: 'When subscription was approved/rejected'
   },
   rejectedReason: {
     type: DataTypes.TEXT,
-    allowNull: true
+    allowNull: true,
+    comment: 'Reason for rejection'
   },
   startDate: {
     type: DataTypes.DATE,
-    allowNull: true  // Set when approved
+    allowNull: true,
+    comment: 'Subscription start date (set when approved)'
   },
   expiryDate: {
     type: DataTypes.DATE,
-    allowNull: true  // Set when approved
+    allowNull: true,
+    comment: 'Subscription expiry date (set when approved)'
   }
 }, {
   timestamps: true,
-  tableName: 'Subscriptions'
+  tableName: 'Subscriptions',
+  indexes: [
+    { fields: ['userId'] },
+    { fields: ['status'] },
+    { fields: ['expiryDate'] }
+  ]
 });
 
 Subscription.associate = (models) => {
@@ -73,7 +84,12 @@ Subscription.associate = (models) => {
     foreignKey: 'userId',
     as: 'user'
   });
+
+  // ✅ NEW: Payment proof association
+  Subscription.hasMany(models.PaymentProof, {
+    foreignKey: 'subscriptionId',
+    as: 'paymentProofs'
+  });
 };
 
 module.exports = Subscription;
-
