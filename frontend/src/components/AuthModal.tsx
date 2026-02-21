@@ -20,7 +20,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
   const [successMsg, setSuccessMsg] = useState<string | null>(null);
   const [showPassword, setShowPassword] = useState(false);
   const [showConfirmPassword, setShowConfirmPassword] = useState(false);
-  // ✅ NEW: Store subscription info
   const [subscriptionInfo, setSubscriptionInfo] = useState<any>(null);
 
   if (!open) return null;
@@ -36,7 +35,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         localStorage.setItem('isLoggedIn', 'true');
         setLoading(false);
         onClose();
-        window.location.reload(); // Refresh UI
+        window.location.reload();
       } else {
         setErrorMsg(res.error || res.message || 'Login failed.');
         setLoading(false);
@@ -48,18 +47,31 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
     }
   }
 
-  // ✅ UPDATED: Signup handler with subscription info
+  // Signup handler with validation
   async function handleSignup(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setErrorMsg(null);
+
+    // ✅ NEW: Password validation
+    if (password !== confirmPassword) {
+      setErrorMsg('Passwords do not match');
+      setLoading(false);
+      return;
+    }
+
+    if (password.length < 6) {
+      setErrorMsg('Password must be at least 6 characters');
+      setLoading(false);
+      return;
+    }
+
     try {
       const res = await apiService.register({ name, email, password });
       if (res.token || res.user) {
-        // ✅ Store subscription info
         setSubscriptionInfo(res.subscription);
         setLoading(false);
-        setStep('subscription-pending'); // ✅ Show subscription pending step
+        setStep('subscription-pending');
       } else {
         setErrorMsg(res.error || res.message || 'Signup failed.');
         setLoading(false);
@@ -159,7 +171,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
               {tab === 'login' ? (
                 <form onSubmit={handleLogin}>
                   <label>Email Address</label>
-                  <input type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} />
+                  <input type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} required />
                   <label>Password</label>
                   <div style={{ position: 'relative' }}>
                     <input 
@@ -168,6 +180,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                       value={password} 
                       onChange={e => setPassword(e.target.value)}
                       style={{ paddingRight: '45px' }}
+                      required
                     />
                     <button
                       type="button"
@@ -256,9 +269,9 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                       {showConfirmPassword ? '👁️' : '👁️‍🗨️'}
                     </button>
                   </div>
-                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 12 }}>
-                    <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} style={{ marginRight: 8 }} required />
-                    <span style={{ fontSize: 13, color: '#666', textAlign: 'center' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', marginBottom: 12, gap: 8 }}>
+                    <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} required />
+                    <span style={{ fontSize: 13, color: '#666' }}>
                       I agree to the <a href="#" style={{ color: '#924DAC' }}>Terms</a> & <a href="#" style={{ color: '#924DAC' }}>Privacy Policy</a>.
                     </span>
                   </div>
@@ -270,7 +283,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
             </>
           )}
 
-          {/* ✅ NEW: Subscription Pending Step */}
+          {/* Subscription Pending Step */}
           {step === "subscription-pending" && (
             <div style={{ textAlign: 'center' }}>
               <div style={{ fontSize: 48, marginBottom: 16 }}>🎉</div>
@@ -281,7 +294,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                 Welcome to Sayonara! Your account has been created.
               </p>
 
-              {/* Subscription Info Card */}
               <div style={{
                 background: '#fff7e6',
                 border: '2px solid #ffd666',
@@ -334,55 +346,6 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                 Go to Dashboard
               </button>
             </div>
-          )}
-
-          {/* Step: Basic Info (if needed later) */}
-          {step === "basic-info" && (
-            <form onSubmit={e => {
-              e.preventDefault();
-              setSuccessMsg('🎉 Your Sayonara account has been created! Happy exchanging, bidding, and reselling.');
-              setTimeout(() => {
-                setSuccessMsg(null);
-                setStep('login-signup');
-                setTab('login');
-              }, 2500);
-            }}>
-              {successMsg && (
-                <div style={{
-                  background: '#e6f9f0',
-                  color: '#0f9d58',
-                  textAlign: 'center',
-                  padding: '12px 16px',
-                  borderRadius: 12,
-                  fontWeight: 600,
-                  marginBottom: 16,
-                  boxShadow: '0 2px 10px rgba(0,0,0,0.08)'
-                }}>
-                  {successMsg}
-                </div>
-              )}
-              <h3 style={{ fontWeight: 700, fontSize: 20, color: '#222', marginBottom: 10 }}>Basic Information</h3>
-              <p style={{ color: '#666', fontSize: 15, marginBottom: 18 }}>Let's start with the basics</p>
-              <input type="text" placeholder="Full Name" value={name} onChange={e => setName(e.target.value)} />
-              <input type="date" placeholder="Date of Birth" value={dob} onChange={e => setDob(e.target.value)} />
-              <select value={gender} onChange={e => setGender(e.target.value)}>
-                <option value="">Gender</option>
-                <option value="male">Male</option>
-                <option value="female">Female</option>
-                <option value="other">Other</option>
-              </select>
-              <input type="text" placeholder="Contact Number" value={contact} onChange={e => setContact(e.target.value)} />
-              <input type="text" placeholder="Location" value={location} onChange={e => setLocation(e.target.value)} />
-              <button type="submit" className="sayonara-btn" style={{ 
-                width: '100%', 
-                marginTop: 8, 
-                fontSize: 18, 
-                backgroundColor: successMsg ? '#c1e1c1' : '#924DAC',
-                cursor: successMsg ? 'not-allowed' : 'pointer'
-              }} disabled={!!successMsg}>
-                CONTINUE
-              </button>
-            </form>
           )}
         </div>
       </div>
