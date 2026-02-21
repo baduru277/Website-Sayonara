@@ -22,30 +22,30 @@ export default function ProfilePage() {
   const [userProfile, setUserProfile] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [selectedLocation, setSelectedLocation] = useState<{ lat: number; lng: number; address: string } | null>(null);
-  // ✅ NEW: Add subscription state
   const [subscription, setSubscription] = useState<any>(null);
+  const [myItems, setMyItems] = useState<any[]>([]);
+  const [itemsLoading, setItemsLoading] = useState(false);
 
   const router = useRouter();
 
-  // Fetch user profile (safe fallback if no token)
+  // Fetch user profile
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
         const response = await apiService.getCurrentUser();
-        console.log("Fetched response:", response); // Debug log
-        
-        // Extract user from response - backend returns { user: {...} }
+        console.log("Fetched response:", response);
+
         const user = response?.user || response;
-        
+
         if (!user) {
           console.warn("No user data found, redirecting to home...");
           router.push("/");
           return;
         }
-        
+
         setUserProfile(user);
 
-        // ✅ Restore previously saved location (backend or localStorage)
+        // Restore previously saved location
         if (user.location) {
           setSelectedLocation(user.location);
         } else {
@@ -57,18 +57,16 @@ export default function ProfilePage() {
           }
         }
 
-        // ✅ NEW: Fetch subscription data
+        // Fetch subscription data
         try {
           const subResponse = await apiService.getSubscription();
           console.log("Subscription response:", subResponse);
           setSubscription(subResponse?.subscription || null);
         } catch (err) {
           console.error("Error fetching subscription:", err);
-          // If no subscription found, that's okay - user might not have one
         }
       } catch (err) {
         console.error("Error fetching user profile:", err);
-        // Don't redirect on error, allow user to see profile page
       } finally {
         setLoading(false);
       }
@@ -76,14 +74,29 @@ export default function ProfilePage() {
     fetchUserProfile();
   }, [router]);
 
-  // Get user display name
+  // ✅ NEW: Fetch user's items when "my-post-items" is selected
+  useEffect(() => {
+    if (selected === "my-post-items" && myItems.length === 0) {
+      fetchMyItems();
+    }
+  }, [selected]);
+
+  const fetchMyItems = async () => {
+    try {
+      setItemsLoading(true);
+      const response = await apiService.getMyItems();
+      setMyItems(response?.items || []);
+    } catch (err) {
+      console.error("Error fetching items:", err);
+    } finally {
+      setItemsLoading(false);
+    }
+  };
+
   const getUserDisplayName = () => {
     if (!userProfile) return "User";
-    
-    // Backend returns: { name, email, ... } - flat structure
     if (userProfile.name) return userProfile.name;
     if (userProfile.email) return userProfile.email.split("@")[0];
-    
     return "User";
   };
 
@@ -103,22 +116,35 @@ export default function ProfilePage() {
     window.location.reload();
   };
 
-  // ✅ NEW: Function to get subscription display info
+  // ✅ IMPROVED: Function to get subscription display info with pending status
   const getSubscriptionDisplay = () => {
     if (!subscription) return { text: "Free", color: "#f0e7ff", status: "No active plan" };
-    
-    const isExpired = subscription.isExpired || new Date() > new Date(subscription.expiryDate);
-    
-    if (isExpired) {
-      return { text: "Expired", color: "#ffe7e7", status: "Plan expired" };
+
+    // ✅ Handle pending status
+    if (subscription.status === 'pending') {
+      return {
+        text: "Pending",
+        color: "#fff7e6",
+        status: "Pending Approval",
+        planName: subscription.planName || "Basic Plan",
+        expiryDate: "N/A",
+        daysRemaining: 0,
+        message: "Contact admin for approval"
+      };
     }
-    
+
+    const isExpired = subscription.isExpired || (subscription.expiryDate && new Date() > new Date(subscription.expiryDate));
+
+    if (isExpired) {
+      return { text: "Expired", color: "#ffe7e7", status: "Plan expired", planName: subscription.planName };
+    }
+
     return {
       text: `₹${subscription.amount}`,
       color: "#e7ffe7",
       status: subscription.status === "active" ? "Active" : subscription.status,
       planName: subscription.planName || "Basic Plan",
-      expiryDate: new Date(subscription.expiryDate).toLocaleDateString(),
+      expiryDate: subscription.expiryDate ? new Date(subscription.expiryDate).toLocaleDateString() : "N/A",
       daysRemaining: subscription.daysRemaining || 0
     };
   };
@@ -218,7 +244,7 @@ export default function ProfilePage() {
 
             <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(250px, 1fr))", gap: 24 }}>
               {[
-                { icon: "📝", title: "My Posts", count: "0", color: "#f3eaff" },
+                { icon: "📝", title: "My Posts", count: myItems.length || "0", color: "#f3eaff" },
                 { icon: "📦", title: "Orders", count: "0", color: "#eafff3" },
                 { icon: "🔔", title: "Notifications", count: "0", color: "#fff3ea" },
                 { icon: "⭐", title: "Subscription", count: subDisplay.text, color: subDisplay.color },
@@ -252,33 +278,88 @@ export default function ProfilePage() {
         return (
           <div style={{ padding: 32 }}>
             <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>My Post Items</h2>
-            <table
-              style={{
-                width: "100%",
-                background: "#fff",
-                borderRadius: 12,
-                boxShadow: "0 2px 12px rgba(146,77,172,0.06)",
-                overflow: "hidden",
-              }}
-            >
-              <thead>
-                <tr style={{ background: "#f3eaff", color: "#924DAC" }}>
-                  <th style={{ padding: 12, textAlign: "left" }}>ITEM</th>
-                  <th style={{ padding: 12, textAlign: "left" }}>STATUS</th>
-                  <th style={{ padding: 12, textAlign: "left" }}>VIEWS</th>
-                  <th style={{ padding: 12, textAlign: "left" }}>LIKES</th>
-                  <th style={{ padding: 12, textAlign: "left" }}>POSTED DATE</th>
-                  <th style={{ padding: 12, textAlign: "left" }}>ACTION</th>
-                </tr>
-              </thead>
-              <tbody>
-                <tr>
-                  <td colSpan={6} style={{ padding: 12, textAlign: "center", color: "#666" }}>
-                    No items have been posted
-                  </td>
-                </tr>
-              </tbody>
-            </table>
+            
+            {itemsLoading ? (
+              <div style={{ textAlign: "center", padding: 40, color: "#924DAC" }}>Loading items...</div>
+            ) : (
+              <table
+                style={{
+                  width: "100%",
+                  background: "#fff",
+                  borderRadius: 12,
+                  boxShadow: "0 2px 12px rgba(146,77,172,0.06)",
+                  overflow: "hidden",
+                }}
+              >
+                <thead>
+                  <tr style={{ background: "#f3eaff", color: "#924DAC" }}>
+                    <th style={{ padding: 12, textAlign: "left" }}>ITEM</th>
+                    <th style={{ padding: 12, textAlign: "left" }}>TYPE</th>
+                    <th style={{ padding: 12, textAlign: "left" }}>STATUS</th>
+                    <th style={{ padding: 12, textAlign: "left" }}>VIEWS</th>
+                    <th style={{ padding: 12, textAlign: "left" }}>LIKES</th>
+                    <th style={{ padding: 12, textAlign: "left" }}>POSTED DATE</th>
+                    <th style={{ padding: 12, textAlign: "left" }}>ACTION</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {myItems.length === 0 ? (
+                    <tr>
+                      <td colSpan={7} style={{ padding: 12, textAlign: "center", color: "#666" }}>
+                        No items have been posted
+                      </td>
+                    </tr>
+                  ) : (
+                    myItems.map((item) => (
+                      <tr key={item.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
+                        <td style={{ padding: 12 }}>{item.title}</td>
+                        <td style={{ padding: 12 }}>
+                          <span style={{
+                            background: item.type === 'bidding' ? '#e7f3ff' : item.type === 'exchange' ? '#fff3ea' : '#eafff3',
+                            padding: '4px 8px',
+                            borderRadius: 4,
+                            fontSize: 12,
+                            fontWeight: 600
+                          }}>
+                            {item.type}
+                          </span>
+                        </td>
+                        <td style={{ padding: 12 }}>
+                          <span style={{
+                            background: item.status === 'available' ? '#e7ffe7' : '#ffe7e7',
+                            padding: '4px 8px',
+                            borderRadius: 4,
+                            fontSize: 12,
+                            fontWeight: 600
+                          }}>
+                            {item.status}
+                          </span>
+                        </td>
+                        <td style={{ padding: 12 }}>{item.views || 0}</td>
+                        <td style={{ padding: 12 }}>{item.likes || 0}</td>
+                        <td style={{ padding: 12 }}>{new Date(item.createdAt).toLocaleDateString()}</td>
+                        <td style={{ padding: 12 }}>
+                          <button
+                            onClick={() => router.push(`/items/${item.id}`)}
+                            style={{
+                              background: "#924DAC",
+                              color: "#fff",
+                              border: "none",
+                              borderRadius: 4,
+                              padding: "4px 12px",
+                              fontSize: 12,
+                              cursor: "pointer"
+                            }}
+                          >
+                            View
+                          </button>
+                        </td>
+                      </tr>
+                    ))
+                  )}
+                </tbody>
+              </table>
+            )}
           </div>
         );
 
@@ -341,7 +422,7 @@ export default function ProfilePage() {
               Subscription Plans
             </h2>
 
-            {/* ✅ NEW: Current Subscription Status */}
+            {/* ✅ Current Subscription Status */}
             {subscription && (
               <div
                 style={{
@@ -350,11 +431,27 @@ export default function ProfilePage() {
                   padding: 24,
                   marginBottom: 32,
                   boxShadow: "0 2px 12px rgba(146,77,172,0.08)",
+                  border: subscription.status === 'pending' ? '2px solid #ffd666' : 'none'
                 }}
               >
                 <h3 style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 12 }}>
                   Your Current Plan
                 </h3>
+                
+                {/* ✅ Pending message */}
+                {subscription.status === 'pending' && (
+                  <div style={{
+                    background: 'rgba(255,214,102,0.3)',
+                    padding: 12,
+                    borderRadius: 8,
+                    marginBottom: 16,
+                    fontSize: 14,
+                    color: '#ad6800'
+                  }}>
+                    ⏳ Your subscription is pending admin approval. Please contact support with payment details.
+                  </div>
+                )}
+
                 <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
                   <div>
                     <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Plan Name</div>
@@ -366,18 +463,26 @@ export default function ProfilePage() {
                   </div>
                   <div>
                     <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Status</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: subscription.status === "active" ? "#2d7a2d" : "#d32f2f" }}>
+                    <div style={{
+                      fontSize: 16,
+                      fontWeight: 700,
+                      color: subscription.status === "active" ? "#2d7a2d" : subscription.status === "pending" ? "#d46b08" : "#d32f2f"
+                    }}>
                       {subDisplay.status}
                     </div>
                   </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Expires On</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.expiryDate}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Days Remaining</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.daysRemaining} days</div>
-                  </div>
+                  {subscription.status === 'active' && (
+                    <>
+                      <div>
+                        <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Expires On</div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.expiryDate}</div>
+                      </div>
+                      <div>
+                        <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Days Remaining</div>
+                        <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.daysRemaining} days</div>
+                      </div>
+                    </>
+                  )}
                 </div>
               </div>
             )}
