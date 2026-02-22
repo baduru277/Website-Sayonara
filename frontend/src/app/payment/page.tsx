@@ -7,7 +7,7 @@ import apiService from "@/services/api";
 export default function PaymentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [plan, setPlan] = useState({
     name: searchParams.get('plan') || 'Basic Plan',
     amount: parseFloat(searchParams.get('amount') || '99'),
