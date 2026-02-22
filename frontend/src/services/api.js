@@ -6,7 +6,6 @@ if (!API_BASE_URL) {
   throw new Error('NEXT_PUBLIC_API_URL is not defined in environment variables!');
 }
 
-// Helper: serialize errors for logging
 function serializeError(error) {
   if (!error) return { message: 'Unknown error' };
   if (error instanceof Error) {
@@ -21,7 +20,6 @@ class ApiService {
     this.baseURL = API_BASE_URL;
   }
 
-  // ----------------- AUTH TOKEN -----------------
   getAuthToken() {
     if (typeof window === 'undefined') return null;
     return localStorage.getItem('token');
@@ -35,7 +33,6 @@ class ApiService {
     if (typeof window !== 'undefined') localStorage.removeItem('token');
   }
 
-  // ----------------- CORE REQUEST -----------------
   async request(endpoint, options = {}) {
     const url = `${this.baseURL}${endpoint}`;
     const token = this.getAuthToken();
@@ -123,6 +120,29 @@ class ApiService {
     const token = this.getAuthToken();
     if (!token) return null;
     return this.request('/users/subscription');
+  }
+
+  // ✅ Create a new subscription (pending)
+  async createSubscription(subscriptionData) {
+    return this.request('/subscriptions', {
+      method: 'POST',
+      body: JSON.stringify(subscriptionData)
+    });
+  }
+
+  // ✅ Upload generic file (payment proof screenshot)
+  async uploadFile(formData) {
+    const token = this.getAuthToken();
+    const res = await fetch(`${this.baseURL}/upload/single`, {
+      method: 'POST',
+      headers: token ? { Authorization: `Bearer ${token}` } : {},
+      body: formData,
+    });
+    if (!res.ok) {
+      const errorData = await res.json();
+      throw new Error(errorData.error || `Upload failed: ${res.status}`);
+    }
+    return res.json();
   }
 
   // ----------------- ITEMS -----------------
@@ -250,18 +270,15 @@ class ApiService {
     return this.request(`/upload/delete/${folder}/${filename}`, { method: 'DELETE' });
   }
 
-  // ✅ Backward compatibility
   async uploadImage(file) {
     return this.uploadSingleImage(file);
   }
 
   // ----------------- ADMIN -----------------
-  // Dashboard stats
   getAdminStats() {
     return this.request('/admin/dashboard/stats');
   }
 
-  // Subscriptions
   getAllSubscriptions(params = {}) {
     const query = new URLSearchParams(params).toString();
     return this.request(`/admin/subscriptions?${query}`);
@@ -303,7 +320,6 @@ class ApiService {
     });
   }
 
-  // Users
   getAllUsers(params = {}) {
     const query = new URLSearchParams(params).toString();
     return this.request(`/admin/users?${query}`);
@@ -313,7 +329,7 @@ class ApiService {
     return this.request(`/admin/users/${id}`);
   }
 
-  // ----------------- PAYMENT (Optional - for QR code feature) -----------------
+  // ----------------- PAYMENT -----------------
   getPaymentInfo() {
     return this.request('/payment/payment-info');
   }
