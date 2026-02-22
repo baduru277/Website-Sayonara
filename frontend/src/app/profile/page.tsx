@@ -25,6 +25,8 @@ export default function ProfilePage() {
   const [subscription, setSubscription] = useState<any>(null);
   const [myItems, setMyItems] = useState<any[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
+  const [selectedPlan, setSelectedPlan] = useState<any>(null);
+  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const router = useRouter();
 
@@ -114,6 +116,25 @@ export default function ProfilePage() {
     apiService.logout();
     router.push("/");
     window.location.reload();
+  };
+
+  // ✅ NEW: Handle subscription plan selection
+  const handleSubscribePlan = (plan: any) => {
+    // Check if user already has an active subscription
+    if (subscription && subscription.status === 'active') {
+      alert('You already have an active subscription. Please wait for it to expire or contact support to upgrade.');
+      return;
+    }
+
+    if (subscription && subscription.status === 'pending') {
+      alert('Your subscription is pending approval. Please complete the payment process or contact support.');
+      return;
+    }
+
+    // Store selected plan and redirect to payment page
+    setSelectedPlan(plan);
+    // Navigate to payment page with plan info
+    router.push(`/payment?plan=${plan.name}&amount=${plan.price}&duration=${plan.duration}`);
   };
 
   // ✅ IMPROVED: Function to get subscription display info with pending status
@@ -521,6 +542,7 @@ export default function ProfilePage() {
                     ))}
                   </ul>
                   <button
+                    onClick={() => handleSubscribePlan(plan)}
                     style={{
                       fontSize: 14,
                       padding: "8px 16px",
