@@ -1,8 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Montserrat, Quicksand } from "next/font/google";
 import "./globals.css";
-import Header from "../components/Header";
-import Footer from "../components/Footer";
+import LayoutWrapper from "../components/LayoutWrapper";
 
 const inter = Inter({ subsets: ["latin"] });
 const montserrat = Montserrat({ subsets: ["latin"], weight: ["400", "700"] });
@@ -27,9 +26,7 @@ export default function RootLayout({
         */}
       </head>
       <body className={quicksand.className + ' ' + montserrat.className + ' ' + inter.className}>
-        <Header />
-        {children}
-        <Footer />
+        <LayoutWrapper>{children}</LayoutWrapper>
       </body>
     </html>
   );
