@@ -5,6 +5,7 @@ import { useRouter } from "next/navigation";
 import apiService from "@/services/api";
 import LocationMap from "@/components/LocationMap";
 import LocationDisplay from "@/components/LocationDisplay";
+import SubscriptionSection from "@/components/SubscriptionSection";
 
 const sidebarItems = [
   { key: "profile", label: "Profile" },
@@ -25,12 +26,9 @@ export default function ProfilePage() {
   const [subscription, setSubscription] = useState<any>(null);
   const [myItems, setMyItems] = useState<any[]>([]);
   const [itemsLoading, setItemsLoading] = useState(false);
-  const [selectedPlan, setSelectedPlan] = useState<any>(null);
-  const [showPaymentModal, setShowPaymentModal] = useState(false);
 
   const router = useRouter();
 
-  // Fetch user profile
   useEffect(() => {
     const fetchUserProfile = async () => {
       try {
@@ -47,7 +45,6 @@ export default function ProfilePage() {
 
         setUserProfile(user);
 
-        // Restore previously saved location
         if (user.location) {
           setSelectedLocation(user.location);
         } else {
@@ -59,7 +56,6 @@ export default function ProfilePage() {
           }
         }
 
-        // Fetch subscription data
         try {
           const subResponse = await apiService.getSubscription();
           console.log("Subscription response:", subResponse);
@@ -76,7 +72,6 @@ export default function ProfilePage() {
     fetchUserProfile();
   }, [router]);
 
-  // ✅ NEW: Fetch user's items when "my-post-items" is selected
   useEffect(() => {
     if (selected === "my-post-items" && myItems.length === 0) {
       fetchMyItems();
@@ -118,30 +113,9 @@ export default function ProfilePage() {
     window.location.reload();
   };
 
-  // ✅ NEW: Handle subscription plan selection
-  const handleSubscribePlan = (plan: any) => {
-    // Check if user already has an active subscription
-    if (subscription && subscription.status === 'active') {
-      alert('You already have an active subscription. Please wait for it to expire or contact support to upgrade.');
-      return;
-    }
-
-    if (subscription && subscription.status === 'pending') {
-      alert('Your subscription is pending approval. Please complete the payment process or contact support.');
-      return;
-    }
-
-    // Store selected plan and redirect to payment page
-    setSelectedPlan(plan);
-    // Navigate to payment page with plan info
-    router.push(`/payment?plan=${plan.name}&amount=${plan.price}&duration=${plan.duration}`);
-  };
-
-  // ✅ IMPROVED: Function to get subscription display info with pending status
   const getSubscriptionDisplay = () => {
     if (!subscription) return { text: "Free", color: "#f0e7ff", status: "No active plan" };
 
-    // ✅ Handle pending status
     if (subscription.status === 'pending') {
       return {
         text: "Pending",
@@ -150,7 +124,6 @@ export default function ProfilePage() {
         planName: subscription.planName || "Basic Plan",
         expiryDate: "N/A",
         daysRemaining: 0,
-        message: "Contact admin for approval"
       };
     }
 
@@ -170,7 +143,6 @@ export default function ProfilePage() {
     };
   };
 
-  // Sidebar component
   const Sidebar = () => (
     <nav
       style={{
@@ -213,7 +185,6 @@ export default function ProfilePage() {
     </nav>
   );
 
-  // Main content render
   const renderContent = () => {
     const subDisplay = getSubscriptionDisplay();
 
@@ -299,7 +270,7 @@ export default function ProfilePage() {
         return (
           <div style={{ padding: 32 }}>
             <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>My Post Items</h2>
-            
+
             {itemsLoading ? (
               <div style={{ textAlign: "center", padding: 40, color: "#924DAC" }}>Loading items...</div>
             ) : (
@@ -437,137 +408,7 @@ export default function ProfilePage() {
         );
 
       case "subscription":
-        return (
-          <div style={{ padding: 32 }}>
-            <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
-              Subscription Plans
-            </h2>
-
-            {/* ✅ Current Subscription Status */}
-            {subscription && (
-              <div
-                style={{
-                  background: subDisplay.color,
-                  borderRadius: 12,
-                  padding: 24,
-                  marginBottom: 32,
-                  boxShadow: "0 2px 12px rgba(146,77,172,0.08)",
-                  border: subscription.status === 'pending' ? '2px solid #ffd666' : 'none'
-                }}
-              >
-                <h3 style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 12 }}>
-                  Your Current Plan
-                </h3>
-                
-                {/* ✅ Pending message */}
-                {subscription.status === 'pending' && (
-                  <div style={{
-                    background: 'rgba(255,214,102,0.3)',
-                    padding: 12,
-                    borderRadius: 8,
-                    marginBottom: 16,
-                    fontSize: 14,
-                    color: '#ad6800'
-                  }}>
-                    ⏳ Your subscription is pending admin approval. Please contact support with payment details.
-                  </div>
-                )}
-
-                <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", gap: 16 }}>
-                  <div>
-                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Plan Name</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.planName}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Amount</div>
-                    <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>₹{subscription.amount}</div>
-                  </div>
-                  <div>
-                    <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Status</div>
-                    <div style={{
-                      fontSize: 16,
-                      fontWeight: 700,
-                      color: subscription.status === "active" ? "#2d7a2d" : subscription.status === "pending" ? "#d46b08" : "#d32f2f"
-                    }}>
-                      {subDisplay.status}
-                    </div>
-                  </div>
-                  {subscription.status === 'active' && (
-                    <>
-                      <div>
-                        <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Expires On</div>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.expiryDate}</div>
-                      </div>
-                      <div>
-                        <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Days Remaining</div>
-                        <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.daysRemaining} days</div>
-                      </div>
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-
-            <h3 style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 16 }}>
-              Available Plans
-            </h3>
-            <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
-              {[
-                { name: "Starter", price: 99, duration: "1 Month", benefits: ["Post up to 5 items", "Exchange items", "Resell options", "Bid on items"], color: "#f3eaff" },
-                { name: "Standard", price: 199, duration: "3 Months", benefits: ["Post up to 15 items", "Exchange items", "Resell options", "Bid on items", "Priority support"], color: "#eafff3" },
-                { name: "Pro", price: 399, duration: "6 Months", benefits: ["Post up to 50 items", "Exchange items", "Resell options", "Bid on items", "Analytics & Insights"], color: "#fff3ea" },
-                { name: "Premium", price: 699, duration: "12 Months", benefits: ["Unlimited posts", "Exchange items", "Resell options", "Bid on items", "Priority support", "Analytics & Insights", "Feature priority"], color: "#f0e7ff" },
-              ].map((plan) => (
-                <div
-                  key={plan.name}
-                  style={{
-                    background: plan.color,
-                    borderRadius: 12,
-                    boxShadow: "0 2px 8px rgba(146,77,172,0.04)",
-                    padding: 28,
-                    minWidth: 220,
-                    flex: "1 1 220px",
-                  }}
-                >
-                  <div style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 8 }}>
-                    {plan.name}
-                  </div>
-                  <div style={{ color: "#444", marginBottom: 12 }}>{plan.duration}</div>
-                  <div style={{ fontSize: 28, fontWeight: 700, color: "#222", marginBottom: 12 }}>
-                    ₹{plan.price}
-                  </div>
-                  <ul style={{ fontSize: 14, color: "#666", marginBottom: 12, paddingLeft: 16 }}>
-                    {plan.benefits.map((b) => (
-                      <li key={b}>{b}</li>
-                    ))}
-                  </ul>
-                  <button
-                    onClick={() => handleSubscribePlan(plan)}
-                    style={{
-                      fontSize: 14,
-                      padding: "8px 16px",
-                      background: "#924DAC",
-                      color: "#fff",
-                      border: "none",
-                      borderRadius: 6,
-                      cursor: "pointer",
-                      fontWeight: 600,
-                      transition: "background 0.2s",
-                    }}
-                    onMouseOver={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "#7a3a8a";
-                    }}
-                    onMouseOut={(e) => {
-                      (e.currentTarget as HTMLButtonElement).style.background = "#924DAC";
-                    }}
-                  >
-                    Subscribe
-                  </button>
-                </div>
-              ))}
-            </div>
-          </div>
-        );
+        return <SubscriptionSection subscription={subscription} />;
 
       case "location":
         return (
