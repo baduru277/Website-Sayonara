@@ -76,6 +76,8 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
   };
 
   const handleSubscribePlan = (plan: any) => {
+    console.log("Subscribe clicked:", plan);
+
     if (subscription && subscription.status === "active") {
       alert("You already have an active subscription. Please wait for it to expire or contact support to upgrade.");
       return;
@@ -84,7 +86,10 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
       alert("Your subscription is pending approval. Please contact support.");
       return;
     }
-    router.push(`/payment?plan=${encodeURIComponent(plan.name)}&amount=${plan.price}&duration=${encodeURIComponent(plan.duration)}`);
+
+    const url = `/payment?plan=${encodeURIComponent(plan.name)}&amount=${plan.price}&duration=${encodeURIComponent(plan.duration)}`;
+    console.log("Navigating to:", url);
+    window.location.href = url;
   };
 
   const subDisplay = getSubscriptionDisplay();
