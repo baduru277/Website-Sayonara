@@ -1,11 +1,11 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
+import React, { useState, useEffect, Suspense } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
 import Image from "next/image";
 import apiService from "@/services/api";
 
-export default function PaymentPage() {
+function PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   
@@ -20,27 +20,21 @@ export default function PaymentPage() {
   const [transactionId, setTransactionId] = useState('');
   const [dynamicQR, setDynamicQR] = useState('');
 
-  // UPI and Bank Details
   const upiId = 'auduru.sarikarao11-2@okaxis';
   const paymentDetails = {
-    accountNumber: '1234567890', // ✅ Update with your real details
+    accountNumber: '1234567890',
     ifsc: 'SBIN0001234',
     accountName: 'Sarikarao Auduru',
     bankName: 'State Bank of India'
   };
 
-  // Generate dynamic QR code
   useEffect(() => {
     generateDynamicQR();
   }, [plan.amount]);
 
   const generateDynamicQR = async () => {
     try {
-      // Create UPI payment string
       const upiString = `upi://pay?pa=${upiId}&pn=Sayonara&am=${plan.amount}&cu=INR&tn=Subscription-${plan.name.replace(/\s/g, '')}`;
-      
-      // Generate QR code using API or library
-      // For now, using a QR code generation service
       const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiString)}&color=924DAC`;
       setDynamicQR(qrUrl);
     } catch (error) {
@@ -160,7 +154,6 @@ export default function PaymentPage() {
                       Scan QR Code to Pay
                     </h4>
 
-                    {/* Your Official QR Code */}
                     <div style={{ marginBottom: 24 }}>
                       <div style={{ fontSize: 14, color: '#666', marginBottom: 12 }}>
                         Official QR Code (Recommended)
@@ -180,30 +173,16 @@ export default function PaymentPage() {
                           style={{ borderRadius: 8 }}
                         />
                       </div>
-                      <div style={{
-                        fontSize: 13,
-                        color: '#924DAC',
-                        marginTop: 12,
-                        fontWeight: 600
-                      }}>
+                      <div style={{ fontSize: 13, color: '#924DAC', marginTop: 12, fontWeight: 600 }}>
                         Sarikarao Auduru
                       </div>
-                      <div style={{
-                        fontSize: 12,
-                        color: '#999',
-                        marginTop: 4
-                      }}>
+                      <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
                         {upiId}
                       </div>
                     </div>
 
-                    <div style={{
-                      height: 1,
-                      background: '#e0e0e0',
-                      margin: '20px 0'
-                    }} />
+                    <div style={{ height: 1, background: '#e0e0e0', margin: '20px 0' }} />
 
-                    {/* Dynamic QR Code with Amount */}
                     <div>
                       <div style={{ fontSize: 14, color: '#666', marginBottom: 12 }}>
                         Dynamic QR (Amount Pre-filled: ₹{plan.amount})
@@ -227,12 +206,7 @@ export default function PaymentPage() {
                       </div>
                     </div>
 
-                    <div style={{
-                      fontSize: 13,
-                      color: '#666',
-                      marginTop: 16,
-                      lineHeight: 1.6
-                    }}>
+                    <div style={{ fontSize: 13, color: '#666', marginTop: 16, lineHeight: 1.6 }}>
                       Scan with any UPI app:<br/>
                       Google Pay • PhonePe • Paytm • BHIM
                     </div>
@@ -244,38 +218,18 @@ export default function PaymentPage() {
                     <h4 style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', marginBottom: 12 }}>
                       UPI Payment
                     </h4>
-                    <div style={{
-                      background: '#fff',
-                      padding: 16,
-                      borderRadius: 8,
-                      marginBottom: 12
-                    }}>
+                    <div style={{ background: '#fff', padding: 16, borderRadius: 8, marginBottom: 12 }}>
                       <div style={{ fontSize: 13, color: '#666', marginBottom: 4 }}>UPI ID</div>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        alignItems: 'center',
-                        gap: 12
-                      }}>
-                        <span style={{ 
-                          fontSize: 16, 
-                          fontWeight: 700, 
-                          color: '#924DAC',
-                          wordBreak: 'break-all'
-                        }}>
+                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
+                        <span style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', wordBreak: 'break-all' }}>
                           {upiId}
                         </span>
                         <button
                           onClick={() => copyToClipboard(upiId, 'UPI ID')}
                           style={{
-                            background: '#924DAC',
-                            color: '#fff',
-                            border: 'none',
-                            borderRadius: 6,
-                            padding: '6px 12px',
-                            fontSize: 13,
-                            cursor: 'pointer',
-                            whiteSpace: 'nowrap'
+                            background: '#924DAC', color: '#fff', border: 'none',
+                            borderRadius: 6, padding: '6px 12px', fontSize: 13,
+                            cursor: 'pointer', whiteSpace: 'nowrap'
                           }}
                         >
                           Copy
@@ -300,77 +254,33 @@ export default function PaymentPage() {
                       Bank Transfer Details
                     </h4>
                     <div style={{ fontSize: 14, lineHeight: 2 }}>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        padding: '8px 0',
-                        borderBottom: '1px solid #e0e0e0'
-                      }}>
-                        <span style={{ color: '#666' }}>Account Number:</span>
-                        <span style={{ fontWeight: 700 }}>
-                          {paymentDetails.accountNumber}
-                          <button
-                            onClick={() => copyToClipboard(paymentDetails.accountNumber, 'Account Number')}
-                            style={{
-                              marginLeft: 8,
-                              background: 'none',
-                              border: 'none',
-                              color: '#924DAC',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            📋
-                          </button>
-                        </span>
-                      </div>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        padding: '8px 0',
-                        borderBottom: '1px solid #e0e0e0'
-                      }}>
-                        <span style={{ color: '#666' }}>IFSC Code:</span>
-                        <span style={{ fontWeight: 700 }}>
-                          {paymentDetails.ifsc}
-                          <button
-                            onClick={() => copyToClipboard(paymentDetails.ifsc, 'IFSC Code')}
-                            style={{
-                              marginLeft: 8,
-                              background: 'none',
-                              border: 'none',
-                              color: '#924DAC',
-                              cursor: 'pointer'
-                            }}
-                          >
-                            📋
-                          </button>
-                        </span>
-                      </div>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        padding: '8px 0',
-                        borderBottom: '1px solid #e0e0e0'
-                      }}>
-                        <span style={{ color: '#666' }}>Account Name:</span>
-                        <span style={{ fontWeight: 700 }}>{paymentDetails.accountName}</span>
-                      </div>
-                      <div style={{
-                        display: 'flex',
-                        justifyContent: 'space-between',
-                        padding: '8px 0'
-                      }}>
-                        <span style={{ color: '#666' }}>Bank Name:</span>
-                        <span style={{ fontWeight: 700 }}>{paymentDetails.bankName}</span>
-                      </div>
+                      {[
+                        { label: 'Account Number', value: paymentDetails.accountNumber },
+                        { label: 'IFSC Code', value: paymentDetails.ifsc },
+                        { label: 'Account Name', value: paymentDetails.accountName },
+                        { label: 'Bank Name', value: paymentDetails.bankName },
+                      ].map((item, i) => (
+                        <div key={item.label} style={{
+                          display: 'flex', justifyContent: 'space-between',
+                          padding: '8px 0',
+                          borderBottom: i < 3 ? '1px solid #e0e0e0' : 'none'
+                        }}>
+                          <span style={{ color: '#666' }}>{item.label}:</span>
+                          <span style={{ fontWeight: 700 }}>
+                            {item.value}
+                            {i < 2 && (
+                              <button
+                                onClick={() => copyToClipboard(item.value, item.label)}
+                                style={{ marginLeft: 8, background: 'none', border: 'none', color: '#924DAC', cursor: 'pointer' }}
+                              >📋</button>
+                            )}
+                          </span>
+                        </div>
+                      ))}
                     </div>
                     <div style={{
-                      fontSize: 13,
-                      color: '#999',
-                      marginTop: 12,
-                      padding: 12,
-                      background: '#fff7e6',
-                      borderRadius: 8
+                      fontSize: 13, color: '#999', marginTop: 12,
+                      padding: 12, background: '#fff7e6', borderRadius: 8
                     }}>
                       💡 Tip: Please update these bank details with your actual account information
                     </div>
@@ -389,24 +299,17 @@ export default function PaymentPage() {
                   onChange={(e) => setTransactionId(e.target.value)}
                   placeholder="Enter your transaction ID after payment"
                   style={{
-                    width: '100%',
-                    padding: '12px 16px',
-                    border: '2px solid #f3eaff',
-                    borderRadius: 8,
-                    fontSize: 16,
-                    outline: 'none',
-                    boxSizing: 'border-box'
+                    width: '100%', padding: '12px 16px',
+                    border: '2px solid #f3eaff', borderRadius: 8,
+                    fontSize: 16, outline: 'none', boxSizing: 'border-box'
                   }}
                 />
               </div>
 
               {/* Important Note */}
               <div style={{
-                background: '#fff7e6',
-                border: '2px solid #ffd666',
-                borderRadius: 12,
-                padding: 16,
-                marginBottom: 24
+                background: '#fff7e6', border: '2px solid #ffd666',
+                borderRadius: 12, padding: 16, marginBottom: 24
               }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#d46b08', marginBottom: 8 }}>
                   ⚠️ Important Instructions
@@ -427,38 +330,23 @@ export default function PaymentPage() {
                 style={{
                   width: '100%',
                   background: transactionId.trim() ? '#2d7a2d' : '#ccc',
-                  color: '#fff',
-                  border: 'none',
-                  borderRadius: 8,
-                  padding: '14px 20px',
-                  fontSize: 16,
-                  fontWeight: 600,
+                  color: '#fff', border: 'none', borderRadius: 8,
+                  padding: '14px 20px', fontSize: 16, fontWeight: 600,
                   cursor: transactionId.trim() ? 'pointer' : 'not-allowed',
                   transition: 'background 0.2s'
                 }}
-                onMouseOver={(e) => {
-                  if (transactionId.trim()) {
-                    e.currentTarget.style.background = '#1f5c1f';
-                  }
-                }}
-                onMouseOut={(e) => {
-                  if (transactionId.trim()) {
-                    e.currentTarget.style.background = '#2d7a2d';
-                  }
-                }}
+                onMouseOver={(e) => { if (transactionId.trim()) e.currentTarget.style.background = '#1f5c1f'; }}
+                onMouseOut={(e) => { if (transactionId.trim()) e.currentTarget.style.background = '#2d7a2d'; }}
               >
                 ✓ I've Completed the Payment
               </button>
             </div>
           </div>
         ) : (
-          /* Confirmation Step */
           <div style={{
-            background: '#fff',
-            borderRadius: 16,
+            background: '#fff', borderRadius: 16,
             boxShadow: '0 2px 12px rgba(146,77,172,0.08)',
-            padding: 40,
-            textAlign: 'center'
+            padding: 40, textAlign: 'center'
           }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
             <h2 style={{ fontSize: 24, fontWeight: 700, color: '#2d7a2d', marginBottom: 12 }}>
@@ -468,21 +356,15 @@ export default function PaymentPage() {
               Thank you for your payment!
             </p>
             <div style={{
-              background: '#f3eaff',
-              padding: 12,
-              borderRadius: 8,
-              marginBottom: 24,
-              fontSize: 14
+              background: '#f3eaff', padding: 12, borderRadius: 8,
+              marginBottom: 24, fontSize: 14
             }}>
               Transaction ID: <strong style={{ color: '#924DAC' }}>{transactionId}</strong>
             </div>
 
             <div style={{
-              background: '#e7ffe7',
-              borderRadius: 12,
-              padding: 20,
-              marginBottom: 24,
-              textAlign: 'left'
+              background: '#e7ffe7', borderRadius: 12, padding: 20,
+              marginBottom: 24, textAlign: 'left'
             }}>
               <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d7a2d', marginBottom: 12 }}>
                 What happens next?
@@ -496,12 +378,8 @@ export default function PaymentPage() {
             </div>
 
             <div style={{
-              fontSize: 13,
-              color: '#999',
-              marginBottom: 24,
-              padding: 12,
-              background: '#f9f9f9',
-              borderRadius: 8
+              fontSize: 13, color: '#999', marginBottom: 24,
+              padding: 12, background: '#f9f9f9', borderRadius: 8
             }}>
               💡 You can check your subscription status in your profile dashboard
             </div>
@@ -509,16 +387,9 @@ export default function PaymentPage() {
             <button
               onClick={handleGoToDashboard}
               style={{
-                width: '100%',
-                background: '#924DAC',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 8,
-                padding: '14px 20px',
-                fontSize: 16,
-                fontWeight: 600,
-                cursor: 'pointer',
-                transition: 'background 0.2s'
+                width: '100%', background: '#924DAC', color: '#fff',
+                border: 'none', borderRadius: 8, padding: '14px 20px',
+                fontSize: 16, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s'
               }}
               onMouseOver={(e) => e.currentTarget.style.background = '#7a3a8a'}
               onMouseOut={(e) => e.currentTarget.style.background = '#924DAC'}
@@ -529,5 +400,17 @@ export default function PaymentPage() {
         )}
       </div>
     </div>
+  );
+}
+
+export default function PaymentPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ padding: 32, textAlign: 'center', color: '#924DAC', fontSize: 18 }}>
+        Loading payment details...
+      </div>
+    }>
+      <PaymentContent />
+    </Suspense>
   );
 }
