@@ -2,29 +2,51 @@
 
 import React, { useState, useEffect } from "react";
 import { useRouter, useSearchParams } from "next/navigation";
+import Image from "next/image";
 import apiService from "@/services/api";
 
 export default function PaymentPage() {
   const router = useRouter();
   const searchParams = useSearchParams();
-
+  
   const [plan, setPlan] = useState({
     name: searchParams.get('plan') || 'Basic Plan',
     amount: parseFloat(searchParams.get('amount') || '99'),
     duration: searchParams.get('duration') || '1 Year'
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'bank' | 'qr'>('upi');
-  const [paymentDetails, setPaymentDetails] = useState({
-    upiId: 'sayonara@paytm',
-    accountNumber: '1234567890',
-    ifsc: 'SBIN0001234',
-    accountName: 'Sayonara Marketplace',
-    bankName: 'State Bank of India'
-  });
-
+  const [paymentMethod, setPaymentMethod] = useState<'qr' | 'upi' | 'bank'>('qr');
   const [step, setStep] = useState<'payment' | 'confirmation'>('payment');
   const [transactionId, setTransactionId] = useState('');
+  const [dynamicQR, setDynamicQR] = useState('');
+
+  // UPI and Bank Details
+  const upiId = 'auduru.sarikarao11-2@okaxis';
+  const paymentDetails = {
+    accountNumber: '1234567890', // ✅ Update with your real details
+    ifsc: 'SBIN0001234',
+    accountName: 'Sarikarao Auduru',
+    bankName: 'State Bank of India'
+  };
+
+  // Generate dynamic QR code
+  useEffect(() => {
+    generateDynamicQR();
+  }, [plan.amount]);
+
+  const generateDynamicQR = async () => {
+    try {
+      // Create UPI payment string
+      const upiString = `upi://pay?pa=${upiId}&pn=Sayonara&am=${plan.amount}&cu=INR&tn=Subscription-${plan.name.replace(/\s/g, '')}`;
+      
+      // Generate QR code using API or library
+      // For now, using a QR code generation service
+      const qrUrl = `https://api.qrserver.com/v1/create-qr-code/?size=300x300&data=${encodeURIComponent(upiString)}&color=924DAC`;
+      setDynamicQR(qrUrl);
+    } catch (error) {
+      console.error('Failed to generate QR:', error);
+    }
+  };
 
   const copyToClipboard = (text: string, label: string) => {
     navigator.clipboard.writeText(text);
@@ -99,9 +121,9 @@ export default function PaymentPage() {
 
               <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
                 {[
-                  { key: 'upi', label: 'UPI', icon: '📱' },
-                  { key: 'bank', label: 'Bank Transfer', icon: '🏦' },
-                  { key: 'qr', label: 'QR Code', icon: '📷' }
+                  { key: 'qr', label: 'QR Code', icon: '📷' },
+                  { key: 'upi', label: 'UPI ID', icon: '📱' },
+                  { key: 'bank', label: 'Bank Transfer', icon: '🏦' }
                 ].map((method) => (
                   <button
                     key={method.key}
@@ -132,6 +154,91 @@ export default function PaymentPage() {
                 padding: 20,
                 marginBottom: 24
               }}>
+                {paymentMethod === 'qr' && (
+                  <div style={{ textAlign: 'center' }}>
+                    <h4 style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', marginBottom: 16 }}>
+                      Scan QR Code to Pay
+                    </h4>
+
+                    {/* Your Official QR Code */}
+                    <div style={{ marginBottom: 24 }}>
+                      <div style={{ fontSize: 14, color: '#666', marginBottom: 12 }}>
+                        Official QR Code (Recommended)
+                      </div>
+                      <div style={{
+                        background: '#fff',
+                        padding: 16,
+                        borderRadius: 12,
+                        display: 'inline-block',
+                        boxShadow: '0 2px 8px rgba(146,77,172,0.1)'
+                      }}>
+                        <Image
+                          src="/qr-code-payment.png"
+                          alt="Sayonara Payment QR Code"
+                          width={250}
+                          height={250}
+                          style={{ borderRadius: 8 }}
+                        />
+                      </div>
+                      <div style={{
+                        fontSize: 13,
+                        color: '#924DAC',
+                        marginTop: 12,
+                        fontWeight: 600
+                      }}>
+                        Sarikarao Auduru
+                      </div>
+                      <div style={{
+                        fontSize: 12,
+                        color: '#999',
+                        marginTop: 4
+                      }}>
+                        {upiId}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      height: 1,
+                      background: '#e0e0e0',
+                      margin: '20px 0'
+                    }} />
+
+                    {/* Dynamic QR Code with Amount */}
+                    <div>
+                      <div style={{ fontSize: 14, color: '#666', marginBottom: 12 }}>
+                        Dynamic QR (Amount Pre-filled: ₹{plan.amount})
+                      </div>
+                      <div style={{
+                        background: '#fff',
+                        padding: 16,
+                        borderRadius: 12,
+                        display: 'inline-block',
+                        boxShadow: '0 2px 8px rgba(146,77,172,0.1)'
+                      }}>
+                        {dynamicQR && (
+                          <Image
+                            src={dynamicQR}
+                            alt="Dynamic Payment QR"
+                            width={200}
+                            height={200}
+                            style={{ borderRadius: 8 }}
+                          />
+                        )}
+                      </div>
+                    </div>
+
+                    <div style={{
+                      fontSize: 13,
+                      color: '#666',
+                      marginTop: 16,
+                      lineHeight: 1.6
+                    }}>
+                      Scan with any UPI app:<br/>
+                      Google Pay • PhonePe • Paytm • BHIM
+                    </div>
+                  </div>
+                )}
+
                 {paymentMethod === 'upi' && (
                   <div>
                     <h4 style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', marginBottom: 12 }}>
@@ -147,13 +254,19 @@ export default function PaymentPage() {
                       <div style={{
                         display: 'flex',
                         justifyContent: 'space-between',
-                        alignItems: 'center'
+                        alignItems: 'center',
+                        gap: 12
                       }}>
-                        <span style={{ fontSize: 18, fontWeight: 700, color: '#924DAC' }}>
-                          {paymentDetails.upiId}
+                        <span style={{ 
+                          fontSize: 16, 
+                          fontWeight: 700, 
+                          color: '#924DAC',
+                          wordBreak: 'break-all'
+                        }}>
+                          {upiId}
                         </span>
                         <button
-                          onClick={() => copyToClipboard(paymentDetails.upiId, 'UPI ID')}
+                          onClick={() => copyToClipboard(upiId, 'UPI ID')}
                           style={{
                             background: '#924DAC',
                             color: '#fff',
@@ -161,7 +274,8 @@ export default function PaymentPage() {
                             borderRadius: 6,
                             padding: '6px 12px',
                             fontSize: 13,
-                            cursor: 'pointer'
+                            cursor: 'pointer',
+                            whiteSpace: 'nowrap'
                           }}
                         >
                           Copy
@@ -170,10 +284,12 @@ export default function PaymentPage() {
                     </div>
                     <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
                       1. Open any UPI app (Google Pay, PhonePe, Paytm)<br/>
-                      2. Enter the UPI ID above<br/>
-                      3. Enter amount: ₹{plan.amount}<br/>
-                      4. Complete the payment<br/>
-                      5. Note down the transaction ID
+                      2. Select "Send Money" or "Pay"<br/>
+                      3. Enter the UPI ID above<br/>
+                      4. Enter amount: ₹{plan.amount}<br/>
+                      5. Add note: "{plan.name}"<br/>
+                      6. Complete the payment<br/>
+                      7. Note down the transaction ID
                     </div>
                   </div>
                 )}
@@ -248,38 +364,15 @@ export default function PaymentPage() {
                         <span style={{ fontWeight: 700 }}>{paymentDetails.bankName}</span>
                       </div>
                     </div>
-                  </div>
-                )}
-
-                {paymentMethod === 'qr' && (
-                  <div style={{ textAlign: 'center' }}>
-                    <h4 style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', marginBottom: 12 }}>
-                      Scan QR Code
-                    </h4>
                     <div style={{
-                      background: '#fff',
-                      padding: 20,
-                      borderRadius: 12,
-                      display: 'inline-block',
-                      marginBottom: 12
+                      fontSize: 13,
+                      color: '#999',
+                      marginTop: 12,
+                      padding: 12,
+                      background: '#fff7e6',
+                      borderRadius: 8
                     }}>
-                      {/* Placeholder for QR code - you can add actual QR generation here */}
-                      <div style={{
-                        width: 200,
-                        height: 200,
-                        background: 'linear-gradient(135deg, #f3eaff 0%, #924DAC 100%)',
-                        borderRadius: 8,
-                        display: 'flex',
-                        alignItems: 'center',
-                        justifyContent: 'center',
-                        color: '#fff',
-                        fontSize: 48
-                      }}>
-                        QR
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 13, color: '#666' }}>
-                      Scan this QR code with any UPI app to pay ₹{plan.amount}
+                      💡 Tip: Please update these bank details with your actual account information
                     </div>
                   </div>
                 )}
@@ -288,7 +381,7 @@ export default function PaymentPage() {
               {/* Transaction ID Input */}
               <div style={{ marginBottom: 24 }}>
                 <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#666', marginBottom: 8 }}>
-                  Transaction ID / Reference Number
+                  Transaction ID / Reference Number *
                 </label>
                 <input
                   type="text"
@@ -316,33 +409,43 @@ export default function PaymentPage() {
                 marginBottom: 24
               }}>
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#d46b08', marginBottom: 8 }}>
-                  ⚠️ Important
+                  ⚠️ Important Instructions
                 </div>
                 <div style={{ fontSize: 13, color: '#ad6800', lineHeight: 1.6 }}>
-                  • Complete the payment using any of the methods above<br/>
-                  • Save your transaction ID / reference number<br/>
-                  • Your subscription will be activated within 24 hours after admin verification<br/>
-                  • Contact support if you face any issues
+                  • Complete the payment using any method above<br/>
+                  • Screenshot your payment confirmation<br/>
+                  • Enter the transaction ID below<br/>
+                  • Your subscription will be activated within 24 hours<br/>
+                  • Contact support for any payment issues
                 </div>
               </div>
 
               {/* Confirm Button */}
               <button
                 onClick={handlePaymentComplete}
+                disabled={!transactionId.trim()}
                 style={{
                   width: '100%',
-                  background: '#2d7a2d',
+                  background: transactionId.trim() ? '#2d7a2d' : '#ccc',
                   color: '#fff',
                   border: 'none',
                   borderRadius: 8,
                   padding: '14px 20px',
                   fontSize: 16,
                   fontWeight: 600,
-                  cursor: 'pointer',
+                  cursor: transactionId.trim() ? 'pointer' : 'not-allowed',
                   transition: 'background 0.2s'
                 }}
-                onMouseOver={(e) => e.currentTarget.style.background = '#1f5c1f'}
-                onMouseOut={(e) => e.currentTarget.style.background = '#2d7a2d'}
+                onMouseOver={(e) => {
+                  if (transactionId.trim()) {
+                    e.currentTarget.style.background = '#1f5c1f';
+                  }
+                }}
+                onMouseOut={(e) => {
+                  if (transactionId.trim()) {
+                    e.currentTarget.style.background = '#2d7a2d';
+                  }
+                }}
               >
                 ✓ I've Completed the Payment
               </button>
@@ -359,12 +462,20 @@ export default function PaymentPage() {
           }}>
             <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
             <h2 style={{ fontSize: 24, fontWeight: 700, color: '#2d7a2d', marginBottom: 12 }}>
-              Payment Submitted!
+              Payment Submitted Successfully!
             </h2>
-            <p style={{ fontSize: 16, color: '#666', marginBottom: 24, lineHeight: 1.6 }}>
-              Your payment has been submitted for verification. <br/>
-              Transaction ID: <strong>{transactionId}</strong>
+            <p style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
+              Thank you for your payment!
             </p>
+            <div style={{
+              background: '#f3eaff',
+              padding: 12,
+              borderRadius: 8,
+              marginBottom: 24,
+              fontSize: 14
+            }}>
+              Transaction ID: <strong style={{ color: '#924DAC' }}>{transactionId}</strong>
+            </div>
 
             <div style={{
               background: '#e7ffe7',
@@ -377,11 +488,22 @@ export default function PaymentPage() {
                 What happens next?
               </h4>
               <div style={{ fontSize: 14, color: '#1f5c1f', lineHeight: 2 }}>
-                1. Admin will verify your payment within 24 hours<br/>
-                2. You'll receive a confirmation email<br/>
-                3. Your subscription will be activated<br/>
-                4. You can start using all premium features
+                1️⃣ Admin will verify your payment (within 24 hours)<br/>
+                2️⃣ You'll receive a confirmation notification<br/>
+                3️⃣ Your subscription will be activated<br/>
+                4️⃣ Start using all premium features!
               </div>
+            </div>
+
+            <div style={{
+              fontSize: 13,
+              color: '#999',
+              marginBottom: 24,
+              padding: 12,
+              background: '#f9f9f9',
+              borderRadius: 8
+            }}>
+              💡 You can check your subscription status in your profile dashboard
             </div>
 
             <button
@@ -401,7 +523,7 @@ export default function PaymentPage() {
               onMouseOver={(e) => e.currentTarget.style.background = '#7a3a8a'}
               onMouseOut={(e) => e.currentTarget.style.background = '#924DAC'}
             >
-              Go to Dashboard
+              Go to Dashboard →
             </button>
           </div>
         )}
