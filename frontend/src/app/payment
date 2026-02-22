@@ -1,0 +1,411 @@
+"use client";
+
+import React, { useState, useEffect } from "react";
+import { useRouter, useSearchParams } from "next/navigation";
+import apiService from "@/services/api";
+
+export default function PaymentPage() {
+  const router = useRouter();
+  const searchParams = useSearchParams();
+  
+  const [plan, setPlan] = useState({
+    name: searchParams.get('plan') || 'Basic Plan',
+    amount: parseFloat(searchParams.get('amount') || '99'),
+    duration: searchParams.get('duration') || '1 Year'
+  });
+
+  const [paymentMethod, setPaymentMethod] = useState<'upi' | 'bank' | 'qr'>('upi');
+  const [paymentDetails, setPaymentDetails] = useState({
+    upiId: 'sayonara@paytm',
+    accountNumber: '1234567890',
+    ifsc: 'SBIN0001234',
+    accountName: 'Sayonara Marketplace',
+    bankName: 'State Bank of India'
+  });
+
+  const [step, setStep] = useState<'payment' | 'confirmation'>('payment');
+  const [transactionId, setTransactionId] = useState('');
+
+  const copyToClipboard = (text: string, label: string) => {
+    navigator.clipboard.writeText(text);
+    alert(`${label} copied to clipboard!`);
+  };
+
+  const handlePaymentComplete = () => {
+    if (!transactionId.trim()) {
+      alert('Please enter your transaction ID');
+      return;
+    }
+    setStep('confirmation');
+  };
+
+  const handleGoToDashboard = () => {
+    router.push('/profile?tab=subscription');
+  };
+
+  return (
+    <div style={{
+      minHeight: '100vh',
+      background: '#f7f7f7',
+      padding: '40px 20px'
+    }}>
+      <div style={{ maxWidth: 600, margin: '0 auto' }}>
+        {/* Header */}
+        <div style={{
+          background: 'linear-gradient(135deg, #924DAC 0%, #d97ef6 100%)',
+          borderRadius: 16,
+          padding: 24,
+          color: '#fff',
+          textAlign: 'center',
+          marginBottom: 32
+        }}>
+          <div style={{ fontSize: 32, marginBottom: 8 }}>💳</div>
+          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
+            Complete Payment
+          </h1>
+          <p style={{ fontSize: 16, opacity: 0.9 }}>
+            {plan.name} - {plan.duration}
+          </p>
+        </div>
+
+        {step === 'payment' ? (
+          <div style={{
+            background: '#fff',
+            borderRadius: 16,
+            boxShadow: '0 2px 12px rgba(146,77,172,0.08)',
+            overflow: 'hidden'
+          }}>
+            {/* Amount Card */}
+            <div style={{
+              background: '#f3eaff',
+              padding: 24,
+              textAlign: 'center',
+              borderBottom: '2px solid #e0e0e0'
+            }}>
+              <div style={{ fontSize: 14, color: '#666', marginBottom: 4 }}>Amount to Pay</div>
+              <div style={{ fontSize: 42, fontWeight: 700, color: '#924DAC' }}>
+                ₹{plan.amount}
+              </div>
+              <div style={{ fontSize: 13, color: '#999', marginTop: 4 }}>
+                One-time payment for {plan.duration}
+              </div>
+            </div>
+
+            {/* Payment Method Selection */}
+            <div style={{ padding: 24 }}>
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#924DAC', marginBottom: 16 }}>
+                Choose Payment Method
+              </h3>
+
+              <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
+                {[
+                  { key: 'upi', label: 'UPI', icon: '📱' },
+                  { key: 'bank', label: 'Bank Transfer', icon: '🏦' },
+                  { key: 'qr', label: 'QR Code', icon: '📷' }
+                ].map((method) => (
+                  <button
+                    key={method.key}
+                    onClick={() => setPaymentMethod(method.key as any)}
+                    style={{
+                      flex: 1,
+                      padding: '12px 16px',
+                      background: paymentMethod === method.key ? '#924DAC' : '#f0f0f0',
+                      color: paymentMethod === method.key ? '#fff' : '#666',
+                      border: 'none',
+                      borderRadius: 8,
+                      cursor: 'pointer',
+                      fontWeight: 600,
+                      fontSize: 14,
+                      transition: 'all 0.2s'
+                    }}
+                  >
+                    <div style={{ fontSize: 20, marginBottom: 4 }}>{method.icon}</div>
+                    {method.label}
+                  </button>
+                ))}
+              </div>
+
+              {/* Payment Details */}
+              <div style={{
+                background: '#faf8fd',
+                borderRadius: 12,
+                padding: 20,
+                marginBottom: 24
+              }}>
+                {paymentMethod === 'upi' && (
+                  <div>
+                    <h4 style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', marginBottom: 12 }}>
+                      UPI Payment
+                    </h4>
+                    <div style={{
+                      background: '#fff',
+                      padding: 16,
+                      borderRadius: 8,
+                      marginBottom: 12
+                    }}>
+                      <div style={{ fontSize: 13, color: '#666', marginBottom: 4 }}>UPI ID</div>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        alignItems: 'center'
+                      }}>
+                        <span style={{ fontSize: 18, fontWeight: 700, color: '#924DAC' }}>
+                          {paymentDetails.upiId}
+                        </span>
+                        <button
+                          onClick={() => copyToClipboard(paymentDetails.upiId, 'UPI ID')}
+                          style={{
+                            background: '#924DAC',
+                            color: '#fff',
+                            border: 'none',
+                            borderRadius: 6,
+                            padding: '6px 12px',
+                            fontSize: 13,
+                            cursor: 'pointer'
+                          }}
+                        >
+                          Copy
+                        </button>
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
+                      1. Open any UPI app (Google Pay, PhonePe, Paytm)<br/>
+                      2. Enter the UPI ID above<br/>
+                      3. Enter amount: ₹{plan.amount}<br/>
+                      4. Complete the payment<br/>
+                      5. Note down the transaction ID
+                    </div>
+                  </div>
+                )}
+
+                {paymentMethod === 'bank' && (
+                  <div>
+                    <h4 style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', marginBottom: 12 }}>
+                      Bank Transfer Details
+                    </h4>
+                    <div style={{ fontSize: 14, lineHeight: 2 }}>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '8px 0',
+                        borderBottom: '1px solid #e0e0e0'
+                      }}>
+                        <span style={{ color: '#666' }}>Account Number:</span>
+                        <span style={{ fontWeight: 700 }}>
+                          {paymentDetails.accountNumber}
+                          <button
+                            onClick={() => copyToClipboard(paymentDetails.accountNumber, 'Account Number')}
+                            style={{
+                              marginLeft: 8,
+                              background: 'none',
+                              border: 'none',
+                              color: '#924DAC',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            📋
+                          </button>
+                        </span>
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '8px 0',
+                        borderBottom: '1px solid #e0e0e0'
+                      }}>
+                        <span style={{ color: '#666' }}>IFSC Code:</span>
+                        <span style={{ fontWeight: 700 }}>
+                          {paymentDetails.ifsc}
+                          <button
+                            onClick={() => copyToClipboard(paymentDetails.ifsc, 'IFSC Code')}
+                            style={{
+                              marginLeft: 8,
+                              background: 'none',
+                              border: 'none',
+                              color: '#924DAC',
+                              cursor: 'pointer'
+                            }}
+                          >
+                            📋
+                          </button>
+                        </span>
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '8px 0',
+                        borderBottom: '1px solid #e0e0e0'
+                      }}>
+                        <span style={{ color: '#666' }}>Account Name:</span>
+                        <span style={{ fontWeight: 700 }}>{paymentDetails.accountName}</span>
+                      </div>
+                      <div style={{
+                        display: 'flex',
+                        justifyContent: 'space-between',
+                        padding: '8px 0'
+                      }}>
+                        <span style={{ color: '#666' }}>Bank Name:</span>
+                        <span style={{ fontWeight: 700 }}>{paymentDetails.bankName}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
+
+                {paymentMethod === 'qr' && (
+                  <div style={{ textAlign: 'center' }}>
+                    <h4 style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', marginBottom: 12 }}>
+                      Scan QR Code
+                    </h4>
+                    <div style={{
+                      background: '#fff',
+                      padding: 20,
+                      borderRadius: 12,
+                      display: 'inline-block',
+                      marginBottom: 12
+                    }}>
+                      {/* Placeholder for QR code - you can add actual QR generation here */}
+                      <div style={{
+                        width: 200,
+                        height: 200,
+                        background: 'linear-gradient(135deg, #f3eaff 0%, #924DAC 100%)',
+                        borderRadius: 8,
+                        display: 'flex',
+                        alignItems: 'center',
+                        justifyContent: 'center',
+                        color: '#fff',
+                        fontSize: 48
+                      }}>
+                        QR
+                      </div>
+                    </div>
+                    <div style={{ fontSize: 13, color: '#666' }}>
+                      Scan this QR code with any UPI app to pay ₹{plan.amount}
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Transaction ID Input */}
+              <div style={{ marginBottom: 24 }}>
+                <label style={{ display: 'block', fontSize: 14, fontWeight: 600, color: '#666', marginBottom: 8 }}>
+                  Transaction ID / Reference Number
+                </label>
+                <input
+                  type="text"
+                  value={transactionId}
+                  onChange={(e) => setTransactionId(e.target.value)}
+                  placeholder="Enter your transaction ID after payment"
+                  style={{
+                    width: '100%',
+                    padding: '12px 16px',
+                    border: '2px solid #f3eaff',
+                    borderRadius: 8,
+                    fontSize: 16,
+                    outline: 'none',
+                    boxSizing: 'border-box'
+                  }}
+                />
+              </div>
+
+              {/* Important Note */}
+              <div style={{
+                background: '#fff7e6',
+                border: '2px solid #ffd666',
+                borderRadius: 12,
+                padding: 16,
+                marginBottom: 24
+              }}>
+                <div style={{ fontSize: 14, fontWeight: 700, color: '#d46b08', marginBottom: 8 }}>
+                  ⚠️ Important
+                </div>
+                <div style={{ fontSize: 13, color: '#ad6800', lineHeight: 1.6 }}>
+                  • Complete the payment using any of the methods above<br/>
+                  • Save your transaction ID / reference number<br/>
+                  • Your subscription will be activated within 24 hours after admin verification<br/>
+                  • Contact support if you face any issues
+                </div>
+              </div>
+
+              {/* Confirm Button */}
+              <button
+                onClick={handlePaymentComplete}
+                style={{
+                  width: '100%',
+                  background: '#2d7a2d',
+                  color: '#fff',
+                  border: 'none',
+                  borderRadius: 8,
+                  padding: '14px 20px',
+                  fontSize: 16,
+                  fontWeight: 600,
+                  cursor: 'pointer',
+                  transition: 'background 0.2s'
+                }}
+                onMouseOver={(e) => e.currentTarget.style.background = '#1f5c1f'}
+                onMouseOut={(e) => e.currentTarget.style.background = '#2d7a2d'}
+              >
+                ✓ I've Completed the Payment
+              </button>
+            </div>
+          </div>
+        ) : (
+          /* Confirmation Step */
+          <div style={{
+            background: '#fff',
+            borderRadius: 16,
+            boxShadow: '0 2px 12px rgba(146,77,172,0.08)',
+            padding: 40,
+            textAlign: 'center'
+          }}>
+            <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
+            <h2 style={{ fontSize: 24, fontWeight: 700, color: '#2d7a2d', marginBottom: 12 }}>
+              Payment Submitted!
+            </h2>
+            <p style={{ fontSize: 16, color: '#666', marginBottom: 24, lineHeight: 1.6 }}>
+              Your payment has been submitted for verification. <br/>
+              Transaction ID: <strong>{transactionId}</strong>
+            </p>
+
+            <div style={{
+              background: '#e7ffe7',
+              borderRadius: 12,
+              padding: 20,
+              marginBottom: 24,
+              textAlign: 'left'
+            }}>
+              <h4 style={{ fontSize: 16, fontWeight: 700, color: '#2d7a2d', marginBottom: 12 }}>
+                What happens next?
+              </h4>
+              <div style={{ fontSize: 14, color: '#1f5c1f', lineHeight: 2 }}>
+                1. Admin will verify your payment within 24 hours<br/>
+                2. You'll receive a confirmation email<br/>
+                3. Your subscription will be activated<br/>
+                4. You can start using all premium features
+              </div>
+            </div>
+
+            <button
+              onClick={handleGoToDashboard}
+              style={{
+                width: '100%',
+                background: '#924DAC',
+                color: '#fff',
+                border: 'none',
+                borderRadius: 8,
+                padding: '14px 20px',
+                fontSize: 16,
+                fontWeight: 600,
+                cursor: 'pointer',
+                transition: 'background 0.2s'
+              }}
+              onMouseOver={(e) => e.currentTarget.style.background = '#7a3a8a'}
+              onMouseOut={(e) => e.currentTarget.style.background = '#924DAC'}
+            >
+              Go to Dashboard
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+}
