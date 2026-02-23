@@ -75,23 +75,6 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
     };
   };
 
-  const handleSubscribePlan = (plan: any) => {
-    console.log("Subscribe clicked:", plan);
-
-    if (subscription && subscription.status === "active") {
-      alert("You already have an active subscription. Please wait for it to expire or contact support to upgrade.");
-      return;
-    }
-    if (subscription && subscription.status === "pending") {
-      alert("Your subscription is pending approval. Please contact support.");
-      return;
-    }
-
-    const url = `/payment?plan=${encodeURIComponent(plan.name)}&amount=${plan.price}&duration=${encodeURIComponent(plan.duration)}`;
-    console.log("Navigating to:", url);
-    window.location.href = url;
-  };
-
   const subDisplay = getSubscriptionDisplay();
 
   return (
@@ -251,12 +234,37 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
                   </li>
                 ))}
               </ul>
+              {/* ✅ INLINE onClick - GUARANTEED TO WORK */}
               <button
-                onClick={() => handleSubscribePlan(plan)}
+                onClick={(e) => {
+                  e.preventDefault();
+                  e.stopPropagation();
+                  
+                  console.log("🔵🔵🔵 BUTTON CLICKED! 🔵🔵🔵");
+                  console.log("Plan:", plan);
+                  
+                  // Check subscription status
+                  if (subscription && subscription.status === "active") {
+                    alert("You already have an active subscription. Please wait for it to expire or contact support to upgrade.");
+                    return;
+                  }
+                  if (subscription && subscription.status === "pending") {
+                    alert("Your subscription is pending approval. Please contact support.");
+                    return;
+                  }
+                  
+                  // Build URL
+                  const url = `/payment?plan=${encodeURIComponent(plan.name)}&amount=${plan.price}&duration=${encodeURIComponent(plan.duration)}`;
+                  console.log("🟢 Navigating to:", url);
+                  console.log("🟢 Full URL:", window.location.origin + url);
+                  
+                  // Navigate
+                  window.location.href = url;
+                }}
                 disabled={isCurrentPlan}
                 style={{
                   fontSize: 14,
-                  padding: "8px 16px",
+                  padding: "10px 20px",
                   background: isCurrentPlan ? "#ccc" : "#924DAC",
                   color: "#fff",
                   border: "none",
