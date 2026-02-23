@@ -1,6 +1,6 @@
 "use client";
 
-import React from "react";
+import React, { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 
 interface SubscriptionSectionProps {
@@ -40,9 +40,15 @@ const plans = [
 
 export default function SubscriptionSection({ subscription }: SubscriptionSectionProps) {
   const router = useRouter();
+  const [isMounted, setIsMounted] = useState(false);
+
+  // Ensure component is mounted to avoid hydration issues with router
+  useEffect(() => {
+    setIsMounted(true);
+  }, []);
 
   const getSubscriptionDisplay = () => {
-    if (!subscription) return { text: "Free", color: "#f0e7ff", status: "No active plan" };
+    if (!subscription) return { text: "Free", color: "#f0e7ff", status: "No active plan", planName: "Free Plan" };
 
     if (subscription.status === "pending") {
       return {
@@ -75,10 +81,35 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
     };
   };
 
+  const handleSubscribe = (plan: typeof plans[0]) => {
+    if (!isMounted) return;
+
+    // 1. Validation Logic
+    if (subscription?.status === "active") {
+      alert("You already have an active subscription.");
+      return;
+    }
+    if (subscription?.status === "pending") {
+      alert("Your subscription is pending approval. Please contact support.");
+      return;
+    }
+
+    // 2. Construct Query Parameters safely
+    const params = new URLSearchParams({
+      plan: plan.name,
+      amount: plan.price.toString(),
+      duration: plan.duration,
+    });
+
+    // 3. Perform Redirection
+    console.log("Redirecting to payment with params:", params.toString());
+    router.push(`/payment?${params.toString()}`);
+  };
+
   const subDisplay = getSubscriptionDisplay();
 
   return (
-    <div style={{ padding: 32 }}>
+    <div style={{ padding: 32, fontFamily: "sans-serif" }}>
       <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22, marginBottom: 18 }}>
         Subscription Plans
       </h2>
@@ -100,190 +131,80 @@ export default function SubscriptionSection({ subscription }: SubscriptionSectio
           </h3>
 
           {subscription.status === "pending" && (
-            <div
-              style={{
-                background: "rgba(255,214,102,0.3)",
-                padding: 12,
-                borderRadius: 8,
-                marginBottom: 16,
-                fontSize: 14,
-                color: "#ad6800",
-              }}
-            >
-              ⏳ Your subscription is pending admin approval. Please contact support with payment details.
+            <div style={{ background: "rgba(255,214,102,0.3)", padding: 12, borderRadius: 8, marginBottom: 16, fontSize: 14, color: "#ad6800" }}>
+              ⏳ Your subscription is pending admin approval.
             </div>
           )}
 
-          {subscription.status === "rejected" && (
-            <div
-              style={{
-                background: "rgba(255,100,100,0.15)",
-                padding: 12,
-                borderRadius: 8,
-                marginBottom: 16,
-                fontSize: 14,
-                color: "#c62828",
-              }}
-            >
-              ❌ Your subscription was rejected.{" "}
-              {subscription.rejectedReason && <>Reason: <strong>{subscription.rejectedReason}</strong></>}
-              {" "}Please subscribe again or contact support.
-            </div>
-          )}
-
-          <div
-            style={{
-              display: "grid",
-              gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
-              gap: 16,
-            }}
-          >
+          <div style={{ display: "grid", gridTemplateColumns: "repeat(auto-fit, minmax(150px, 1fr))", gap: 16 }}>
             <div>
-              <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Plan Name</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.planName}</div>
+              <div style={{ fontSize: 12, color: "#666" }}>Plan Name</div>
+              <div style={{ fontSize: 16, fontWeight: 700 }}>{subDisplay.planName}</div>
             </div>
             <div>
-              <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Amount</div>
-              <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>₹{subscription.amount}</div>
-            </div>
-            <div>
-              <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Status</div>
-              <div
-                style={{
-                  fontSize: 16,
-                  fontWeight: 700,
-                  color:
-                    subscription.status === "active"
-                      ? "#2d7a2d"
-                      : subscription.status === "pending"
-                      ? "#d46b08"
-                      : "#d32f2f",
-                }}
-              >
+              <div style={{ fontSize: 12, color: "#666" }}>Status</div>
+              <div style={{ fontSize: 16, fontWeight: 700, color: subscription.status === "active" ? "#2d7a2d" : "#d46b08" }}>
                 {subDisplay.status}
               </div>
             </div>
             {subscription.status === "active" && (
-              <>
-                <div>
-                  <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Expires On</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>{subDisplay.expiryDate}</div>
-                </div>
-                <div>
-                  <div style={{ fontSize: 12, color: "#666", marginBottom: 4 }}>Days Remaining</div>
-                  <div style={{ fontSize: 16, fontWeight: 700, color: "#222" }}>
-                    {subDisplay.daysRemaining} days
-                  </div>
-                </div>
-              </>
+              <div>
+                <div style={{ fontSize: 12, color: "#666" }}>Expires On</div>
+                <div style={{ fontSize: 16, fontWeight: 700 }}>{subDisplay.expiryDate}</div>
+              </div>
             )}
           </div>
         </div>
       )}
 
-      {/* Available Plans */}
-      <h3 style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 16 }}>
-        Available Plans
-      </h3>
+      {/* Available Plans Grid */}
       <div style={{ display: "flex", gap: 24, flexWrap: "wrap" }}>
         {plans.map((plan) => {
           const isCurrentPlan = subscription?.planName === plan.name && subscription?.status === "active";
+          
           return (
             <div
               key={plan.name}
               style={{
                 background: plan.color,
                 borderRadius: 12,
-                boxShadow: isCurrentPlan
-                  ? "0 0 0 2px #924DAC, 0 2px 8px rgba(146,77,172,0.1)"
-                  : "0 2px 8px rgba(146,77,172,0.04)",
                 padding: 28,
-                minWidth: 220,
-                flex: "1 1 220px",
+                flex: "1 1 250px",
                 position: "relative",
+                display: "flex",
+                flexDirection: "column",
+                border: isCurrentPlan ? "2px solid #924DAC" : "1px solid transparent",
               }}
             >
               {isCurrentPlan && (
-                <div
-                  style={{
-                    position: "absolute",
-                    top: -10,
-                    right: 16,
-                    background: "#924DAC",
-                    color: "#fff",
-                    fontSize: 11,
-                    fontWeight: 700,
-                    padding: "3px 10px",
-                    borderRadius: 20,
-                  }}
-                >
+                <div style={{ position: "absolute", top: 10, right: 10, background: "#924DAC", color: "#fff", fontSize: 10, padding: "2px 8px", borderRadius: 10 }}>
                   CURRENT
                 </div>
               )}
-              <div style={{ fontSize: 18, fontWeight: 700, color: "#924DAC", marginBottom: 8 }}>
-                {plan.name}
-              </div>
-              <div style={{ color: "#444", marginBottom: 12 }}>{plan.duration}</div>
-              <div style={{ fontSize: 28, fontWeight: 700, color: "#222", marginBottom: 12 }}>
-                ₹{plan.price}
-              </div>
-              <ul style={{ fontSize: 14, color: "#666", marginBottom: 16, paddingLeft: 16 }}>
-                {plan.benefits.map((b) => (
-                  <li key={b} style={{ marginBottom: 4 }}>
-                    {b}
-                  </li>
-                ))}
+              <h3 style={{ color: "#924DAC", margin: "0 0 8px 0" }}>{plan.name}</h3>
+              <div style={{ fontSize: 24, fontWeight: 800, marginBottom: 4 }}>₹{plan.price}</div>
+              <div style={{ fontSize: 12, color: "#666", marginBottom: 16 }}>{plan.duration}</div>
+              
+              <ul style={{ paddingLeft: 20, fontSize: 13, color: "#444", flexGrow: 1 }}>
+                {plan.benefits.map((b, i) => <li key={i} style={{ marginBottom: 4 }}>{b}</li>)}
               </ul>
-              {/* ✅ INLINE onClick - GUARANTEED TO WORK */}
+
               <button
-                onClick={(e) => {
-                  e.preventDefault();
-                  e.stopPropagation();
-                  
-                  console.log("🔵🔵🔵 BUTTON CLICKED! 🔵🔵🔵");
-                  console.log("Plan:", plan);
-                  
-                  // Check subscription status
-                  if (subscription && subscription.status === "active") {
-                    alert("You already have an active subscription. Please wait for it to expire or contact support to upgrade.");
-                    return;
-                  }
-                  if (subscription && subscription.status === "pending") {
-                    alert("Your subscription is pending approval. Please contact support.");
-                    return;
-                  }
-                  
-                  // Build URL
-                  const url = `/payment?plan=${encodeURIComponent(plan.name)}&amount=${plan.price}&duration=${encodeURIComponent(plan.duration)}`;
-                  console.log("🟢 Navigating to:", url);
-                  console.log("🟢 Full URL:", window.location.origin + url);
-                  
-                  // Navigate
-                  window.location.href = url;
-                }}
+                onClick={() => handleSubscribe(plan)}
                 disabled={isCurrentPlan}
                 style={{
-                  fontSize: 14,
-                  padding: "10px 20px",
-                  background: isCurrentPlan ? "#ccc" : "#924DAC",
-                  color: "#fff",
+                  marginTop: 16,
+                  padding: "12px",
+                  backgroundColor: isCurrentPlan ? "#ccc" : "#924DAC",
+                  color: "white",
                   border: "none",
-                  borderRadius: 6,
-                  cursor: isCurrentPlan ? "not-allowed" : "pointer",
+                  borderRadius: "8px",
                   fontWeight: 600,
-                  transition: "background 0.2s",
-                  width: "100%",
-                }}
-                onMouseOver={(e) => {
-                  if (!isCurrentPlan)
-                    (e.currentTarget as HTMLButtonElement).style.background = "#7a3a8a";
-                }}
-                onMouseOut={(e) => {
-                  if (!isCurrentPlan)
-                    (e.currentTarget as HTMLButtonElement).style.background = "#924DAC";
+                  cursor: isCurrentPlan ? "not-allowed" : "pointer",
+                  width: "100%"
                 }}
               >
-                {isCurrentPlan ? "Current Plan" : "Subscribe"}
+                {isCurrentPlan ? "Active Plan" : "Subscribe Now"}
               </button>
             </div>
           );
