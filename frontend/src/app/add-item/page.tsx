@@ -59,6 +59,7 @@ const subCategories = {
 export default function AddItemPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [uploadingImages, setUploadingImages] = useState(false);
   const router = useRouter();
   
   const [formData, setFormData] = useState({
@@ -75,6 +76,7 @@ export default function AddItemPage() {
   const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
   const [images, setImages] = useState<File[]>([]);
   const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [uploadedImageUrls, setUploadedImageUrls] = useState<string[]>([]);
   const [condition, setCondition] = useState('New');
   
   const [actionType, setActionType] = useState('');
@@ -144,19 +146,66 @@ export default function AddItemPage() {
   const handleRemoveImage = (idx: number) => {
     setImages(prev => prev.filter((_, i) => i !== idx));
     setImagePreviews(prev => prev.filter((_, i) => i !== idx));
+    
+    // Also remove uploaded URL if it exists
+    if (uploadedImageUrls[idx]) {
+      setUploadedImageUrls(prev => prev.filter((_, i) => i !== idx));
+    }
+  };
+
+  // ✅ NEW: Upload images to server BEFORE creating item
+  const uploadImagesToServer = async () => {
+    if (images.length === 0) {
+      return [];
+    }
+
+    console.log('📤 Uploading', images.length, 'images to server...');
+    setUploadingImages(true);
+
+    try {
+      const formData = new FormData();
+      
+      // Add all images to FormData
+      images.forEach((image) => {
+        formData.append('images', image);
+      });
+      formData.append('folder', 'products');
+
+      console.log('📤 Calling uploadMultipleImages...');
+      const response = await apiService.uploadMultipleImages(formData);
+      
+      console.log('✅ Images uploaded:', response);
+      
+      // Extract image URLs from response
+      const imageUrls = response.images.map((img: any) => img.imageUrl);
+      setUploadedImageUrls(imageUrls);
+      
+      return imageUrls;
+    } catch (error) {
+      console.error('❌ Failed to upload images:', error);
+      throw new Error('Failed to upload images. Please try again.');
+    } finally {
+      setUploadingImages(false);
+    }
   };
 
   const handleSubmitItem = async () => {
     if (!actionType) return;
     
-    // DEBUG LOGGING
-    console.log('🔍 DEBUG: Starting handleSubmitItem');
-    console.log('🔍 actionType:', actionType);
-    console.log('🔍 API_URL from env:', process.env.NEXT_PUBLIC_API_URL);
-    console.log('🔍 Full URL will be:', `${process.env.NEXT_PUBLIC_API_URL}/items`);
+    console.log('🔍 Starting item creation...');
+    console.log('📸 Images to upload:', images.length);
     
     setLoading(true);
     try {
+      // ✅ STEP 1: Upload images first
+      let imageUrls: string[] = [];
+      if (images.length > 0) {
+        console.log('📤 Uploading images...');
+        imageUrls = await uploadImagesToServer();
+        console.log('✅ Images uploaded:', imageUrls);
+      }
+
+      // ✅ STEP 2: Create item with image URLs
       const itemData = {
         title: formData.title,
         description: formData.description,
@@ -164,9 +213,9 @@ export default function AddItemPage() {
         condition: condition,
         type: actionType,
         stock: 1,
-        images: [],
+        images: imageUrls, // ✅ NOW HAS ACTUAL URLs!
         tags: selectedCategories,
-        location: 'Andhra Pradesh', // Add default location
+        location: 'Andhra Pradesh',
         ...(formData.warrantyStatus && { warrantyStatus: formData.warrantyStatus }),
         ...(formData.itemCondition && { itemCondition: formData.itemCondition }),
         ...(formData.damageInfo && { damageInfo: formData.damageInfo }),
@@ -180,10 +229,7 @@ export default function AddItemPage() {
         })
       };
 
-      const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      console.log('🔗 API_BASE_URL:', apiUrl);
-      console.log('📤 Full request URL:', `${apiUrl}/items`);
-      console.log('📦 Request payload:', itemData);
+      console.log('📦 Creating item with data:', itemData);
 
       const token = localStorage.getItem('token');
       if (!token) {
@@ -192,13 +238,8 @@ export default function AddItemPage() {
         return;
       }
 
-      console.log('🔐 Token found:', token.substring(0, 20) + '...');
-
-      // Make direct fetch to debug
-      const fullUrl = `${apiUrl}/items`;
-      console.log('🚀 Making fetch request to:', fullUrl);
-
-      const response = await fetch(fullUrl, {
+      const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
+      const response = await fetch(`${apiUrl}/api/items`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -208,53 +249,36 @@ export default function AddItemPage() {
       });
 
       console.log('📥 Response status:', response.status);
-      console.log('📥 Response headers:', {
-        'content-type': response.headers.get('content-type'),
-        'content-length': response.headers.get('content-length')
-      });
-
-      const responseText = await response.text();
-      console.log('📥 Raw response (first 500 chars):', responseText.substring(0, 500));
-
-      let responseData;
-      try {
-        responseData = JSON.parse(responseText);
-        console.log('✅ Response parsed as JSON:', responseData);
-      } catch (parseError) {
-        console.error('❌ Failed to parse as JSON');
-        console.error('Parse error:', parseError);
-        throw new Error(`Server returned HTML/non-JSON. First 200 chars: ${responseText.substring(0, 200)}`);
-      }
 
       if (!response.ok) {
-        const errorMessage = responseData?.error || responseData?.message || `HTTP ${response.status}`;
-        throw new Error(errorMessage);
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create item');
       }
 
+      const responseData = await response.json();
       console.log('✅ Item created successfully:', responseData);
 
-      if (responseData.item || responseData.message) {
-        setStep(5);
-        setTimeout(() => {
-          switch (actionType) {
-            case 'bidding':
-              router.push('/bidding');
-              break;
-            case 'exchange':
-              router.push('/exchange');
-              break;
-            case 'resell':
-              router.push('/resell');
-              break;
-            default:
-              router.push('/');
-          }
-        }, 2000);
-      }
+      // Show success and redirect
+      setStep(5);
+      setTimeout(() => {
+        switch (actionType) {
+          case 'bidding':
+            router.push('/bidding');
+            break;
+          case 'exchange':
+            router.push('/exchange');
+            break;
+          case 'resell':
+            router.push('/resell');
+            break;
+          default:
+            router.push('/');
+        }
+      }, 2000);
     } catch (error) {
       console.error('❌ Error creating item:', error);
       const errorMsg = error instanceof Error ? error.message : 'Failed to create item. Please try again.';
-      alert(`Error: ${errorMsg}\n\nCheck browser console (F12) for debugging details.`);
+      alert(`Error: ${errorMsg}`);
     } finally {
       setLoading(false);
     }
@@ -385,15 +409,44 @@ export default function AddItemPage() {
   const step3 = (
     <div>
       <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 18 }}>Add product photos (max 10)</div>
+      {uploadingImages && (
+        <div style={{
+          background: '#e7f3ff',
+          border: '2px solid #2196f3',
+          borderRadius: 12,
+          padding: 16,
+          marginBottom: 18,
+          textAlign: 'center',
+          color: '#0d47a1',
+          fontWeight: 600
+        }}>
+          📤 Uploading images... Please wait
+        </div>
+      )}
       <div style={{ border: '2px dashed #ccc', borderRadius: 12, padding: 24, marginBottom: 18, minHeight: 120, background: '#faf9fd' }}>
         <label style={{ display: 'inline-block', cursor: 'pointer', color: '#924DAC', fontWeight: 600, border: '2px solid #924DAC', borderRadius: 8, padding: '10px 18px', marginBottom: 12 }}>
           Upload a photo
-          <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImageUpload} disabled={images.length >= 10} />
+          <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImageUpload} disabled={images.length >= 10 || uploadingImages} />
         </label>
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
           {imagePreviews.map((img, idx) => (
             <div key={idx} style={{ position: 'relative', width: 80, height: 80, borderRadius: 8, overflow: 'hidden', background: '#fff', border: '1.5px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img src={img} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+              {uploadedImageUrls[idx] && (
+                <div style={{
+                  position: 'absolute',
+                  bottom: 0,
+                  left: 0,
+                  right: 0,
+                  background: 'rgba(46, 204, 64, 0.9)',
+                  color: '#fff',
+                  fontSize: 10,
+                  padding: 2,
+                  textAlign: 'center'
+                }}>
+                  ✓ Uploaded
+                </div>
+              )}
               <span style={{ position: 'absolute', top: 2, right: 6, color: '#924DAC', fontWeight: 700, cursor: 'pointer', fontSize: 18 }} onClick={() => handleRemoveImage(idx)}>&times;</span>
             </div>
           ))}
@@ -410,7 +463,7 @@ export default function AddItemPage() {
       </div>
       <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginTop: 36 }}>
         <button className="sayonara-btn" style={{ minWidth: 120 }} onClick={() => setStep(2)}>Back</button>
-        <button className="sayonara-btn" style={{ minWidth: 120 }} disabled={images.length === 0} onClick={() => setStep(4)}>Next</button>
+        <button className="sayonara-btn" style={{ minWidth: 120 }} disabled={images.length === 0 || uploadingImages} onClick={() => setStep(4)}>Next</button>
         <button className="sayonara-btn" style={{ minWidth: 120, background: '#fff', color: '#924DAC', border: '2px solid #924DAC' }} onClick={() => setStep(1)}>Draft</button>
       </div>
     </div>
