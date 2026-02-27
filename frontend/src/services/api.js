@@ -114,6 +114,33 @@ class ApiService {
   getMyItems() {
     return this.request('/users/my/items');
   }
+  /**
+   * Check if mobile number already exists
+   */
+  checkMobileExists: async (mobile) => {
+    try {
+      const response = await axios.post(`${API_URL}/auth/check-mobile`, {
+        mobile
+      });
+      return response.data;
+    } catch (error) {
+      console.error('Check mobile error:', error);
+      return { exists: false, available: true };
+    }
+  },
+
+  // Alternative: Using GET
+  checkMobileExistsGET: async (mobile) => {
+    try {
+      const response = await axios.get(`${API_URL}/auth/check-mobile?mobile=${mobile}`);
+      return response.data;
+    } catch (error) {
+      console.error('Check mobile error:', error);
+      return { exists: false, available: true };
+    }
+  }
+};
+
 
   // ✅ Get user subscription
   async getSubscription() {
