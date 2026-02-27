@@ -19,30 +19,12 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
 
   if (!isOpen) return null;
 
-  const handleSubmit = async (e?: React.FormEvent) => {
-    if (e) {
-      e.preventDefault();
-      e.stopPropagation();
-    }
-
-    console.log('🔵🔵🔵 LOGIN BUTTON CLICKED! 🔵🔵🔵');
-    console.log('Is Login:', isLogin);
-    console.log('Email:', email);
-    console.log('Loading:', loading);
-    
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault();
     setError('');
 
-    // Validation
-    if (!email || !password) {
-      setError('Please fill in all fields');
-      return;
-    }
-
+    // Validation for signup
     if (!isLogin) {
-      if (!name) {
-        setError('Please enter your name');
-        return;
-      }
       if (password !== confirmPassword) {
         setError('Passwords do not match');
         return;
@@ -54,16 +36,12 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
     }
 
     setLoading(true);
-    console.log('🔄 Starting authentication...');
 
     try {
       const apiUrl = process.env.NEXT_PUBLIC_API_URL || 'http://localhost:4000';
       const endpoint = isLogin ? '/api/auth/login' : '/api/auth/register';
-      const fullUrl = `${apiUrl}${endpoint}`;
 
-      console.log('📤 Sending request to:', fullUrl);
-
-      const response = await fetch(fullUrl, {
+      const response = await fetch(`${apiUrl}${endpoint}`, {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -75,10 +53,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
         ),
       });
 
-      console.log('📥 Response status:', response.status);
-
       const data = await response.json();
-      console.log('📥 Response data:', data);
 
       if (!response.ok) {
         throw new Error(data.error || 'Authentication failed');
@@ -86,24 +61,21 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
 
       // Save token
       localStorage.setItem('token', data.token);
-      console.log('✅ Token saved to localStorage');
 
-      // Show success message
+      // ✅ NEW: Just show success and close modal
+      // No subscription pending screen!
       alert(isLogin ? 'Login successful!' : 'Account created successfully! You can now post up to 3 items for free.');
       
       onLoginSuccess(data.user);
       onClose();
       
       // Refresh page to update auth state
-      console.log('🔄 Reloading page...');
       window.location.reload();
 
     } catch (err: any) {
-      console.error('❌ Login error:', err);
       setError(err.message || 'Something went wrong');
     } finally {
       setLoading(false);
-      console.log('✅ Authentication complete');
     }
   };
 
@@ -136,12 +108,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
       >
         {/* Close button */}
         <button
-          onClick={(e) => {
-            e.preventDefault();
-            e.stopPropagation();
-            console.log('❌ Closing modal');
-            onClose();
-          }}
+          onClick={onClose}
           style={{
             position: 'absolute',
             top: 16,
@@ -191,7 +158,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
                 type="text"
                 value={name}
                 onChange={(e) => setName(e.target.value)}
-                required={!isLogin}
+                required
                 style={{
                   width: '100%',
                   padding: '10px 12px',
@@ -213,10 +180,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
             <input
               type="email"
               value={email}
-              onChange={(e) => {
-                setEmail(e.target.value);
-                setError('');
-              }}
+              onChange={(e) => setEmail(e.target.value)}
               required
               style={{
                 width: '100%',
@@ -238,10 +202,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
             <input
               type="password"
               value={password}
-              onChange={(e) => {
-                setPassword(e.target.value);
-                setError('');
-              }}
+              onChange={(e) => setPassword(e.target.value)}
               required
               style={{
                 width: '100%',
@@ -264,11 +225,8 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
               <input
                 type="password"
                 value={confirmPassword}
-                onChange={(e) => {
-                  setConfirmPassword(e.target.value);
-                  setError('');
-                }}
-                required={!isLogin}
+                onChange={(e) => setConfirmPassword(e.target.value)}
+                required
                 style={{
                   width: '100%',
                   padding: '10px 12px',
@@ -283,16 +241,10 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
             </div>
           )}
 
-          {/* ✅ FIXED: Submit button with inline onClick */}
+          {/* Submit button */}
           <button
             type="submit"
             disabled={loading}
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('🔵 Button clicked directly!');
-              handleSubmit();
-            }}
             style={{
               width: '100%',
               padding: '12px 20px',
@@ -321,10 +273,7 @@ export default function AuthModal({ isOpen, onClose, onLoginSuccess }: AuthModal
         <div style={{ textAlign: 'center', marginTop: 24, fontSize: 14, color: '#666' }}>
           {isLogin ? "Don't have an account? " : 'Already have an account? '}
           <button
-            onClick={(e) => {
-              e.preventDefault();
-              e.stopPropagation();
-              console.log('🔄 Toggling to:', !isLogin ? 'Login' : 'Signup');
+            onClick={() => {
               setIsLogin(!isLogin);
               setError('');
             }}
