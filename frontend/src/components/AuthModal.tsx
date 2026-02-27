@@ -22,15 +22,28 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
 
   if (!open) return null;
 
-  // Login handler
-  async function handleLogin(e: React.FormEvent) {
-    e.preventDefault();
+  // ✅ FIXED: Login handler with debugging
+  async function handleLogin(e?: React.FormEvent) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    console.log('🔵🔵🔵 LOGIN CLICKED! 🔵🔵🔵');
+    console.log('Email:', email);
+    console.log('Password:', password ? '***' : 'empty');
+    
     setLoading(true);
     setErrorMsg(null);
+    
     try {
+      console.log('📤 Calling login API...');
       const res = await apiService.login({ email, password });
+      console.log('📥 Login response:', res);
+      
       if (res.token) {
         localStorage.setItem('isLoggedIn', 'true');
+        console.log('✅ Login successful!');
         setLoading(false);
         onClose();
         window.location.reload(); // Refresh UI
@@ -39,20 +52,34 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         setLoading(false);
       }
     } catch (err: any) {
+      console.error('❌ Login error:', err);
       const msg = err?.response?.data?.error || err.message || 'Login failed.';
       setErrorMsg(msg);
       setLoading(false);
     }
   }
 
-  // Signup handler (direct to basic info now)
-  async function handleSignup(e: React.FormEvent) {
-    e.preventDefault();
+  // ✅ FIXED: Signup handler with debugging
+  async function handleSignup(e?: React.FormEvent) {
+    if (e) {
+      e.preventDefault();
+      e.stopPropagation();
+    }
+    
+    console.log('🔵🔵🔵 SIGNUP CLICKED! 🔵🔵🔵');
+    console.log('Name:', name);
+    console.log('Email:', email);
+    
     setLoading(true);
     setErrorMsg(null);
+    
     try {
+      console.log('📤 Calling register API...');
       const res = await apiService.register({ name, email, password });
+      console.log('📥 Register response:', res);
+      
       if (res.token || res.user) {
+        console.log('✅ Signup successful!');
         setLoading(false);
         setStep('basic-info'); // directly go to basic info
       } else {
@@ -60,6 +87,7 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
         setLoading(false);
       }
     } catch (err: any) {
+      console.error('❌ Signup error:', err);
       const msg = err?.response?.data?.error || err.message || 'Signup failed.';
       setErrorMsg(msg);
       setLoading(false);
@@ -109,7 +137,26 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
           margin: '0 auto',
           position: 'relative',
         }}>
-          <button onClick={onClose} style={{ position: 'absolute', top: 18, right: 18, background: 'none', border: 'none', fontSize: 22, color: '#924DAC', cursor: 'pointer' }}>&times;</button>
+          <button 
+            onClick={(e) => {
+              e.preventDefault();
+              e.stopPropagation();
+              console.log('❌ Closing modal');
+              onClose();
+            }} 
+            style={{ 
+              position: 'absolute', 
+              top: 18, 
+              right: 18, 
+              background: 'none', 
+              border: 'none', 
+              fontSize: 22, 
+              color: '#924DAC', 
+              cursor: 'pointer' 
+            }}
+          >
+            &times;
+          </button>
 
           {/* Step 1: Login/Signup */}
           {step === "login-signup" && (
@@ -127,7 +174,12 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                     padding: '8px 0',
                     cursor: 'pointer',
                   }}
-                  onClick={() => setTab('login')}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔄 Switching to Login tab');
+                    setTab('login');
+                  }}
                 >
                   Log In
                 </button>
@@ -143,7 +195,12 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
                     padding: '8px 0',
                     cursor: 'pointer',
                   }}
-                  onClick={() => setTab('signup')}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    e.stopPropagation();
+                    console.log('🔄 Switching to Signup tab');
+                    setTab('signup');
+                  }}
                 >
                   Sign Up
                 </button>
@@ -154,32 +211,113 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
               {tab === 'login' ? (
                 <form onSubmit={handleLogin}>
                   <label>Email Address</label>
-                  <input type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} />
+                  <input 
+                    type="email" 
+                    placeholder="Enter your email" 
+                    value={email} 
+                    onChange={e => {
+                      setEmail(e.target.value);
+                      setErrorMsg(null);
+                    }} 
+                  />
                   <label>Password</label>
-                  <input type="password" placeholder="Enter your password" value={password} onChange={e => setPassword(e.target.value)} />
-                  <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 18, fontSize: 18 }} disabled={loading}>
+                  <input 
+                    type="password" 
+                    placeholder="Enter your password" 
+                    value={password} 
+                    onChange={e => {
+                      setPassword(e.target.value);
+                      setErrorMsg(null);
+                    }} 
+                  />
+                  {/* ✅ FIXED: Button with inline onClick */}
+                  <button 
+                    type="submit" 
+                    className="sayonara-btn" 
+                    style={{ width: '100%', marginTop: 18, fontSize: 18 }} 
+                    disabled={loading}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('🔵 Login button clicked directly!');
+                      handleLogin();
+                    }}
+                  >
                     {loading ? 'Signing In...' : 'SIGN IN'}
                   </button>
                 </form>
               ) : (
                 <form onSubmit={handleSignup}>
                   <label>Name</label>
-                  <input type="text" placeholder="Enter your name" value={name} onChange={e => setName(e.target.value)} />
+                  <input 
+                    type="text" 
+                    placeholder="Enter your name" 
+                    value={name} 
+                    onChange={e => setName(e.target.value)} 
+                  />
                   <label>Email Address</label>
-                  <input type="email" placeholder="Enter your email" value={email} onChange={e => setEmail(e.target.value)} />
+                  <input 
+                    type="email" 
+                    placeholder="Enter your email" 
+                    value={email} 
+                    onChange={e => setEmail(e.target.value)} 
+                  />
                   <label>Password</label>
-                  <input type="password" placeholder="Create a password" value={password} onChange={e => setPassword(e.target.value)} />
+                  <input 
+                    type="password" 
+                    placeholder="Create a password" 
+                    value={password} 
+                    onChange={e => setPassword(e.target.value)} 
+                  />
                   <label>Confirm Password</label>
-                  <input type="password" placeholder="Confirm your password" value={confirmPassword} onChange={e => setConfirmPassword(e.target.value)} />
+                  <input 
+                    type="password" 
+                    placeholder="Confirm your password" 
+                    value={confirmPassword} 
+                    onChange={e => setConfirmPassword(e.target.value)} 
+                  />
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', marginBottom: 12 }}>
-                    <input type="checkbox" checked={terms} onChange={e => setTerms(e.target.checked)} style={{ marginRight: 8 }} />
+                    <input 
+                      type="checkbox" 
+                      checked={terms} 
+                      onChange={e => setTerms(e.target.checked)} 
+                      style={{ marginRight: 8 }} 
+                    />
                     <span style={{ fontSize: 13, color: '#666', textAlign: 'center' }}>
                       I agree to the <a href="#" style={{ color: '#924DAC' }}>Terms</a> & <a href="#" style={{ color: '#924DAC' }}>Privacy Policy</a>.
                     </span>
                   </div>
-                  <button type="submit" className="sayonara-btn" style={{ width: '100%', marginTop: 8, fontSize: 18 }} disabled={loading}>
+                  {/* ✅ FIXED: Button with inline onClick */}
+                  <button 
+                    type="submit" 
+                    className="sayonara-btn" 
+                    style={{ width: '100%', marginTop: 8, fontSize: 18 }} 
+                    disabled={loading}
+                    onClick={(e) => {
+                      e.preventDefault();
+                      e.stopPropagation();
+                      console.log('🔵 Signup button clicked directly!');
+                      handleSignup();
+                    }}
+                  >
                     {loading ? 'Signing Up...' : 'SIGN UP'}
                   </button>
+                  
+                  {/* ✅ FREE TIER MESSAGE */}
+                  <div
+                    style={{
+                      marginTop: 16,
+                      padding: 12,
+                      background: '#e7ffe7',
+                      borderRadius: 8,
+                      fontSize: 13,
+                      color: '#2d7a2d',
+                      textAlign: 'center',
+                    }}
+                  >
+                    🎉 <strong>Free Account:</strong> Post up to 3 items<br />
+                    💎 Upgrade to ₹99/year for unlimited posts
+                  </div>
                 </form>
               )}
             </>
@@ -189,11 +327,12 @@ export default function AuthModal({ open, onClose }: { open: boolean; onClose: (
           {step === "basic-info" && (
             <form onSubmit={e => {
               e.preventDefault();
-              setSuccessMsg('🎉 Your Sayonara account has been created! Happy exchanging, bidding, and reselling.');
+              setSuccessMsg('🎉 Your Sayonara account has been created! You can now post up to 3 items for free. Happy exchanging, bidding, and reselling!');
               setTimeout(() => {
                 setSuccessMsg(null);
-                setStep('login-signup');
-                setTab('login');
+                localStorage.setItem('isLoggedIn', 'true');
+                onClose();
+                window.location.reload(); // Refresh to show logged in state
               }, 2500); // show message 2.5s
             }}>
               {successMsg && (
