@@ -103,7 +103,67 @@ router.put('/profile', auth, async (req, res) => {
     res.status(500).json({ error: 'Server error' });
   }
 });
+/**
+ * Check if mobile number already exists
+ * POST /api/auth/check-mobile
+ * or GET /api/users/check-mobile?mobile=1234567890
+ */
+router.post('/check-mobile', async (req, res) => {
+  try {
+    const { mobile } = req.body;
 
+    if (!mobile) {
+      return res.status(400).json({ error: 'Mobile number required' });
+    }
+
+    // Validate mobile number (10 digits)
+    if (!/^\d{10}$/.test(mobile)) {
+      return res.status(400).json({ error: 'Invalid mobile number. Must be 10 digits.' });
+    }
+
+    // Check if mobile exists in database
+    const existingUser = await User.findOne({
+      where: { contact: mobile }
+    });
+
+    res.json({
+      exists: !!existingUser,
+      available: !existingUser
+    });
+
+  } catch (error) {
+    console.error('Check mobile error:', error);
+    res.status(500).json({ error: 'Failed to check mobile number' });
+  }
+});
+
+// Alternative: GET route
+router.get('/check-mobile', async (req, res) => {
+  try {
+    const { mobile } = req.query;
+
+    if (!mobile) {
+      return res.status(400).json({ error: 'Mobile number required' });
+    }
+
+    if (!/^\d{10}$/.test(mobile)) {
+      return res.status(400).json({ error: 'Invalid mobile number' });
+    }
+
+    const existingUser = await User.findOne({
+      where: { contact: mobile }
+    });
+
+    res.json({
+      exists: !!existingUser,
+      available: !existingUser
+    });
+
+  } catch (error) {
+    console.error('Check mobile error:', error);
+    res.status(500).json({ error: 'Failed to check mobile number' });
+  }
+});
 // -------------------- Get My Items --------------------
 router.get('/my/items', auth, async (req, res) => {
   try {
