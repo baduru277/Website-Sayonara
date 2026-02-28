@@ -199,20 +199,20 @@ export default function BiddingPage() {
       {/* Header Banner */}
       <div style={{
         background: 'linear-gradient(135deg, #924DAC 0%, #b06fd4 60%, #7a3a8a 100%)',
-        padding: '32px 24px 28px',
+        padding: '14px 24px 12px',
         color: '#fff'
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 6 }}>
-            <TrendingUp size={28} />
-            <h1 style={{ fontSize: 28, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>Live Auctions</h1>
+            <TrendingUp size={20} />
+            <h1 style={{ fontSize: 20, fontWeight: 800, margin: 0, letterSpacing: '-0.5px' }}>Live Auctions</h1>
             <span style={{
               background: '#ff4444', color: '#fff', fontSize: 11, fontWeight: 700,
               padding: '3px 8px', borderRadius: 20, letterSpacing: 1,
               animation: 'pulse 1.5s ease infinite'
             }}>● LIVE</span>
           </div>
-          <p style={{ margin: 0, opacity: 0.85, fontSize: 15 }}>
+          <p style={{ margin: 0, opacity: 0.85, fontSize: 12 }}>
             {items.length} active auction{items.length !== 1 ? 's' : ''} — bid before time runs out
           </p>
         </div>
