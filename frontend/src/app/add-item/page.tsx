@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import apiService from '@/services/api';
@@ -59,7 +59,35 @@ const subCategories = {
 export default function AddItemPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
+  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
+  const [itemCount, setItemCount] = useState(0);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const [limitChecked, setLimitChecked] = useState(false);
   const router = useRouter();
+
+  const FREE_LIMIT = 3;
+
+  // Check item count and subscription on mount — block if free plan & >= 3 items
+  useEffect(() => {
+    const checkLimit = async () => {
+      try {
+        const data = await apiService.getDashboard();
+        const count = data?.stats?.totalItems ?? 0;
+        const sub = data?.user?.subscriptions?.[0];
+        const active = sub?.status === 'active' && sub?.expiryDate && new Date(sub.expiryDate) > new Date();
+        setItemCount(count);
+        setIsSubscribed(active);
+        if (!active && count >= FREE_LIMIT) {
+          setShowUpgradeModal(true);
+        }
+      } catch (err) {
+        console.error('Failed to check item limit:', err);
+      } finally {
+        setLimitChecked(true);
+      }
+    };
+    checkLimit();
+  }, []);
   
   const [formData, setFormData] = useState({
     title: '',
@@ -483,8 +511,39 @@ export default function AddItemPage() {
     </div>
   );
 
+  // Upgrade modal — shown when free user hits 3-item limit
+  const upgradeModal = showUpgradeModal && (
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+      <div style={{ background: '#fff', borderRadius: 18, padding: 40, maxWidth: 440, width: '100%', textAlign: 'center', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
+        <div style={{ fontSize: 52, marginBottom: 12 }}>🔒</div>
+        <h2 style={{ fontWeight: 700, fontSize: 22, color: '#222', marginBottom: 10 }}>Free Plan Limit Reached</h2>
+        <p style={{ color: '#555', fontSize: 15, marginBottom: 6 }}>
+          You've used all <strong>3 free listings</strong> on your current plan.
+        </p>
+        <p style={{ color: '#555', fontSize: 15, marginBottom: 24 }}>
+          Upgrade to unlimited listings for just <strong style={{ color: '#924DAC' }}>₹99/year</strong> — special promotion for this year only!
+        </p>
+        <a
+          href="https://sayonaraa.com/payment"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: 'block', background: 'linear-gradient(90deg, #924DAC, #b06fd4)', color: '#fff', fontWeight: 700, borderRadius: 10, padding: '14px 0', fontSize: 16, textDecoration: 'none', marginBottom: 12 }}
+        >
+          Subscribe Now — ₹99/year →
+        </a>
+        <button
+          onClick={() => router.back()}
+          style={{ background: 'none', border: 'none', color: '#888', fontSize: 14, cursor: 'pointer', textDecoration: 'underline' }}
+        >
+          Go back
+        </button>
+      </div>
+    </div>
+  );
+
   return (
     <div style={{ minHeight: 'calc(100vh - 120px)', background: '#f7f7fa', padding: '32px 0' }}>
+      {upgradeModal}
 
       {/* Promotional notification banner */}
       <div style={{ background: 'linear-gradient(90deg, #924DAC 0%, #b06fd4 100%)', color: '#fff', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24, borderRadius: 12, maxWidth: 900, margin: '0 auto 24px auto', boxShadow: '0 2px 12px rgba(146,77,172,0.18)' }}>
