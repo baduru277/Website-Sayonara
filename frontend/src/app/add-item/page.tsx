@@ -61,11 +61,10 @@ export default function AddItemPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   
-  // ✅ NEW: Free tier state
-  const [checkingLimit, setCheckingLimit] = useState(true);
+  // ✅ NEW: Free tier state (disabled by default until you're ready)
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [userItemCount, setUserItemCount] = useState(0);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(false);
+  const [hasActiveSubscription, setHasActiveSubscription] = useState(true); // Set to true to disable limits for now
   const FREE_TIER_LIMIT = 3;
   
   const [formData, setFormData] = useState({
@@ -92,7 +91,8 @@ export default function AddItemPage() {
   const maxTitle = 60;
   const maxDesc = 1200;
   
-  // ✅ NEW: Check user limits on page load
+  // ✅ OPTIONAL: Uncomment this when you're ready to enable limits
+  /*
   useEffect(() => {
     checkUserLimits();
   }, []);
@@ -101,52 +101,41 @@ export default function AddItemPage() {
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('Please login to post items');
         router.push('/');
         return;
       }
 
-      // Check subscription status
+      // Check subscription and item count
       try {
-        const subResponse = await apiService.getSubscription();
-        const subscription = subResponse?.subscription;
-        
-        if (subscription && subscription.status === 'active') {
-          setHasActiveSubscription(true);
-          console.log('✅ User has active subscription - unlimited posts');
-        } else {
-          setHasActiveSubscription(false);
-          console.log('⚠️ User on free tier - checking item count...');
+        if (typeof apiService.getSubscription === 'function') {
+          const subResponse = await apiService.getSubscription();
+          const subscription = subResponse?.subscription;
+          setHasActiveSubscription(subscription?.status === 'active');
         }
       } catch (err) {
-        console.log('No subscription found - free tier');
         setHasActiveSubscription(false);
       }
 
-      // Check how many items user has posted
       try {
-        const itemsResponse = await apiService.getMyItems();
-        const count = itemsResponse?.items?.length || 0;
-        setUserItemCount(count);
-        console.log(`📊 User has posted ${count} items`);
-
-        // If free tier and already at limit, show upgrade modal
-        if (!hasActiveSubscription && count >= FREE_TIER_LIMIT) {
-          console.log('🚫 Free tier limit reached!');
-          setShowUpgradeModal(true);
+        if (typeof apiService.getMyItems === 'function') {
+          const itemsResponse = await apiService.getMyItems();
+          const count = itemsResponse?.items?.length || 0;
+          setUserItemCount(count);
+          
+          if (!hasActiveSubscription && count >= FREE_TIER_LIMIT) {
+            setShowUpgradeModal(true);
+          }
         }
       } catch (err) {
-        console.error('Error fetching user items:', err);
+        console.error('Error fetching items:', err);
       }
     } catch (error) {
       console.error('Error checking limits:', error);
-    } finally {
-      setCheckingLimit(false);
     }
   };
+  */
 
   const handleUpgradeClick = () => {
-    // Redirect to payment page with ₹99/year plan
     router.push('/payment?plan=Annual%20Plan&amount=99&duration=1%20Year');
   };
   
@@ -214,14 +203,13 @@ export default function AddItemPage() {
   const handleSubmitItem = async () => {
     if (!actionType) return;
     
-    // ✅ NEW: Check limit before submitting
+    // ✅ Check limit (currently disabled - set hasActiveSubscription to false to enable)
     if (!hasActiveSubscription && userItemCount >= FREE_TIER_LIMIT) {
       setShowUpgradeModal(true);
       return;
     }
     
     console.log('🔍 DEBUG: Starting handleSubmitItem');
-    console.log('🔍 actionType:', actionType);
     
     setLoading(true);
     try {
@@ -282,7 +270,7 @@ export default function AddItemPage() {
 
       console.log('✅ Item created successfully:', responseData);
       
-      // ✅ Update item count
+      // Update item count
       setUserItemCount(prev => prev + 1);
 
       if (responseData.item || responseData.message) {
@@ -312,7 +300,7 @@ export default function AddItemPage() {
     }
   };
 
-  // ✅ NEW: Upgrade Modal
+  // ✅ Upgrade Modal (only shows if showUpgradeModal is true)
   const UpgradeModal = () => (
     <div
       style={{
@@ -420,82 +408,7 @@ export default function AddItemPage() {
     </div>
   );
 
-  // ✅ NEW: Free Tier Banner
-  const FreeTierBanner = () => {
-    if (hasActiveSubscription) {
-      return (
-        <div style={{
-          background: 'linear-gradient(135deg, #e7ffe7 0%, #eafff3 100%)',
-          borderRadius: 12,
-          padding: 16,
-          marginBottom: 24,
-          textAlign: 'center',
-          fontSize: 14,
-          color: '#2d7a2d',
-          fontWeight: 600
-        }}>
-          💎 Premium Account - Unlimited Posts
-        </div>
-      );
-    }
-
-    const remaining = FREE_TIER_LIMIT - userItemCount;
-    
-    return (
-      <div style={{
-        background: remaining > 0 ? 'linear-gradient(135deg, #fff3ea 0%, #f0e7ff 100%)' : 'linear-gradient(135deg, #ffe7e7 0%, #fff3ea 100%)',
-        borderRadius: 12,
-        padding: 16,
-        marginBottom: 24,
-        textAlign: 'center',
-        fontSize: 14,
-        color: remaining > 0 ? '#d46b08' : '#d32f2f',
-        fontWeight: 600
-      }}>
-        {remaining > 0 ? (
-          <>
-            🎉 Free Account: {remaining} of {FREE_TIER_LIMIT} posts remaining
-            <span style={{ display: 'block', fontSize: 12, marginTop: 4, fontWeight: 400 }}>
-              Upgrade to ₹99/year for unlimited posts
-            </span>
-          </>
-        ) : (
-          <>
-            🚫 Free tier limit reached ({FREE_TIER_LIMIT} posts)
-            <button
-              onClick={handleUpgradeClick}
-              style={{
-                marginLeft: 12,
-                padding: '4px 12px',
-                background: '#924DAC',
-                color: '#fff',
-                border: 'none',
-                borderRadius: 6,
-                fontSize: 13,
-                fontWeight: 600,
-                cursor: 'pointer'
-              }}
-            >
-              Upgrade Now
-            </button>
-          </>
-        )}
-      </div>
-    );
-  };
-
-  // ✅ Loading check
-  if (checkingLimit) {
-    return (
-      <div style={{ minHeight: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f7fa' }}>
-        <div style={{ textAlign: 'center', color: '#924DAC', fontSize: 18 }}>
-          <div style={{ marginBottom: 16 }}>🔍 Checking your account...</div>
-        </div>
-      </div>
-    );
-  }
-
-  // ✅ Show upgrade modal if limit reached
+  // Show upgrade modal if triggered
   if (showUpgradeModal) {
     return <UpgradeModal />;
   }
@@ -716,7 +629,6 @@ export default function AddItemPage() {
   return (
     <div style={{ minHeight: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f7fa', padding: '32px 0' }}>
       <div style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', maxWidth: 900, width: '100%', padding: 36 }}>
-        <FreeTierBanner />
         {stepper}
         {step === 1 && step1}
         {step === 2 && step2}
