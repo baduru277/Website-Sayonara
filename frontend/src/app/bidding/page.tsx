@@ -198,7 +198,7 @@ export default function BiddingPage() {
 
       {/* Header Banner */}
       <div style={{
-        background: 'linear-gradient(135deg, #924DAC 0%, #b06fd4 60%, #7a3a8a 100%)',
+        background: 'linear-gradient(135deg, #a970ff 0%, #c084fc 60%, #8b5cf6 100%)',
         padding: '14px 24px 12px',
         color: '#fff'
       }}>
