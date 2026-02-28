@@ -60,14 +60,13 @@ export default function AddItemPage() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [itemCount, setItemCount] = useState(0);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [limitChecked, setLimitChecked] = useState(false);
+  const [itemCount, setItemCount] = useState(0);
   const router = useRouter();
 
   const FREE_LIMIT = 3;
 
-  // Check item count and subscription on mount — block if free plan & >= 3 items
+  // On mount: check item count & subscription — show modal if free plan & >= 3 items
   useEffect(() => {
     const checkLimit = async () => {
       try {
@@ -76,19 +75,17 @@ export default function AddItemPage() {
         const sub = data?.user?.subscriptions?.[0];
         const active = sub?.status === 'active' && sub?.expiryDate && new Date(sub.expiryDate) > new Date();
         setItemCount(count);
-        setIsSubscribed(active);
+        setIsSubscribed(!!active);
         if (!active && count >= FREE_LIMIT) {
           setShowUpgradeModal(true);
         }
       } catch (err) {
         console.error('Failed to check item limit:', err);
-      } finally {
-        setLimitChecked(true);
       }
     };
     checkLimit();
   }, []);
-  
+
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -135,8 +132,7 @@ export default function AddItemPage() {
     setSelectedCategories(selectedCategories.filter(c => c !== cat));
   };
 
-  // CHANGE 1: Replaced resizeImagesForGrid + createThumbnail with URL.createObjectURL
-  // for reliable instant previews. validateImageFile kept as-is.
+  // FIX: Use URL.createObjectURL for reliable instant previews
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files).slice(0, 10 - images.length);
@@ -152,9 +148,7 @@ export default function AddItemPage() {
       if (validFiles.length === 0) return;
 
       try {
-        // Use object URLs instead of resizeImagesForGrid — faster and more reliable
         const previews = validFiles.map(file => URL.createObjectURL(file));
-
         setImages(prev => [...prev, ...validFiles]);
         setImagePreviews(prev => [...prev, ...previews]);
       } catch (error) {
@@ -164,7 +158,7 @@ export default function AddItemPage() {
     }
   };
   
-  // CHANGE 2: Revoke object URL on remove to free memory
+  // FIX: Revoke object URL on remove to free memory
   const handleRemoveImage = (idx: number) => {
     URL.revokeObjectURL(imagePreviews[idx]);
     setImages(prev => prev.filter((_, i) => i !== idx));
@@ -174,14 +168,34 @@ export default function AddItemPage() {
   const handleSubmitItem = async () => {
     if (!actionType) return;
     
-    // DEBUG LOGGING
     console.log('🔍 DEBUG: Starting handleSubmitItem');
     console.log('🔍 actionType:', actionType);
     console.log('🔍 API_URL from env:', process.env.NEXT_PUBLIC_API_URL);
-    console.log('🔍 Full URL will be:', `${process.env.NEXT_PUBLIC_API_URL}/items`);
     
     setLoading(true);
     try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        alert('You must be logged in to create an item');
+        router.push('/');
+        return;
+      }
+
+      // STEP 1: Upload images separately using existing apiService (multipart)
+      // This keeps item creation as JSON so backend express.json() works correctly
+      let uploadedImageUrls: string[] = [];
+      if (images.length > 0) {
+        try {
+          console.log('📸 Uploading', images.length, 'image(s)...');
+          const uploadResult = await apiService.uploadMultipleImages(images);
+          uploadedImageUrls = uploadResult?.urls || uploadResult?.images || [];
+          console.log('✅ Images uploaded:', uploadedImageUrls);
+        } catch (imgErr) {
+          console.warn('⚠️ Image upload failed, continuing without images:', imgErr);
+        }
+      }
+
+      // STEP 2: Create item as JSON — matches backend's express.json() parser
       const itemData = {
         title: formData.title,
         description: formData.description,
@@ -189,6 +203,7 @@ export default function AddItemPage() {
         condition: condition,
         type: actionType,
         stock: 1,
+        images: uploadedImageUrls,
         tags: selectedCategories,
         location: 'Andhra Pradesh',
         ...(formData.warrantyStatus && { warrantyStatus: formData.warrantyStatus }),
@@ -205,44 +220,18 @@ export default function AddItemPage() {
       };
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      console.log('🔗 API_BASE_URL:', apiUrl);
-      console.log('📤 Full request URL:', `${apiUrl}/items`);
       console.log('📦 Request payload:', itemData);
-
-      const token = localStorage.getItem('token');
-      if (!token) {
-        alert('You must be logged in to create an item');
-        router.push('/');
-        return;
-      }
-
-      console.log('🔐 Token found:', token.substring(0, 20) + '...');
 
       const fullUrl = `${apiUrl}/items`;
       console.log('🚀 Making fetch request to:', fullUrl);
 
-      // CHANGE 3: Use FormData to send images as actual files instead of images: []
-      const formPayload = new FormData();
-
-      // Append all item fields
-      Object.entries(itemData).forEach(([key, val]) => {
-        if (val !== undefined && val !== null) {
-          formPayload.append(key, typeof val === 'object' ? JSON.stringify(val) : String(val));
-        }
-      });
-
-      // Append actual image files
-      images.forEach(file => formPayload.append('images', file));
-
-      console.log('📎 Attaching', images.length, 'image(s) to FormData');
-
       const response = await fetch(fullUrl, {
         method: 'POST',
         headers: {
-          // NOTE: Do NOT set Content-Type here — browser sets it automatically with boundary for FormData
+          'Content-Type': 'application/json',
           'Authorization': `Bearer ${token}`
         },
-        body: formPayload
+        body: JSON.stringify(itemData)
       });
 
       console.log('📥 Response status:', response.status);
@@ -513,7 +502,7 @@ export default function AddItemPage() {
 
   // Upgrade modal — shown when free user hits 3-item limit
   const upgradeModal = showUpgradeModal && (
-    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
+    <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ background: '#fff', borderRadius: 18, padding: 40, maxWidth: 440, width: '100%', textAlign: 'center', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
         <div style={{ fontSize: 52, marginBottom: 12 }}>🔒</div>
         <h2 style={{ fontWeight: 700, fontSize: 22, color: '#222', marginBottom: 10 }}>Free Plan Limit Reached</h2>
@@ -551,21 +540,21 @@ export default function AddItemPage() {
         <span style={{ fontWeight: 500, fontSize: 15 }}>
           Free plan is limited to <strong>3 items</strong>. Unlock unlimited listings for just <strong>₹99/year</strong> — special promotion for this year only!
         </span>
-        <a href="https://sayonaraa.com/payment" target="_blank" rel="noopener noreferrer" style={{ background: '#fff', color: '#924DAC', fontWeight: 700, borderRadius: 20, padding: '7px 20px', fontSize: 14, textDecoration: 'none', whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(0,0,0,0.10)', transition: 'background 0.2s' }}>
+        <a href="https://sayonaraa.com/payment" target="_blank" rel="noopener noreferrer" style={{ background: '#fff', color: '#924DAC', fontWeight: 700, borderRadius: 20, padding: '7px 20px', fontSize: 14, textDecoration: 'none', whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}>
           Subscribe Now →
         </a>
       </div>
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-      <div style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', maxWidth: 900, width: '100%', padding: 36 }}>
-        {stepper}
-        {step === 1 && step1}
-        {step === 2 && step2}
-        {step === 3 && step3}
-        {step === 4 && step4}
-        {step === 5 && step5}
+        <div style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', maxWidth: 900, width: '100%', padding: 36 }}>
+          {stepper}
+          {step === 1 && step1}
+          {step === 2 && step2}
+          {step === 3 && step3}
+          {step === 4 && step4}
+          {step === 5 && step5}
+        </div>
       </div>
-    </div>
     </div>
   );
 }
