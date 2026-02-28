@@ -10,7 +10,7 @@ interface BiddingItem {
   title: string;
   description: string;
   image: string;
-  images?: string[];
+  images?: any[];
   category: string;
   condition: string;
   currentBid: number;
@@ -39,7 +39,13 @@ export default function BiddingPage() {
       try {
         setLoading(true);
         setError(null);
+
+        console.log('Fetching bidding items from:', `${process.env.NEXT_PUBLIC_API_URL}/items?type=bidding`);
+
         const response = await apiService.getBiddingItems();
+
+        console.log('API Response:', response);
+
         const apiItems = Array.isArray(response) ? response : (response?.items || []);
 
         if (!apiItems || apiItems.length === 0) {
@@ -49,10 +55,16 @@ export default function BiddingPage() {
         }
 
         const transformedItems = apiItems.map((item: any) => {
-          const rawImage = item.images?.[0] || '';
+          // ✅ FIX: Handle both string and object image formats
+          const rawImageData = item.images?.[0] || '';
+          const rawImage = typeof rawImageData === 'string'
+            ? rawImageData
+            : rawImageData?.imageUrl || rawImageData?.url || '';
+
           const image = rawImage
             ? (rawImage.startsWith('http') ? rawImage : `${BASE_URL}${rawImage}`)
             : '';
+
           return {
             id: item.id,
             title: item.title,
@@ -63,7 +75,7 @@ export default function BiddingPage() {
             condition: item.condition,
             currentBid: parseFloat(item.currentBid || item.startingBid || '0'),
             startingBid: parseFloat(item.startingBid || '0'),
-            buyNowPrice: parseFloat(item.buyNowPrice || '0'),
+            buyNowPrice: item.buyNowPrice ? parseFloat(item.buyNowPrice) : undefined,
             timeLeft: calculateTimeLeft(item.auctionEndDate),
             totalBids: item.totalBids || 0,
             location: item.location || 'India',
@@ -75,9 +87,9 @@ export default function BiddingPage() {
         });
 
         setItems(transformedItems);
-      } catch (err) {
+      } catch (err: any) {
         console.error('Failed to fetch bidding items:', err);
-        setError('Failed to load bidding items');
+        setError(err?.message || 'Failed to load bidding items');
       } finally {
         setLoading(false);
       }
@@ -134,6 +146,10 @@ export default function BiddingPage() {
           <div style={{ fontSize: 64, marginBottom: 16 }}>🔨</div>
           <div style={{ color: '#924DAC', fontWeight: 700, fontSize: 20, marginBottom: 8 }}>No Live Auctions</div>
           <div style={{ color: '#888', fontSize: 15 }}>{error || 'Check back soon for new items!'}</div>
+          {/* Debug info */}
+          <div style={{ marginTop: 16, fontSize: 12, color: '#bbb' }}>
+            API: {process.env.NEXT_PUBLIC_API_URL || 'NOT SET'}
+          </div>
         </div>
       </div>
     );
@@ -145,6 +161,10 @@ export default function BiddingPage() {
         @keyframes fadeInUp {
           from { opacity: 0; transform: translateY(20px); }
           to { opacity: 1; transform: translateY(0); }
+        }
+        @keyframes pulse {
+          0%, 100% { opacity: 1; }
+          50% { opacity: 0.5; }
         }
         .bid-card {
           animation: fadeInUp 0.4s ease both;
@@ -258,16 +278,19 @@ export default function BiddingPage() {
                     style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
                     onError={(e) => {
                       e.currentTarget.style.display = 'none';
-                      (e.currentTarget.nextSibling as HTMLElement).style.display = 'flex';
+                      const fallback = e.currentTarget.nextSibling as HTMLElement;
+                      if (fallback) fallback.style.display = 'flex';
                     }}
                   />
                 ) : null}
-                {/* Fallback — shown if no image or image fails */}
+                {/* Fallback */}
                 <div style={{
                   display: item.image ? 'none' : 'flex',
                   width: '100%', height: '100%',
                   alignItems: 'center', justifyContent: 'center',
-                  flexDirection: 'column', gap: 8, color: '#c9a8e0'
+                  flexDirection: 'column', gap: 8, color: '#c9a8e0',
+                  position: 'absolute', top: 0, left: 0,
+                  background: '#f5f0fa',
                 }}>
                   <div style={{ fontSize: 40 }}>📦</div>
                   <div style={{ fontSize: 12, fontWeight: 500 }}>No Image</div>
@@ -341,6 +364,13 @@ export default function BiddingPage() {
                     <div style={{ fontSize: 16, fontWeight: 700, color: '#333' }}>{item.totalBids}</div>
                   </div>
                 </div>
+
+                {/* Buy Now Price if available */}
+                {item.buyNowPrice && item.buyNowPrice > 0 && (
+                  <div style={{ fontSize: 12, color: '#666', marginBottom: 10 }}>
+                    Buy Now: <span style={{ fontWeight: 700, color: '#2d8a4e' }}>{formatCurrency(item.buyNowPrice)}</span>
+                  </div>
+                )}
 
                 {/* Footer */}
                 <div style={{
