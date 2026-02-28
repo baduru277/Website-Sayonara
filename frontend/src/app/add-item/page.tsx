@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import apiService from '@/services/api';
@@ -61,12 +61,6 @@ export default function AddItemPage() {
   const [loading, setLoading] = useState(false);
   const router = useRouter();
   
-  // ✅ NEW: Free tier state (disabled by default until you're ready)
-  const [showUpgradeModal, setShowUpgradeModal] = useState(false);
-  const [userItemCount, setUserItemCount] = useState(0);
-  const [hasActiveSubscription, setHasActiveSubscription] = useState(true); // Set to true to disable limits for now
-  const FREE_TIER_LIMIT = 3;
-  
   const [formData, setFormData] = useState({
     title: '',
     description: '',
@@ -90,54 +84,6 @@ export default function AddItemPage() {
 
   const maxTitle = 60;
   const maxDesc = 1200;
-  
-  // ✅ OPTIONAL: Uncomment this when you're ready to enable limits
-  /*
-  useEffect(() => {
-    checkUserLimits();
-  }, []);
-
-  const checkUserLimits = async () => {
-    try {
-      const token = localStorage.getItem('token');
-      if (!token) {
-        router.push('/');
-        return;
-      }
-
-      // Check subscription and item count
-      try {
-        if (typeof apiService.getSubscription === 'function') {
-          const subResponse = await apiService.getSubscription();
-          const subscription = subResponse?.subscription;
-          setHasActiveSubscription(subscription?.status === 'active');
-        }
-      } catch (err) {
-        setHasActiveSubscription(false);
-      }
-
-      try {
-        if (typeof apiService.getMyItems === 'function') {
-          const itemsResponse = await apiService.getMyItems();
-          const count = itemsResponse?.items?.length || 0;
-          setUserItemCount(count);
-          
-          if (!hasActiveSubscription && count >= FREE_TIER_LIMIT) {
-            setShowUpgradeModal(true);
-          }
-        }
-      } catch (err) {
-        console.error('Error fetching items:', err);
-      }
-    } catch (error) {
-      console.error('Error checking limits:', error);
-    }
-  };
-  */
-
-  const handleUpgradeClick = () => {
-    router.push('/payment?plan=Annual%20Plan&amount=99&duration=1%20Year');
-  };
   
   const handleChange = (
     e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
@@ -203,13 +149,11 @@ export default function AddItemPage() {
   const handleSubmitItem = async () => {
     if (!actionType) return;
     
-    // ✅ Check limit (currently disabled - set hasActiveSubscription to false to enable)
-    if (!hasActiveSubscription && userItemCount >= FREE_TIER_LIMIT) {
-      setShowUpgradeModal(true);
-      return;
-    }
-    
+    // DEBUG LOGGING
     console.log('🔍 DEBUG: Starting handleSubmitItem');
+    console.log('🔍 actionType:', actionType);
+    console.log('🔍 API_URL from env:', process.env.NEXT_PUBLIC_API_URL);
+    console.log('🔍 Full URL will be:', `${process.env.NEXT_PUBLIC_API_URL}/items`);
     
     setLoading(true);
     try {
@@ -237,6 +181,10 @@ export default function AddItemPage() {
       };
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
+      console.log('🔗 API_BASE_URL:', apiUrl);
+      console.log('📤 Full request URL:', `${apiUrl}/items`);
+      console.log('📦 Request payload:', itemData);
+
       const token = localStorage.getItem('token');
       if (!token) {
         alert('You must be logged in to create an item');
@@ -244,7 +192,11 @@ export default function AddItemPage() {
         return;
       }
 
-      const fullUrl = `${apiUrl}/api/items`;
+      console.log('🔐 Token found:', token.substring(0, 20) + '...');
+
+      const fullUrl = `${apiUrl}/items`;
+      console.log('🚀 Making fetch request to:', fullUrl);
+
       const response = await fetch(fullUrl, {
         method: 'POST',
         headers: {
@@ -254,12 +206,22 @@ export default function AddItemPage() {
         body: JSON.stringify(itemData)
       });
 
+      console.log('📥 Response status:', response.status);
+      console.log('📥 Response headers:', {
+        'content-type': response.headers.get('content-type'),
+        'content-length': response.headers.get('content-length')
+      });
+
       const responseText = await response.text();
+      console.log('📥 Raw response (first 500 chars):', responseText.substring(0, 500));
+
       let responseData;
-      
       try {
         responseData = JSON.parse(responseText);
+        console.log('✅ Response parsed as JSON:', responseData);
       } catch (parseError) {
+        console.error('❌ Failed to parse as JSON');
+        console.error('Parse error:', parseError);
         throw new Error(`Server returned HTML/non-JSON. First 200 chars: ${responseText.substring(0, 200)}`);
       }
 
@@ -269,9 +231,6 @@ export default function AddItemPage() {
       }
 
       console.log('✅ Item created successfully:', responseData);
-      
-      // Update item count
-      setUserItemCount(prev => prev + 1);
 
       if (responseData.item || responseData.message) {
         setStep(5);
@@ -299,119 +258,6 @@ export default function AddItemPage() {
       setLoading(false);
     }
   };
-
-  // ✅ Upgrade Modal (only shows if showUpgradeModal is true)
-  const UpgradeModal = () => (
-    <div
-      style={{
-        position: 'fixed',
-        top: 0,
-        left: 0,
-        right: 0,
-        bottom: 0,
-        background: 'rgba(0, 0, 0, 0.6)',
-        display: 'flex',
-        alignItems: 'center',
-        justifyContent: 'center',
-        zIndex: 9999,
-      }}
-    >
-      <div
-        style={{
-          background: '#fff',
-          borderRadius: 16,
-          padding: 40,
-          maxWidth: 500,
-          width: '90%',
-          textAlign: 'center',
-        }}
-      >
-        <div style={{ fontSize: 64, marginBottom: 16 }}>🚀</div>
-        
-        <h2 style={{ fontSize: 28, fontWeight: 700, color: '#924DAC', marginBottom: 12 }}>
-          Upgrade to Post More
-        </h2>
-        
-        <p style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
-          You've reached your free tier limit of <strong>{FREE_TIER_LIMIT} items</strong>
-        </p>
-        
-        <div
-          style={{
-            background: 'linear-gradient(135deg, #f3eaff 0%, #e7ffe7 100%)',
-            borderRadius: 12,
-            padding: 24,
-            marginTop: 24,
-            marginBottom: 24,
-          }}
-        >
-          <div style={{ fontSize: 14, color: '#666', marginBottom: 8 }}>
-            Annual Subscription
-          </div>
-          <div style={{ fontSize: 48, fontWeight: 700, color: '#924DAC', marginBottom: 8 }}>
-            ₹99
-          </div>
-          <div style={{ fontSize: 16, color: '#666', marginBottom: 16 }}>
-            for 1 full year
-          </div>
-          
-          <div style={{ textAlign: 'left', fontSize: 14, color: '#444', lineHeight: 2 }}>
-            ✅ <strong>Unlimited</strong> item posts<br />
-            ✅ Post to Bidding, Exchange & Resell<br />
-            ✅ Priority support<br />
-            ✅ Analytics & insights<br />
-            ✅ Featured listings
-          </div>
-        </div>
-
-        <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <button
-            onClick={() => {
-              setShowUpgradeModal(false);
-              router.push('/');
-            }}
-            style={{
-              padding: '12px 24px',
-              background: '#fff',
-              color: '#924DAC',
-              border: '2px solid #924DAC',
-              borderRadius: 8,
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Maybe Later
-          </button>
-          
-          <button
-            onClick={handleUpgradeClick}
-            style={{
-              padding: '12px 24px',
-              background: '#924DAC',
-              color: '#fff',
-              border: 'none',
-              borderRadius: 8,
-              fontSize: 16,
-              fontWeight: 600,
-              cursor: 'pointer',
-            }}
-          >
-            Upgrade Now →
-          </button>
-        </div>
-
-        <div style={{ fontSize: 13, color: '#999', marginTop: 16 }}>
-          💡 You currently have {userItemCount} of {FREE_TIER_LIMIT} free posts used
-        </div>
-      </div>
-    </div>
-  );
-
-  // Show upgrade modal if triggered
-  if (showUpgradeModal) {
-    return <UpgradeModal />;
-  }
 
   const stepper = (
     <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', marginBottom: 32, gap: 48 }}>
