@@ -188,7 +188,9 @@ export default function AddItemPage() {
         try {
           console.log('📸 Uploading', images.length, 'image(s)...');
           const uploadResult = await apiService.uploadMultipleImages(images);
-          uploadedImageUrls = uploadResult?.urls || uploadResult?.images || [];
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
+          uploadedImageUrls = (uploadResult?.imageUrls || uploadResult?.urls || uploadResult?.images || [])
+            .map((url: string) => url.startsWith('http') ? url : `${baseUrl}${url}`);
           console.log('✅ Images uploaded:', uploadedImageUrls);
         } catch (imgErr) {
           console.warn('⚠️ Image upload failed, continuing without images:', imgErr);
