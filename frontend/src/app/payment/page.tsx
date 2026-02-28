@@ -15,18 +15,11 @@ function PaymentContent() {
     duration: searchParams.get('duration') || '1 Year'
   });
 
-  const [paymentMethod, setPaymentMethod] = useState<'qr' | 'upi' | 'bank'>('qr');
   const [step, setStep] = useState<'payment' | 'confirmation'>('payment');
   const [transactionId, setTransactionId] = useState('');
   const [dynamicQR, setDynamicQR] = useState('');
 
   const upiId = 'auduru.sarikarao11-2@okaxis';
-  const paymentDetails = {
-    accountNumber: '1234567890',
-    ifsc: 'SBIN0001234',
-    accountName: 'Sarikarao Auduru',
-    bankName: 'State Bank of India'
-  };
 
   useEffect(() => {
     generateDynamicQR();
@@ -42,11 +35,6 @@ function PaymentContent() {
     }
   };
 
-  const copyToClipboard = (text: string, label: string) => {
-    navigator.clipboard.writeText(text);
-    alert(`${label} copied to clipboard!`);
-  };
-
   const handlePaymentComplete = () => {
     if (!transactionId.trim()) {
       alert('Please enter your transaction ID');
@@ -60,232 +48,105 @@ function PaymentContent() {
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: '#f7f7f7',
-      padding: '40px 20px'
-    }}>
+    <div style={{ minHeight: '100vh', background: '#f7f7f7', padding: '40px 20px' }}>
       <div style={{ maxWidth: 600, margin: '0 auto' }}>
+
         {/* Header */}
         <div style={{
           background: 'linear-gradient(135deg, #924DAC 0%, #d97ef6 100%)',
-          borderRadius: 16,
-          padding: 24,
-          color: '#fff',
-          textAlign: 'center',
-          marginBottom: 32
+          borderRadius: 16, padding: 24, color: '#fff',
+          textAlign: 'center', marginBottom: 32
         }}>
           <div style={{ fontSize: 32, marginBottom: 8 }}>💳</div>
-          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>
-            Complete Payment
-          </h1>
-          <p style={{ fontSize: 16, opacity: 0.9 }}>
-            {plan.name} - {plan.duration}
-          </p>
+          <h1 style={{ fontSize: 28, fontWeight: 700, marginBottom: 8 }}>Complete Payment</h1>
+          <p style={{ fontSize: 16, opacity: 0.9 }}>{plan.name} - {plan.duration}</p>
         </div>
 
         {step === 'payment' ? (
           <div style={{
-            background: '#fff',
-            borderRadius: 16,
-            boxShadow: '0 2px 12px rgba(146,77,172,0.08)',
-            overflow: 'hidden'
+            background: '#fff', borderRadius: 16,
+            boxShadow: '0 2px 12px rgba(146,77,172,0.08)', overflow: 'hidden'
           }}>
             {/* Amount Card */}
             <div style={{
-              background: '#f3eaff',
-              padding: 24,
-              textAlign: 'center',
+              background: '#f3eaff', padding: 24, textAlign: 'center',
               borderBottom: '2px solid #e0e0e0'
             }}>
               <div style={{ fontSize: 14, color: '#666', marginBottom: 4 }}>Amount to Pay</div>
-              <div style={{ fontSize: 42, fontWeight: 700, color: '#924DAC' }}>
-                ₹{plan.amount}
-              </div>
+              <div style={{ fontSize: 42, fontWeight: 700, color: '#924DAC' }}>₹{plan.amount}</div>
               <div style={{ fontSize: 13, color: '#999', marginTop: 4 }}>
                 One-time payment for {plan.duration}
               </div>
             </div>
 
-            {/* Payment Method Selection */}
             <div style={{ padding: 24 }}>
-              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#924DAC', marginBottom: 16 }}>
-                Choose Payment Method
+              <h3 style={{ fontSize: 18, fontWeight: 700, color: '#924DAC', marginBottom: 20 }}>
+                📷 Scan QR Code to Pay
               </h3>
 
-              <div style={{ display: 'flex', gap: 12, marginBottom: 24 }}>
-                {[
-                  { key: 'qr', label: 'QR Code', icon: '📷' },
-                  { key: 'upi', label: 'UPI ID', icon: '📱' },
-                  { key: 'bank', label: 'Bank Transfer', icon: '🏦' }
-                ].map((method) => (
-                  <button
-                    key={method.key}
-                    onClick={() => setPaymentMethod(method.key as any)}
-                    style={{
-                      flex: 1,
-                      padding: '12px 16px',
-                      background: paymentMethod === method.key ? '#924DAC' : '#f0f0f0',
-                      color: paymentMethod === method.key ? '#fff' : '#666',
-                      border: 'none',
-                      borderRadius: 8,
-                      cursor: 'pointer',
-                      fontWeight: 600,
-                      fontSize: 14,
-                      transition: 'all 0.2s'
-                    }}
-                  >
-                    <div style={{ fontSize: 20, marginBottom: 4 }}>{method.icon}</div>
-                    {method.label}
-                  </button>
-                ))}
-              </div>
-
-              {/* Payment Details */}
+              {/* QR Section */}
               <div style={{
-                background: '#faf8fd',
-                borderRadius: 12,
-                padding: 20,
-                marginBottom: 24
+                background: '#faf8fd', borderRadius: 12, padding: 24,
+                marginBottom: 24, textAlign: 'center'
               }}>
-                {paymentMethod === 'qr' && (
-                  <div style={{ textAlign: 'center' }}>
-                    <h4 style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', marginBottom: 16 }}>
-                      Scan QR Code to Pay
-                    </h4>
-
-                    <div style={{ marginBottom: 24 }}>
-                      <div style={{ fontSize: 14, color: '#666', marginBottom: 12 }}>
-                        Official QR Code (Recommended)
-                      </div>
-                      <div style={{
-                        background: '#fff',
-                        padding: 16,
-                        borderRadius: 12,
-                        display: 'inline-block',
-                        boxShadow: '0 2px 8px rgba(146,77,172,0.1)'
-                      }}>
-                        <Image
-                          src="/qr-code-payment.png"
-                          alt="Sayonara Payment QR Code"
-                          width={250}
-                          height={250}
-                          style={{ borderRadius: 8 }}
-                        />
-                      </div>
-                      <div style={{ fontSize: 13, color: '#924DAC', marginTop: 12, fontWeight: 600 }}>
-                        Sarikarao Auduru
-                      </div>
-                      <div style={{ fontSize: 12, color: '#999', marginTop: 4 }}>
-                        {upiId}
-                      </div>
-                    </div>
-
-                    <div style={{ height: 1, background: '#e0e0e0', margin: '20px 0' }} />
-
-                    <div>
-                      <div style={{ fontSize: 14, color: '#666', marginBottom: 12 }}>
-                        Dynamic QR (Amount Pre-filled: ₹{plan.amount})
-                      </div>
-                      <div style={{
-                        background: '#fff',
-                        padding: 16,
-                        borderRadius: 12,
-                        display: 'inline-block',
-                        boxShadow: '0 2px 8px rgba(146,77,172,0.1)'
-                      }}>
-                        {dynamicQR && (
-                          <Image
-                            src={dynamicQR}
-                            alt="Dynamic Payment QR"
-                            width={200}
-                            height={200}
-                            style={{ borderRadius: 8 }}
-                          />
-                        )}
-                      </div>
-                    </div>
-
-                    <div style={{ fontSize: 13, color: '#666', marginTop: 16, lineHeight: 1.6 }}>
-                      Scan with any UPI app:<br/>
-                      Google Pay • PhonePe • Paytm • BHIM
-                    </div>
+                {/* Official Static QR */}
+                <div style={{ marginBottom: 28 }}>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#555', marginBottom: 12 }}>
+                    Official QR Code (Recommended)
                   </div>
-                )}
-
-                {paymentMethod === 'upi' && (
-                  <div>
-                    <h4 style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', marginBottom: 12 }}>
-                      UPI Payment
-                    </h4>
-                    <div style={{ background: '#fff', padding: 16, borderRadius: 8, marginBottom: 12 }}>
-                      <div style={{ fontSize: 13, color: '#666', marginBottom: 4 }}>UPI ID</div>
-                      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: 12 }}>
-                        <span style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', wordBreak: 'break-all' }}>
-                          {upiId}
-                        </span>
-                        <button
-                          onClick={() => copyToClipboard(upiId, 'UPI ID')}
-                          style={{
-                            background: '#924DAC', color: '#fff', border: 'none',
-                            borderRadius: 6, padding: '6px 12px', fontSize: 13,
-                            cursor: 'pointer', whiteSpace: 'nowrap'
-                          }}
-                        >
-                          Copy
-                        </button>
-                      </div>
-                    </div>
-                    <div style={{ fontSize: 13, color: '#666', lineHeight: 1.6 }}>
-                      1. Open any UPI app (Google Pay, PhonePe, Paytm)<br/>
-                      2. Select "Send Money" or "Pay"<br/>
-                      3. Enter the UPI ID above<br/>
-                      4. Enter amount: ₹{plan.amount}<br/>
-                      5. Add note: "{plan.name}"<br/>
-                      6. Complete the payment<br/>
-                      7. Note down the transaction ID
-                    </div>
+                  <div style={{
+                    background: '#fff', padding: 16, borderRadius: 12,
+                    display: 'inline-block', boxShadow: '0 2px 8px rgba(146,77,172,0.1)'
+                  }}>
+                    <Image
+                      src="/qr-code-payment.png"
+                      alt="Sayonara Payment QR Code"
+                      width={250}
+                      height={250}
+                      style={{ borderRadius: 8 }}
+                    />
                   </div>
-                )}
-
-                {paymentMethod === 'bank' && (
-                  <div>
-                    <h4 style={{ fontSize: 16, fontWeight: 700, color: '#924DAC', marginBottom: 12 }}>
-                      Bank Transfer Details
-                    </h4>
-                    <div style={{ fontSize: 14, lineHeight: 2 }}>
-                      {[
-                        { label: 'Account Number', value: paymentDetails.accountNumber },
-                        { label: 'IFSC Code', value: paymentDetails.ifsc },
-                        { label: 'Account Name', value: paymentDetails.accountName },
-                        { label: 'Bank Name', value: paymentDetails.bankName },
-                      ].map((item, i) => (
-                        <div key={item.label} style={{
-                          display: 'flex', justifyContent: 'space-between',
-                          padding: '8px 0',
-                          borderBottom: i < 3 ? '1px solid #e0e0e0' : 'none'
-                        }}>
-                          <span style={{ color: '#666' }}>{item.label}:</span>
-                          <span style={{ fontWeight: 700 }}>
-                            {item.value}
-                            {i < 2 && (
-                              <button
-                                onClick={() => copyToClipboard(item.value, item.label)}
-                                style={{ marginLeft: 8, background: 'none', border: 'none', color: '#924DAC', cursor: 'pointer' }}
-                              >📋</button>
-                            )}
-                          </span>
-                        </div>
-                      ))}
+                  {/* Blurred/hidden UPI ID below QR */}
+                  <div style={{ marginTop: 10 }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#924DAC' }}>
+                      Sarikarao Auduru
                     </div>
                     <div style={{
-                      fontSize: 13, color: '#999', marginTop: 12,
-                      padding: 12, background: '#fff7e6', borderRadius: 8
+                      fontSize: 12, color: '#999', marginTop: 4,
+                      filter: 'blur(4px)', userSelect: 'none'
                     }}>
-                      💡 Tip: Please update these bank details with your actual account information
+                      {upiId}
                     </div>
                   </div>
-                )}
+                </div>
+
+                <div style={{ height: 1, background: '#e0e0e0', margin: '0 0 24px 0' }} />
+
+                {/* Dynamic QR with amount pre-filled */}
+                <div>
+                  <div style={{ fontSize: 14, fontWeight: 600, color: '#555', marginBottom: 12 }}>
+                    Dynamic QR — Amount Pre-filled: ₹{plan.amount}
+                  </div>
+                  <div style={{
+                    background: '#fff', padding: 16, borderRadius: 12,
+                    display: 'inline-block', boxShadow: '0 2px 8px rgba(146,77,172,0.1)'
+                  }}>
+                    {dynamicQR && (
+                      <Image
+                        src={dynamicQR}
+                        alt="Dynamic Payment QR"
+                        width={200}
+                        height={200}
+                        style={{ borderRadius: 8 }}
+                      />
+                    )}
+                  </div>
+                </div>
+
+                <div style={{ fontSize: 13, color: '#666', marginTop: 16, lineHeight: 1.8 }}>
+                  Scan with any UPI app:<br />
+                  <strong>Google Pay • PhonePe • Paytm • BHIM</strong>
+                </div>
               </div>
 
               {/* Transaction ID Input */}
@@ -314,11 +175,11 @@ function PaymentContent() {
                 <div style={{ fontSize: 14, fontWeight: 700, color: '#d46b08', marginBottom: 8 }}>
                   ⚠️ Important Instructions
                 </div>
-                <div style={{ fontSize: 13, color: '#ad6800', lineHeight: 1.6 }}>
-                  • Complete the payment using any method above<br/>
-                  • Screenshot your payment confirmation<br/>
-                  • Enter the transaction ID below<br/>
-                  • Your subscription will be activated within 24 hours<br/>
+                <div style={{ fontSize: 13, color: '#ad6800', lineHeight: 1.8 }}>
+                  • Complete the payment by scanning the QR code above<br />
+                  • Screenshot your payment confirmation<br />
+                  • Enter the transaction ID below<br />
+                  • Your subscription will be activated within 24 hours<br />
                   • Contact support for any payment issues
                 </div>
               </div>
@@ -352,9 +213,7 @@ function PaymentContent() {
             <h2 style={{ fontSize: 24, fontWeight: 700, color: '#2d7a2d', marginBottom: 12 }}>
               Payment Submitted Successfully!
             </h2>
-            <p style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>
-              Thank you for your payment!
-            </p>
+            <p style={{ fontSize: 16, color: '#666', marginBottom: 8 }}>Thank you for your payment!</p>
             <div style={{
               background: '#f3eaff', padding: 12, borderRadius: 8,
               marginBottom: 24, fontSize: 14
@@ -370,9 +229,9 @@ function PaymentContent() {
                 What happens next?
               </h4>
               <div style={{ fontSize: 14, color: '#1f5c1f', lineHeight: 2 }}>
-                1️⃣ Admin will verify your payment (within 24 hours)<br/>
-                2️⃣ You'll receive a confirmation notification<br/>
-                3️⃣ Your subscription will be activated<br/>
+                1️⃣ Admin will verify your payment (within 24 hours)<br />
+                2️⃣ You'll receive a confirmation notification<br />
+                3️⃣ Your subscription will be activated<br />
                 4️⃣ Start using all premium features!
               </div>
             </div>
