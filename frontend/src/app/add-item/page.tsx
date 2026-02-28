@@ -4,7 +4,7 @@ import { useState } from 'react';
 import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import apiService from '@/services/api';
-import { resizeImagesForGrid, validateImageFile, createThumbnail } from '@/utils/imageResize';
+import { validateImageFile } from '@/utils/imageResize';
 import "../../components/Header.css";
 
 const subCategories = {
@@ -107,6 +107,8 @@ export default function AddItemPage() {
     setSelectedCategories(selectedCategories.filter(c => c !== cat));
   };
 
+  // CHANGE 1: Replaced resizeImagesForGrid + createThumbnail with URL.createObjectURL
+  // for reliable instant previews. validateImageFile kept as-is.
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (e.target.files) {
       const files = Array.from(e.target.files).slice(0, 10 - images.length);
@@ -122,18 +124,11 @@ export default function AddItemPage() {
       if (validFiles.length === 0) return;
 
       try {
-        const resizedImages = await resizeImagesForGrid(validFiles, {
-          maxWidth: 400,
-          maxHeight: 300,
-          quality: 0.8,
-          maintainAspectRatio: true
-        });
-
-        const thumbnailPromises = validFiles.map(file => createThumbnail(file, 80));
-        const thumbnails = await Promise.all(thumbnailPromises);
+        // Use object URLs instead of resizeImagesForGrid — faster and more reliable
+        const previews = validFiles.map(file => URL.createObjectURL(file));
 
         setImages(prev => [...prev, ...validFiles]);
-        setImagePreviews(prev => [...prev, ...resizedImages]);
+        setImagePreviews(prev => [...prev, ...previews]);
       } catch (error) {
         console.error('Error processing images:', error);
         alert('Error processing images. Please try again.');
@@ -141,7 +136,9 @@ export default function AddItemPage() {
     }
   };
   
+  // CHANGE 2: Revoke object URL on remove to free memory
   const handleRemoveImage = (idx: number) => {
+    URL.revokeObjectURL(imagePreviews[idx]);
     setImages(prev => prev.filter((_, i) => i !== idx));
     setImagePreviews(prev => prev.filter((_, i) => i !== idx));
   };
@@ -164,7 +161,6 @@ export default function AddItemPage() {
         condition: condition,
         type: actionType,
         stock: 1,
-        images: [],
         tags: selectedCategories,
         location: 'Andhra Pradesh',
         ...(formData.warrantyStatus && { warrantyStatus: formData.warrantyStatus }),
@@ -197,13 +193,28 @@ export default function AddItemPage() {
       const fullUrl = `${apiUrl}/items`;
       console.log('🚀 Making fetch request to:', fullUrl);
 
+      // CHANGE 3: Use FormData to send images as actual files instead of images: []
+      const formPayload = new FormData();
+
+      // Append all item fields
+      Object.entries(itemData).forEach(([key, val]) => {
+        if (val !== undefined && val !== null) {
+          formPayload.append(key, typeof val === 'object' ? JSON.stringify(val) : String(val));
+        }
+      });
+
+      // Append actual image files
+      images.forEach(file => formPayload.append('images', file));
+
+      console.log('📎 Attaching', images.length, 'image(s) to FormData');
+
       const response = await fetch(fullUrl, {
         method: 'POST',
         headers: {
-          'Content-Type': 'application/json',
+          // NOTE: Do NOT set Content-Type here — browser sets it automatically with boundary for FormData
           'Authorization': `Bearer ${token}`
         },
-        body: JSON.stringify(itemData)
+        body: formPayload
       });
 
       console.log('📥 Response status:', response.status);
@@ -473,7 +484,20 @@ export default function AddItemPage() {
   );
 
   return (
-    <div style={{ minHeight: 'calc(100vh - 120px)', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#f7f7fa', padding: '32px 0' }}>
+    <div style={{ minHeight: 'calc(100vh - 120px)', background: '#f7f7fa', padding: '32px 0' }}>
+
+      {/* Promotional notification banner */}
+      <div style={{ background: 'linear-gradient(90deg, #924DAC 0%, #b06fd4 100%)', color: '#fff', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24, borderRadius: 12, maxWidth: 900, margin: '0 auto 24px auto', boxShadow: '0 2px 12px rgba(146,77,172,0.18)' }}>
+        <span style={{ fontSize: 20 }}>🎁</span>
+        <span style={{ fontWeight: 500, fontSize: 15 }}>
+          Free plan is limited to <strong>3 items</strong>. Unlock unlimited listings for just <strong>₹99/year</strong> — special promotion for this year only!
+        </span>
+        <a href="https://sayonaraa.com/payment" target="_blank" rel="noopener noreferrer" style={{ background: '#fff', color: '#924DAC', fontWeight: 700, borderRadius: 20, padding: '7px 20px', fontSize: 14, textDecoration: 'none', whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(0,0,0,0.10)', transition: 'background 0.2s' }}>
+          Subscribe Now →
+        </a>
+      </div>
+
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
       <div style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', maxWidth: 900, width: '100%', padding: 36 }}>
         {stepper}
         {step === 1 && step1}
@@ -482,6 +506,7 @@ export default function AddItemPage() {
         {step === 4 && step4}
         {step === 5 && step5}
       </div>
+    </div>
     </div>
   );
 }
