@@ -1,14 +1,17 @@
+
+const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
-const User = require('./User');
-const Item = require('./Item');
-const Bid = require('./Bid');
-const Subscription = require('./Subscription');
-const PaymentProof = require('./PaymentProof'); // ✅ ADD THIS
-const messagesRouter = require('./messages');
 
+// Import and initialize all models
+const User = require('./User')(sequelize, DataTypes);
+const Item = require('./Item')(sequelize, DataTypes);
+const Bid = require('./Bid')(sequelize, DataTypes);
+const Subscription = require('./Subscription')(sequelize, DataTypes);
+const PaymentProof = require('./PaymentProof')(sequelize, DataTypes);
+const Message = require('./messages')(sequelize, DataTypes);
 
-// Define all models
-const models = { User, Item, Bid, Subscription, PaymentProof, sequelize,messages }; // ✅ ADD PaymentProof
+// Export all models
+const models = { User, Item, Bid, Subscription, PaymentProof, Message, sequelize };
 
 // Call associate functions to set up all relationships
 Object.values(models).forEach(model => {
@@ -18,3 +21,10 @@ Object.values(models).forEach(model => {
 });
 
 module.exports = models;
+EOF
+
+echo "✅ index.js updated"
+
+# Now try starting the server
+cd ~/Website-Sayonara/backend
+node server.js
