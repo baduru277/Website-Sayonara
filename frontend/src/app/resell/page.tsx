@@ -1,259 +1,276 @@
 'use client';
-
 import { useState, useEffect } from 'react';
-import Image from 'next/image';
 import { useRouter } from 'next/navigation';
 import apiService from '@/services/api';
-
-interface SellerInfo {
-  id: string;
-  name: string;
-  rating: number;
-  totalReviews: number;
-  isVerified: boolean;
-}
 
 interface ResellItem {
   id: string;
   title: string;
   description: string;
   images: string[];
+  image: string;
   category: string;
   condition: string;
-  type: string;
   location: string;
-  isActive: boolean;
   views: number;
   price: number;
+  originalPrice?: number;
+  discount?: number;
   tags: string[];
   createdAt: string;
-  seller: SellerInfo;
+  seller: {
+    id: string;
+    name: string;
+    rating: number;
+    totalReviews: number;
+    isVerified: boolean;
+  };
 }
 
 export default function ResellPage() {
   const [items, setItems] = useState<ResellItem[]>([]);
-  const [selectedItem, setSelectedItem] = useState<ResellItem | null>(null);
   const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [mainImage, setMainImage] = useState(0);
+  const [filter, setFilter] = useState('all');
   const router = useRouter();
+
+  const BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
 
   useEffect(() => {
     const fetchItems = async () => {
       try {
         setLoading(true);
         const response = await apiService.getItems({ type: 'resell', limit: 50 });
-        const fetchedItems = response.items || [];
-        setItems(fetchedItems);
-        if (fetchedItems.length > 0) {
-          setSelectedItem(fetchedItems[0]);
-          setMainImage(0);
-        }
+        const apiItems = response.items || [];
+
+        const transformed = apiItems.map((item: any) => {
+          const rawImage = item.images?.[0] || '';
+          const image = rawImage
+            ? (rawImage.startsWith('http') ? rawImage : `${BASE_URL}${rawImage}`)
+            : '';
+          const allImages = (item.images || []).map((img: string) =>
+            img.startsWith('http') ? img : `${BASE_URL}${img}`
+          );
+          return {
+            id: item.id,
+            title: item.title,
+            description: item.description,
+            image,
+            images: allImages,
+            category: item.category,
+            condition: item.condition,
+            location: item.location || 'India',
+            views: item.views || 0,
+            price: parseFloat(item.price || '0'),
+            originalPrice: item.originalPrice ? parseFloat(item.originalPrice) : undefined,
+            discount: item.discount || undefined,
+            tags: item.tags || [],
+            createdAt: item.createdAt,
+            seller: {
+              id: item.seller?.id || '',
+              name: item.seller?.name || 'Unknown',
+              rating: item.seller?.rating || 4.5,
+              totalReviews: item.seller?.totalReviews || 0,
+              isVerified: item.seller?.isVerified || false,
+            },
+          };
+        });
+
+        setItems(transformed);
       } catch (err) {
-        setError(err instanceof Error ? err.message : 'Failed to load items');
         console.error('Error fetching items:', err);
       } finally {
         setLoading(false);
       }
     };
-
     fetchItems();
   }, []);
 
-  const handleChatClick = () => {
-    if (selectedItem?.seller?.id) {
-      router.push(`/messages?sellerId=${selectedItem.seller.id}`);
-    }
-  };
+  const categories = ['all', ...Array.from(new Set(items.map(i => i.category)))];
+  const filteredItems = filter === 'all' ? items : items.filter(i => i.category === filter);
 
-  if (loading) return <div className="min-h-screen flex items-center justify-center">Loading...</div>;
-  if (error) return <div className="min-h-screen flex items-center justify-center text-red-600">Error: {error}</div>;
-  if (!selectedItem) return <div className="min-h-screen flex items-center justify-center">No items available</div>;
+  const formatPrice = (price: number) =>
+    new Intl.NumberFormat('en-IN', { style: 'currency', currency: 'INR', minimumFractionDigits: 0 }).format(price);
+
+  if (loading) {
+    return (
+      <div style={{ minHeight: '100vh', background: '#f7f7fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ width: 48, height: 48, border: '4px solid #f0e6fa', borderTop: '4px solid #924DAC', borderRadius: '50%', animation: 'spin 0.8s linear infinite', margin: '0 auto 16px' }} />
+          <div style={{ color: '#924DAC', fontWeight: 600 }}>Loading items...</div>
+        </div>
+        <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
+      </div>
+    );
+  }
 
   return (
-    <div className="min-h-screen bg-white">
-      {/* Breadcrumb */}
-      <div className="max-w-7xl mx-auto px-4 py-3 border-b text-sm text-gray-600">
-        <span>Electronics › Mobiles › Smartphones</span>
+    <div style={{ minHeight: '100vh', background: '#f7f7fa' }}>
+      <style>{`
+        .rs-card { transition: transform 0.2s, box-shadow 0.2s; cursor: pointer; }
+        .rs-card:hover { transform: translateY(-4px); box-shadow: 0 12px 32px rgba(146,77,172,0.18) !important; }
+        .rs-card:hover .rs-img { transform: scale(1.05); }
+        .rs-btn { transition: background 0.2s; }
+        .rs-btn:hover { background: #7a3a8a !important; }
+      `}</style>
+
+      {/* Header */}
+      <div style={{
+        background: 'linear-gradient(135deg, #924DAC 0%, #a855c8 60%, #7a3a8a 100%)',
+        padding: '32px 24px', color: '#fff'
+      }}>
+        <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+          <h1 style={{ fontSize: 28, fontWeight: 800, margin: '0 0 6px', letterSpacing: '-0.5px' }}>🛒 Resell Items</h1>
+          <p style={{ margin: 0, opacity: 0.85, fontSize: 15 }}>
+            {items.length} item{items.length !== 1 ? 's' : ''} available for purchase
+          </p>
+        </div>
       </div>
 
-      {/* Main Content */}
-      <div className="max-w-7xl mx-auto px-4 py-8">
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          
-          {/* Left: Images */}
-          <div className="lg:col-span-1">
-            {/* Main Image */}
-            <div className="bg-gray-100 rounded-lg p-4 mb-4 sticky top-4">
-              <div className="relative w-full aspect-square bg-gray-50 rounded overflow-hidden flex items-center justify-center">
-                <Image
-                  src={selectedItem.images[mainImage]}
-                  alt={selectedItem.title}
-                  fill
-                  className="object-contain"
-                  priority
-                />
-              </div>
-            </div>
+      <div style={{ maxWidth: 1200, margin: '0 auto', padding: '28px 24px' }}>
 
-            {/* Thumbnails */}
-            <div className="flex gap-2">
-              {selectedItem.images.map((img, idx) => (
+        {/* Filter Buttons */}
+        <div style={{ display: 'flex', gap: 10, marginBottom: 28, flexWrap: 'wrap' }}>
+          {categories.map(cat => (
+            <button
+              key={cat}
+              onClick={() => setFilter(cat)}
+              style={{
+                padding: '8px 18px', borderRadius: 20,
+                border: `2px solid ${filter === cat ? '#924DAC' : '#e0d0f0'}`,
+                background: filter === cat ? '#924DAC' : '#fff',
+                color: filter === cat ? '#fff' : '#924DAC',
+                fontWeight: 600, fontSize: 13, cursor: 'pointer', transition: 'all 0.2s',
+              }}
+            >
+              {cat.charAt(0).toUpperCase() + cat.slice(1)}
+            </button>
+          ))}
+        </div>
+
+        {/* Grid */}
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(240px, 1fr))', gap: 20 }}>
+          {filteredItems.map((item) => (
+            <div
+              key={item.id}
+              className="rs-card"
+              style={{
+                background: '#fff', borderRadius: 14, overflow: 'hidden',
+                boxShadow: '0 2px 12px rgba(146,77,172,0.08)',
+                border: '1.5px solid #f0e6fa',
+              }}
+              onClick={() => router.push(`/resell/${item.id}`)}
+            >
+              {/* Image */}
+              <div style={{ position: 'relative', height: 200, overflow: 'hidden', background: '#f5f0fa' }}>
+                {item.image ? (
+                  <img
+                    src={item.image}
+                    alt={item.title}
+                    className="rs-img"
+                    style={{ width: '100%', height: '100%', objectFit: 'cover', transition: 'transform 0.3s ease' }}
+                    onError={(e) => {
+                      e.currentTarget.style.display = 'none';
+                      const fallback = e.currentTarget.nextSibling as HTMLElement;
+                      if (fallback) fallback.style.display = 'flex';
+                    }}
+                  />
+                ) : null}
+                <div style={{
+                  display: item.image ? 'none' : 'flex',
+                  width: '100%', height: '100%', position: 'absolute', top: 0, left: 0,
+                  alignItems: 'center', justifyContent: 'center',
+                  flexDirection: 'column', gap: 8, color: '#c9a8e0', background: '#f5f0fa'
+                }}>
+                  <div style={{ fontSize: 40 }}>📦</div>
+                  <div style={{ fontSize: 12 }}>No Image</div>
+                </div>
+
+                {/* Discount Badge */}
+                {item.discount && (
+                  <div style={{
+                    position: 'absolute', top: 10, left: 10,
+                    background: '#e74c3c', color: '#fff',
+                    fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20,
+                  }}>
+                    {item.discount}% OFF
+                  </div>
+                )}
+
+                {/* Condition Badge */}
+                <div style={{
+                  position: 'absolute', bottom: 10, left: 10,
+                  background: 'rgba(146,77,172,0.85)', color: '#fff',
+                  fontSize: 10, fontWeight: 600, padding: '3px 8px', borderRadius: 10,
+                }}>
+                  {item.condition}
+                </div>
+
+                {item.seller.isVerified && (
+                  <div style={{
+                    position: 'absolute', top: 10, right: 10,
+                    background: '#2ecc71', color: '#fff',
+                    fontSize: 10, fontWeight: 700, padding: '3px 8px', borderRadius: 10,
+                  }}>
+                    ✓ Verified
+                  </div>
+                )}
+              </div>
+
+              {/* Card Body */}
+              <div style={{ padding: '14px 16px 16px' }}>
+                <div style={{ fontSize: 11, color: '#924DAC', fontWeight: 600, marginBottom: 4, textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                  {item.category}
+                </div>
+                <h3 style={{
+                  margin: '0 0 10px', fontSize: 15, fontWeight: 700, color: '#1a1a2e', lineHeight: 1.35,
+                  display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical', overflow: 'hidden'
+                }}>
+                  {item.title}
+                </h3>
+
+                {/* Price */}
+                <div style={{ marginBottom: 10 }}>
+                  <div style={{ fontSize: 20, fontWeight: 800, color: '#924DAC' }}>
+                    {formatPrice(item.price)}
+                  </div>
+                  {item.originalPrice && item.originalPrice > item.price && (
+                    <div style={{ fontSize: 13, color: '#aaa', textDecoration: 'line-through' }}>
+                      {formatPrice(item.originalPrice)}
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div style={{
+                  display: 'flex', justifyContent: 'space-between', fontSize: 12, color: '#888',
+                  paddingTop: 10, borderTop: '1px solid #f0e6fa', marginBottom: 14
+                }}>
+                  <span>⭐ {item.seller.rating}</span>
+                  <span>📍 {item.location}</span>
+                </div>
+
                 <button
-                  key={idx}
-                  onClick={() => setMainImage(idx)}
-                  className={`w-16 h-16 rounded border-2 overflow-hidden ${
-                    mainImage === idx ? 'border-blue-600' : 'border-gray-300'
-                  }`}
+                  className="rs-btn"
+                  onClick={(e) => { e.stopPropagation(); router.push(`/resell/${item.id}`); }}
+                  style={{
+                    width: '100%', background: '#924DAC', color: '#fff',
+                    border: 'none', borderRadius: 8, padding: '11px 0',
+                    fontSize: 14, fontWeight: 700, cursor: 'pointer',
+                  }}
                 >
-                  <Image src={img} alt={`View ${idx}`} width={64} height={64} className="w-full h-full object-cover" />
+                  🛒 View Details
                 </button>
-              ))}
-            </div>
-          </div>
-
-          {/* Center: Product Details */}
-          <div className="lg:col-span-1">
-            {/* Title & Rating */}
-            <h1 className="text-2xl font-bold text-gray-900 mb-2">{selectedItem.title}</h1>
-            
-            <div className="flex items-center gap-3 mb-6 pb-6 border-b">
-              <div className="flex text-yellow-400">
-                {'★'.repeat(Math.round(selectedItem.seller.rating)).padEnd(5, '☆')}
-              </div>
-              <span className="text-blue-600 cursor-pointer hover:underline text-sm">
-                {selectedItem.seller.rating} ({selectedItem.seller.totalReviews} reviews)
-              </span>
-              <span className="text-gray-600 text-sm">| Search this page</span>
-            </div>
-
-            {/* Description */}
-            <div className="mb-6">
-              <h3 className="text-gray-900 font-semibold mb-2">About this item</h3>
-              <p className="text-gray-600 text-sm leading-relaxed">{selectedItem.description}</p>
-            </div>
-
-            {/* Key Details */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-6">
-              <h3 className="font-semibold text-gray-900 mb-3">Key Details</h3>
-              <div className="space-y-2 text-sm">
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Condition:</span>
-                  <span className="font-semibold text-gray-900">{selectedItem.condition}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Category:</span>
-                  <span className="font-semibold text-gray-900">{selectedItem.category}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Location:</span>
-                  <span className="font-semibold text-gray-900">📍 {selectedItem.location}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Posted:</span>
-                  <span className="font-semibold text-gray-900">{new Date(selectedItem.createdAt).toLocaleDateString('en-US', { year: 'numeric', month: '2-digit', day: '2-digit' })}</span>
-                </div>
-                <div className="flex justify-between">
-                  <span className="text-gray-600">Views:</span>
-                  <span className="font-semibold text-gray-900">{selectedItem.views}</span>
-                </div>
               </div>
             </div>
-
-            {/* Tags */}
-            {selectedItem.tags.length > 0 && (
-              <div className="flex flex-wrap gap-2">
-                {selectedItem.tags.map(tag => (
-                  <span key={tag} className="bg-gray-200 text-gray-700 px-3 py-1 rounded-full text-xs font-medium">
-                    {tag}
-                  </span>
-                ))}
-              </div>
-            )}
-          </div>
-
-          {/* Right: Price & Action */}
-          <div className="lg:col-span-1">
-            <div className="bg-gray-50 rounded-lg p-6 sticky top-4 border border-gray-200">
-              {/* Price */}
-              <div className="mb-6">
-                <div className="text-sm text-gray-600 mb-1">Price</div>
-                <div className="text-4xl font-bold text-gray-900">₹{selectedItem.price.toLocaleString()}</div>
-              </div>
-
-              {/* Seller Info */}
-              <div className="mb-6 pb-6 border-b">
-                <div className="text-sm text-gray-600 mb-3">Sold by</div>
-                <div className="flex items-start justify-between">
-                  <div>
-                    <div className="font-semibold text-gray-900">{selectedItem.seller.name}</div>
-                    {selectedItem.seller.isVerified && (
-                      <div className="text-green-600 text-sm font-semibold flex items-center gap-1 mt-1">
-                        ✓ Verified Seller
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-
-              {/* Verification Status */}
-              <div className="mb-6 pb-6 border-b bg-white rounded p-3">
-                <div className="flex items-center gap-2 mb-2">
-                  <span className="text-lg">🔍</span>
-                  <span className="font-semibold text-gray-900">Verification Status</span>
-                </div>
-                <p className="text-sm text-gray-600 mb-2">
-                  {selectedItem.seller.isVerified 
-                    ? 'This seller is verified. Product details confirmed.'
-                    : 'Verify product details with seller before purchase.'}
-                </p>
-                <div className="text-xs text-gray-500">
-                  Always communicate through our platform for your safety
-                </div>
-              </div>
-
-              {/* Chat Button */}
-              <button
-                onClick={handleChatClick}
-                className="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-lg transition mb-3 text-lg"
-              >
-                💬 Chat with Seller
-              </button>
-
-              {/* Info Box */}
-              <div className="bg-yellow-50 border border-yellow-200 rounded p-3 text-xs text-gray-700">
-                <p className="font-semibold mb-1">💡 Tip</p>
-                <p>Ask seller about product condition, defects, warranty, and original accessories before making a decision.</p>
-              </div>
-            </div>
-          </div>
+          ))}
         </div>
 
-        {/* More Items Grid */}
-        <div className="mt-12 pt-8 border-t">
-          <h2 className="text-2xl font-bold text-gray-900 mb-6">More Items for Sale</h2>
-          <div className="grid grid-cols-2 sm:grid-cols-3 md:grid-cols-4 lg:grid-cols-5 gap-4">
-            {items.map(item => (
-              <div
-                key={item.id}
-                onClick={() => router.push(`/resell/${item.id}`)}
-                className="border border-gray-200 rounded-lg overflow-hidden cursor-pointer hover:shadow-lg transition"
-              >
-                <div className="relative w-full aspect-square bg-gray-100">
-                  <Image src={item.images[0]} alt={item.title} fill className="object-cover" />
-                </div>
-                <div className="p-3">
-                  <h3 className="font-semibold text-gray-900 text-sm line-clamp-2 mb-2">{item.title}</h3>
-                  <div className="text-lg font-bold text-gray-900 mb-1">₹{item.price.toLocaleString()}</div>
-                  <div className="flex items-center gap-1 text-xs text-gray-600">
-                    <span className="text-yellow-400">★</span>
-                    <span>{item.seller.rating}</span>
-                  </div>
-                </div>
-              </div>
-            ))}
+        {filteredItems.length === 0 && !loading && (
+          <div style={{ textAlign: 'center', padding: '60px 20px', color: '#888' }}>
+            <div style={{ fontSize: 48, marginBottom: 12 }}>🔍</div>
+            <div style={{ fontSize: 16, fontWeight: 600 }}>No items found</div>
           </div>
-        </div>
+        )}
       </div>
     </div>
   );
