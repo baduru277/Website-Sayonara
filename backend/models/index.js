@@ -23,7 +23,3 @@ Object.values(models).forEach(model => {
 
 module.exports = models;
 EOF
-
-# Now start the server
-cd ~/Website-Sayonara/backend
-node server.js
