@@ -109,7 +109,7 @@ function PaymentContent() {
                   {/* Blurred/hidden UPI ID below QR */}
                   <div style={{ marginTop: 10 }}>
                     <div style={{ fontSize: 13, fontWeight: 600, color: '#924DAC' }}>
-                      Sarikarao Auduru
+                      Sayonara
                     </div>
                     <div style={{
                       fontSize: 12, color: '#999', marginTop: 4,
