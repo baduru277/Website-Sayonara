@@ -1,5 +1,3 @@
-
-cat > index.js << 'EOF'
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -22,4 +20,3 @@ Object.values(models).forEach(model => {
 });
 
 module.exports = models;
-EOF
