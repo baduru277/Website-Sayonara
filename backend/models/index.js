@@ -1,4 +1,3 @@
-cd ~/Website-Sayonara/backend/models
 
 cat > index.js << 'EOF'
 const { DataTypes } = require('sequelize');
