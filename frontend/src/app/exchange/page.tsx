@@ -93,7 +93,7 @@ export default function ExchangePage() {
 
       {/* Header */}
       <div style={{
-        background: 'linear-gradient(135deg, #6b2d8b 0%, #7a3a8a 60%, #4a1a5e 100%)',
+        background: 'linear-gradient(135deg, #924DAC 0%, #a855c8 60%, #7a3a8a 100%)',
         padding: '32px 24px', color: '#fff'
       }}>
         <div style={{ maxWidth: 1200, margin: '0 auto' }}>
