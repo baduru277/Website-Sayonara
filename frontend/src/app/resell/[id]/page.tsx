@@ -22,7 +22,7 @@ export default async function ItemDetailPage({ params }: { params: Promise<{ id:
         <div style={{ textAlign: 'center' }}>
           <div style={{ fontSize: 48, marginBottom: 16 }}>😕</div>
           <div style={{ fontSize: 18, color: '#666', marginBottom: 16 }}>Item not found</div>
-          <a href="/exchange" style={{ color: '#924DAC', textDecoration: 'none', fontWeight: 600 }}>← Back to Exchange</a>
+          <a href="/resell" style={{ color: '#924DAC', textDecoration: 'none', fontWeight: 600 }}>← Back to Resell</a>
         </div>
       </div>
     );
