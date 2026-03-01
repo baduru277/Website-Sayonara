@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect, useRef } from 'react';
+import { Suspense, useState, useEffect, useRef } from 'react';
 import { useRouter, useSearchParams } from 'next/navigation';
 import apiService from '@/services/api';
 
@@ -50,7 +50,7 @@ interface Message {
   sender?: { id: string; name: string; avatar?: string };
 }
 
-export default function MessagesPage() {
+function MessagesPageContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
   const sellerId = searchParams.get('sellerId');
@@ -564,5 +564,17 @@ export default function MessagesPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+export default function MessagesPage() {
+  return (
+    <Suspense fallback={
+      <div style={{ minHeight: '100vh', background: '#f7f7fa', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+        <div style={{ color: '#924DAC', fontSize: 16 }}>Loading messages...</div>
+      </div>
+    }>
+      <MessagesPageContent />
+    </Suspense>
   );
 }
