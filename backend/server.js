@@ -38,12 +38,17 @@ const itemsRouter   = require('./routes/items');
 const usersRouter   = require('./routes/users');
 const adminRouter   = require('./routes/admin');
 const uploadRouter  = require('./routes/upload');
+const messagesRouter = require('./routes/messages');
 
 console.log('✓ Routes imported successfully');
 
 // -------------------- Register Routes --------------------
 app.use('/api',          indexRouter);
 console.log('✓ GET /api registered');
+app.use('/api/messages', messagesRouter);
+console.log('✓ GET /api messagesRouter');
+
+
 
 app.use('/api/auth',     authRouter);
 console.log('✓ /api/auth/* routes registered');
@@ -59,6 +64,7 @@ console.log('✓ /api/admin/* routes registered');
 
 app.use('/api/upload',   uploadRouter);
 console.log('✓ /api/upload/* routes registered');
+
 
 // -------------------- Health Check --------------------
 app.get('/health', (req, res) => {
