@@ -1,13 +1,12 @@
-const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
-// Import and initialize all models
-const User = require('./User')(sequelize, DataTypes);
-const Item = require('./Item')(sequelize, DataTypes);
-const Bid = require('./Bid')(sequelize, DataTypes);
-const Subscription = require('./Subscription')(sequelize, DataTypes);
-const PaymentProof = require('./PaymentProof')(sequelize, DataTypes);
-const Message = require('./messages')(sequelize, DataTypes);
+// Import models directly
+const User = require('./User');
+const Item = require('./Item');
+const Bid = require('./Bid');
+const Subscription = require('./Subscription');
+const PaymentProof = require('./PaymentProof');
+const Message = require('./messages');
 
 // Export all models
 const models = { User, Item, Bid, Subscription, PaymentProof, Message, sequelize };
