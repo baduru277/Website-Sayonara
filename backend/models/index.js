@@ -1,4 +1,6 @@
+cd ~/Website-Sayonara/backend/models
 
+cat > index.js << 'EOF'
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -23,8 +25,6 @@ Object.values(models).forEach(model => {
 module.exports = models;
 EOF
 
-echo "✅ index.js updated"
-
-# Now try starting the server
+# Now start the server
 cd ~/Website-Sayonara/backend
 node server.js
