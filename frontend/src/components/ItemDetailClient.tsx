@@ -1,5 +1,6 @@
 'use client';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
+import { useRouter } from 'next/navigation';
 
 interface Seller {
   id: string;
@@ -49,7 +50,6 @@ interface Props {
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
 
-// Fix relative image URLs to full URLs
 function fixImageUrl(url: string): string {
   if (!url) return '';
   if (url.startsWith('http')) return url;
@@ -57,11 +57,38 @@ function fixImageUrl(url: string): string {
 }
 
 export default function ItemDetailClient({ item }: Props) {
+  const router = useRouter();
   const [mainImg, setMainImg] = useState(0);
   const [tab, setTab] = useState('description');
   const [imgError, setImgError] = useState(false);
+  const [bidAmount, setBidAmount] = useState('');
+  const [showBidInput, setShowBidInput] = useState(false);
+  const [bidError, setBidError] = useState('');
+  const [currentUserId, setCurrentUserId] = useState<string | null>(null);
+  const [ownerError, setOwnerError] = useState('');
 
   const images = (item.images || []).map(fixImageUrl).filter(Boolean);
+
+  // Get logged in user id from token
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) return;
+      const payload = JSON.parse(atob(token.split('.')[1]));
+      setCurrentUserId(payload.id || payload.userId || payload.sub || null);
+    } catch {}
+  }, []);
+
+  const isOwner = currentUserId && item.seller?.id && currentUserId === item.seller.id;
+
+  const checkOwner = (action: string): boolean => {
+    if (isOwner) {
+      setOwnerError(`❌ You cannot ${action} your own item.`);
+      setTimeout(() => setOwnerError(''), 3000);
+      return true;
+    }
+    return false;
+  };
 
   const formatPrice = (price?: number) => {
     if (!price) return 'N/A';
@@ -83,6 +110,61 @@ export default function ItemDetailClient({ item }: Props) {
     return `${minutes}m left`;
   };
 
+  const handleChatWithSeller = () => {
+    if (checkOwner('chat with yourself')) return;
+    if (!item.seller?.id) return;
+    router.push(`/messages?sellerId=${item.seller.id}&itemId=${item.id}`);
+  };
+
+  const handlePlaceBid = async () => {
+    if (checkOwner('bid on')) return;
+    if (!showBidInput) {
+      setShowBidInput(true);
+      return;
+    }
+    const amount = parseFloat(bidAmount);
+    const minBid = (item.currentBid || item.startingBid || 0);
+    if (!amount || amount <= minBid) {
+      setBidError(`Bid must be higher than ${formatPrice(minBid)}`);
+      return;
+    }
+    setBidError('');
+    try {
+      const token = localStorage.getItem('token');
+      if (!token) {
+        setBidError('Please login to place a bid.');
+        return;
+      }
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/items/${item.id}/bid`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({ amount })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        alert(`✅ Bid of ${formatPrice(amount)} placed successfully!`);
+        setShowBidInput(false);
+        setBidAmount('');
+        window.location.reload();
+      } else {
+        setBidError(data.error || 'Failed to place bid. Please login first.');
+      }
+    } catch {
+      setBidError('Failed to place bid. Please login first.');
+    }
+  };
+
+  const handleBuyNow = () => {
+    if (checkOwner('buy')) return;
+    router.push(`/payment?itemId=${item.id}&amount=${item.price}&type=resell`);
+  };
+
+  const handleProposeExchange = () => {
+    if (checkOwner('exchange with yourself')) return;
+    if (!item.seller?.id) return;
+    router.push(`/messages?sellerId=${item.seller.id}&itemId=${item.id}`);
+  };
+
   const typeColor = item.type === 'bidding' ? '#f39c12' : item.type === 'exchange' ? '#3498db' : '#2ecc40';
   const typeLabel = item.type === 'bidding' ? '🔨 Auction' : item.type === 'exchange' ? '🔄 Exchange' : '🛒 Resell';
 
@@ -95,9 +177,38 @@ export default function ItemDetailClient({ item }: Props) {
         .action-btn:hover { opacity: 0.88; transform: scale(1.02); }
         .tab-item { transition: color 0.2s; }
         .tab-item:hover { color: #924DAC !important; }
+        @keyframes slideDown {
+          from { opacity: 0; transform: translateY(-8px); }
+          to { opacity: 1; transform: translateY(0); }
+        }
+        .owner-error { animation: slideDown 0.3s ease; }
       `}</style>
 
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
+
+        {/* Owner error toast */}
+        {ownerError && (
+          <div className="owner-error" style={{
+            background: '#fff0f0', border: '1.5px solid #ffcccc',
+            color: '#e74c3c', borderRadius: 10, padding: '12px 20px',
+            marginBottom: 20, fontWeight: 600, fontSize: 15,
+            display: 'flex', alignItems: 'center', gap: 10
+          }}>
+            {ownerError}
+          </div>
+        )}
+
+        {/* Owner banner */}
+        {isOwner && (
+          <div style={{
+            background: '#f0e6fa', border: '1.5px solid #d4a8e8',
+            color: '#924DAC', borderRadius: 10, padding: '12px 20px',
+            marginBottom: 20, fontWeight: 600, fontSize: 14,
+            display: 'flex', alignItems: 'center', gap: 10
+          }}>
+            👤 This is your listing. You cannot bid, buy, or exchange your own item.
+          </div>
+        )}
 
         {/* Breadcrumb */}
         <div style={{ fontSize: 13, color: '#888', marginBottom: 20 }}>
@@ -112,8 +223,6 @@ export default function ItemDetailClient({ item }: Props) {
 
           {/* ── Left: Image Gallery ── */}
           <div style={{ flex: 1, minWidth: 300, maxWidth: 480 }}>
-
-            {/* Main Image */}
             <div style={{
               background: '#fff', borderRadius: 14,
               boxShadow: '0 2px 16px rgba(146,77,172,0.08)',
@@ -134,8 +243,6 @@ export default function ItemDetailClient({ item }: Props) {
                   <div style={{ fontSize: 13, marginTop: 8 }}>No image available</div>
                 </div>
               )}
-
-              {/* Type badge on image */}
               <div style={{
                 position: 'absolute', top: 14, left: 14,
                 background: typeColor, color: '#fff',
@@ -146,7 +253,6 @@ export default function ItemDetailClient({ item }: Props) {
               </div>
             </div>
 
-            {/* Thumbnails */}
             {images.length > 1 && (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {images.map((img, idx) => (
@@ -170,7 +276,6 @@ export default function ItemDetailClient({ item }: Props) {
           {/* ── Right: Product Info ── */}
           <div style={{ flex: 2, minWidth: 300 }}>
 
-            {/* Title + badges */}
             <div style={{ display: 'flex', alignItems: 'flex-start', gap: 10, marginBottom: 8, flexWrap: 'wrap' }}>
               <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a2e', margin: 0, lineHeight: 1.3, flex: 1 }}>
                 {item.title}
@@ -182,7 +287,6 @@ export default function ItemDetailClient({ item }: Props) {
               )}
             </div>
 
-            {/* Meta row */}
             <div style={{ display: 'flex', gap: 16, fontSize: 13, color: '#888', marginBottom: 18, flexWrap: 'wrap' }}>
               <span>📂 {item.category}</span>
               <span>📍 {item.location}</span>
@@ -230,6 +334,34 @@ export default function ItemDetailClient({ item }: Props) {
               )}
             </div>
 
+            {/* Bid input */}
+            {showBidInput && item.type === 'bidding' && (
+              <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 18, border: '1.5px solid #f0e6fa' }}>
+                <div style={{ fontSize: 14, color: '#666', marginBottom: 8 }}>
+                  Enter your bid (minimum: {formatPrice((item.currentBid || item.startingBid || 0) + 1)})
+                </div>
+                <div style={{ display: 'flex', gap: 10 }}>
+                  <input
+                    type="number"
+                    value={bidAmount}
+                    onChange={e => setBidAmount(e.target.value)}
+                    placeholder="Enter amount in ₹"
+                    style={{
+                      flex: 1, padding: '10px 14px', borderRadius: 8,
+                      border: '1.5px solid #e0d0f0', fontSize: 15, outline: 'none'
+                    }}
+                  />
+                  <button
+                    onClick={() => setShowBidInput(false)}
+                    style={{ padding: '10px 14px', borderRadius: 8, border: '1.5px solid #e0d0f0', background: '#fff', cursor: 'pointer', color: '#888' }}
+                  >
+                    Cancel
+                  </button>
+                </div>
+                {bidError && <div style={{ color: '#e74c3c', fontSize: 13, marginTop: 6 }}>{bidError}</div>}
+              </div>
+            )}
+
             {/* Item Details Grid */}
             <div style={{ background: '#fff', borderRadius: 12, padding: 18, marginBottom: 18, boxShadow: '0 1px 8px rgba(146,77,172,0.07)', border: '1.5px solid #f0e6fa' }}>
               <div style={{ fontWeight: 700, marginBottom: 12, color: '#333', fontSize: 15 }}>Item Details</div>
@@ -249,7 +381,6 @@ export default function ItemDetailClient({ item }: Props) {
               </div>
             </div>
 
-            {/* Damage Info */}
             {item.damageInfo && (
               <div style={{ background: '#fff8e6', border: '1.5px solid #ffd666', borderRadius: 10, padding: 14, marginBottom: 18 }}>
                 <div style={{ fontWeight: 700, color: '#856404', marginBottom: 4 }}>⚠️ Damage Information</div>
@@ -257,40 +388,89 @@ export default function ItemDetailClient({ item }: Props) {
               </div>
             )}
 
-            {/* Action Buttons */}
+            {/* ── Action Buttons ── */}
             <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginBottom: 18 }}>
-              <button className="action-btn" style={{
-                flex: 1, minWidth: 140, padding: '12px 16px',
-                background: 'linear-gradient(135deg, #924DAC, #b06fd4)',
-                color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 15
-              }}>
-                💬 Chat with Seller
-              </button>
-              {item.type === 'bidding' && (
-                <button className="action-btn" style={{
-                  flex: 1, minWidth: 140, padding: '12px 16px',
-                  background: '#f39c12', color: '#fff', border: 'none',
-                  borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 15
-                }}>
-                  🔨 Place Bid
+              {!isOwner && (
+                <button
+                  className="action-btn"
+                  onClick={handleChatWithSeller}
+                  style={{
+                    flex: 1, minWidth: 140, padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #924DAC, #b06fd4)',
+                    color: '#fff', border: 'none', borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 15
+                  }}
+                >
+                  💬 Chat with Seller
                 </button>
               )}
+
+              {item.type === 'bidding' && (
+                <button
+                  className="action-btn"
+                  onClick={handlePlaceBid}
+                  disabled={!!isOwner}
+                  style={{
+                    flex: 1, minWidth: 140, padding: '12px 16px',
+                    background: isOwner ? '#ddd' : '#f39c12',
+                    color: isOwner ? '#999' : '#fff',
+                    border: 'none', borderRadius: 8,
+                    cursor: isOwner ? 'not-allowed' : 'pointer',
+                    fontWeight: 700, fontSize: 15
+                  }}
+                >
+                  {showBidInput ? '✅ Confirm Bid' : '🔨 Place Bid'}
+                </button>
+              )}
+
               {item.type === 'exchange' && (
-                <button className="action-btn" style={{
-                  flex: 1, minWidth: 140, padding: '12px 16px',
-                  background: '#3498db', color: '#fff', border: 'none',
-                  borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 15
-                }}>
+                <button
+                  className="action-btn"
+                  onClick={handleProposeExchange}
+                  disabled={!!isOwner}
+                  style={{
+                    flex: 1, minWidth: 140, padding: '12px 16px',
+                    background: isOwner ? '#ddd' : '#3498db',
+                    color: isOwner ? '#999' : '#fff',
+                    border: 'none', borderRadius: 8,
+                    cursor: isOwner ? 'not-allowed' : 'pointer',
+                    fontWeight: 700, fontSize: 15
+                  }}
+                >
                   🔄 Propose Exchange
                 </button>
               )}
+
               {item.type === 'resell' && (
-                <button className="action-btn" style={{
-                  flex: 1, minWidth: 140, padding: '12px 16px',
-                  background: '#2ecc40', color: '#fff', border: 'none',
-                  borderRadius: 8, cursor: 'pointer', fontWeight: 700, fontSize: 15
-                }}>
+                <button
+                  className="action-btn"
+                  onClick={handleBuyNow}
+                  disabled={!!isOwner}
+                  style={{
+                    flex: 1, minWidth: 140, padding: '12px 16px',
+                    background: isOwner ? '#ddd' : '#2ecc40',
+                    color: isOwner ? '#999' : '#fff',
+                    border: 'none', borderRadius: 8,
+                    cursor: isOwner ? 'not-allowed' : 'pointer',
+                    fontWeight: 700, fontSize: 15
+                  }}
+                >
                   🛒 Buy Now
+                </button>
+              )}
+
+              {/* Edit button for owner */}
+              {isOwner && (
+                <button
+                  className="action-btn"
+                  onClick={() => router.push(`/add-item?edit=${item.id}`)}
+                  style={{
+                    flex: 1, minWidth: 140, padding: '12px 16px',
+                    background: 'linear-gradient(135deg, #924DAC, #b06fd4)',
+                    color: '#fff', border: 'none', borderRadius: 8,
+                    cursor: 'pointer', fontWeight: 700, fontSize: 15
+                  }}
+                >
+                  ✏️ Edit Listing
                 </button>
               )}
             </div>
@@ -306,6 +486,7 @@ export default function ItemDetailClient({ item }: Props) {
                   <div>
                     <div style={{ fontWeight: 700, color: '#333' }}>
                       {item.seller.name}
+                      {isOwner && <span style={{ color: '#924DAC', marginLeft: 6, fontSize: 12, fontWeight: 600 }}>(You)</span>}
                       {item.seller.isVerified && <span style={{ color: '#2ecc71', marginLeft: 6, fontSize: 13 }}>✓ Verified</span>}
                     </div>
                     <div style={{ fontSize: 13, color: '#888' }}>
@@ -313,13 +494,25 @@ export default function ItemDetailClient({ item }: Props) {
                       {item.seller.location && ` · ${item.seller.location}`}
                     </div>
                   </div>
+                  {!isOwner && (
+                    <button
+                      onClick={handleChatWithSeller}
+                      style={{
+                        marginLeft: 'auto', background: '#f0e6fa', color: '#924DAC',
+                        border: 'none', borderRadius: 8, padding: '8px 14px',
+                        fontSize: 13, fontWeight: 600, cursor: 'pointer'
+                      }}
+                    >
+                      💬 Message
+                    </button>
+                  )}
                 </div>
               </div>
             )}
           </div>
         </div>
 
-        {/* ── Tabs Section ── */}
+        {/* ── Tabs ── */}
         <div style={{ background: '#fff', borderRadius: 14, boxShadow: '0 2px 12px rgba(146,77,172,0.07)', padding: 28, marginTop: 32 }}>
           <div style={{ display: 'flex', gap: 28, borderBottom: '2px solid #f0e6fa', marginBottom: 20 }}>
             {['description', 'specification', 'reviews'].map(t => (
