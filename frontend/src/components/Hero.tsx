@@ -39,11 +39,9 @@ export default function Hero() {
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    if (search.trim()) {
-      // Check if item exists — for now open the request form
-      setReqItem(search.trim());
-      setShowRequestForm(true);
-    }
+    // Always open request form — pre-fill item if search has text
+    setReqItem(search.trim());
+    setShowRequestForm(true);
   };
 
   const handleRequestSubmit = async (e: React.FormEvent) => {
@@ -143,7 +141,8 @@ export default function Hero() {
               }}
             />
             <button
-              type="submit"
+              type="button"
+              onClick={() => { setReqItem(search.trim()); setShowRequestForm(true); }}
               style={{
                 position: 'absolute',
                 right: 6,
