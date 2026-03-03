@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, Suspense } from 'react';
 import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import apiService from '@/services/api';
@@ -63,7 +63,7 @@ function fixImageUrl(url: string): string {
   return `${BASE_URL}${url}`;
 }
 
-export default function AddItemPage() {
+function AddItemPageInner() {
   const [step, setStep] = useState(1);
   const [loading, setLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
@@ -677,5 +677,14 @@ export default function AddItemPage() {
         </div>
       </div>
     </div>
+  );
+}
+
+
+export default function AddItemPage() {
+  return (
+    <Suspense fallback={<div style={{ minHeight: '100vh', background: '#f7f7fa', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18, color: '#924DAC' }}>Loading...</div>}>
+      <AddItemPageInner />
+    </Suspense>
   );
 }
