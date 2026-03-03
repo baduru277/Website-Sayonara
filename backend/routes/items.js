@@ -5,6 +5,8 @@ const { auth, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
 
+const FREE_LIMIT = 3;
+
 // -------------------- Get All Items --------------------
 router.get('/', optionalAuth, async (req, res) => {
   try {
@@ -23,7 +25,6 @@ router.get('/', optionalAuth, async (req, res) => {
     if (condition && condition !== 'All') where.condition = condition;
     if (status && status !== 'All') where.status = status;
 
-    // ✅ FIXED: Use Op.like instead of Op.iLike (SQLite doesn't support iLike)
     if (search) {
       where[Op.or] = [
         { title: { [Op.like]: `%${search}%` } },
@@ -32,7 +33,6 @@ router.get('/', optionalAuth, async (req, res) => {
       ];
     }
 
-    // ✅ FIXED: tags stored as JSON string, use like instead of overlap
     if (tags) {
       where.tags = { [Op.like]: `%${tags}%` };
     }
@@ -66,7 +66,6 @@ router.get('/', optionalAuth, async (req, res) => {
 });
 
 // -------------------- Get Featured Items --------------------
-// ✅ FIXED: Moved before /:id to prevent route conflict
 router.get('/featured/items', async (req, res) => {
   try {
     const items = await Item.findAll({
@@ -87,7 +86,6 @@ router.get('/featured/items', async (req, res) => {
 });
 
 // -------------------- Get Categories --------------------
-// ✅ FIXED: Moved before /:id to prevent route conflict
 router.get('/categories/list', async (req, res) => {
   try {
     const categories = await Item.findAll({
@@ -133,10 +131,8 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
     if (!item) return res.status(404).json({ error: 'Item not found' });
 
-    // Increment views
     await item.increment('views');
 
-    // Get bids if bidding item
     let bids = [];
     if (item.type === 'bidding') {
       bids = await Bid.findAll({
@@ -168,29 +164,48 @@ router.post('/', auth, async (req, res) => {
     } = req.body;
 
     // -------------------- Validation --------------------
-    if (!title || !description) {
-      return res.status(400).json({ error: 'Title and description are required' });
-    }
-    if (!type) {
-      return res.status(400).json({ error: 'Type is required (bidding, exchange, or resell)' });
-    }
-    if (!category) {
-      return res.status(400).json({ error: 'Category is required' });
-    }
-    if (!condition) {
-      return res.status(400).json({ error: 'Condition is required' });
-    }
-    if (!location) {
-      return res.status(400).json({ error: 'Location is required' });
-    }
-    if (type === 'resell' && !price) {
-      return res.status(400).json({ error: 'Resell items require a price' });
-    }
-    if (type === 'bidding' && !startingBid) {
-      return res.status(400).json({ error: 'Bidding items require a starting bid' });
-    }
-    if (type === 'exchange' && !lookingFor) {
-      return res.status(400).json({ error: 'Exchange items require what you are looking for' });
+    if (!title || !description) return res.status(400).json({ error: 'Title and description are required' });
+    if (!type) return res.status(400).json({ error: 'Type is required (bidding, exchange, or resell)' });
+    if (!category) return res.status(400).json({ error: 'Category is required' });
+    if (!condition) return res.status(400).json({ error: 'Condition is required' });
+    if (!location) return res.status(400).json({ error: 'Location is required' });
+    if (type === 'resell' && !price) return res.status(400).json({ error: 'Resell items require a price' });
+    if (type === 'bidding' && !startingBid) return res.status(400).json({ error: 'Bidding items require a starting bid' });
+    if (type === 'exchange' && !lookingFor) return res.status(400).json({ error: 'Exchange items require what you are looking for' });
+
+    // -------------------- FREE TIER CHECK --------------------
+    // Count ALL items ever posted by this user (including deleted ones)
+    // This prevents the loophole of delete + repost to bypass the free limit
+    const user = await User.findByPk(req.user.id, {
+      include: [{
+        model: require('../models').Subscription || null,
+        as: 'subscriptions',
+        required: false
+      }]
+    });
+
+    // Check if user has active subscription
+    const activeSub = user?.subscriptions?.find(sub =>
+      sub.status === 'active' &&
+      sub.expiryDate &&
+      new Date(sub.expiryDate) > new Date()
+    );
+
+    if (!activeSub) {
+      // Count ALL items ever posted — including soft-deleted ones
+      const totalEverPosted = await Item.count({
+        where: { userId: req.user.id }
+        // NOTE: No isActive filter — counts deleted items too
+      });
+
+      if (totalEverPosted >= FREE_LIMIT) {
+        return res.status(403).json({
+          error: `Free plan limit reached. You have posted ${totalEverPosted} items (limit: ${FREE_LIMIT}). Upgrade to ₹99/year for unlimited listings.`,
+          limitReached: true,
+          totalPosted: totalEverPosted,
+          limit: FREE_LIMIT
+        });
+      }
     }
 
     // -------------------- Create Item --------------------
@@ -210,7 +225,6 @@ router.post('/', auth, async (req, res) => {
       views: 0,
       likes: 0,
 
-      // Resell fields
       price: price || null,
       originalPrice: originalPrice || null,
       discount: discount || null,
@@ -218,24 +232,20 @@ router.post('/', auth, async (req, res) => {
       shipping: shipping || null,
       fastShipping: fastShipping || false,
 
-      // Bidding fields
       startingBid: startingBid || null,
       currentBid: startingBid || null,
       buyNowPrice: buyNowPrice || null,
       auctionEndDate: auctionEndDate || null,
       totalBids: 0,
 
-      // Exchange fields
       lookingFor: lookingFor || null,
 
-      // Extra fields
       warrantyStatus: warrantyStatus || null,
       damageInfo: damageInfo || null,
       usageHistory: usageHistory || null,
       originalBox: originalBox || false,
     });
 
-    // Return item with seller info
     const createdItem = await Item.findByPk(item.id, {
       include: [{
         model: User,
@@ -260,9 +270,7 @@ router.put('/:id', auth, async (req, res) => {
     if (!item) return res.status(404).json({ error: 'Item not found' });
     if (item.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
 
-    // ✅ Prevent updating sensitive fields directly
     const { userId, views, totalBids, currentBid, likes, ...updateData } = req.body;
-
     await item.update(updateData);
 
     const updatedItem = await Item.findByPk(item.id, {
@@ -287,7 +295,7 @@ router.delete('/:id', auth, async (req, res) => {
     if (!item) return res.status(404).json({ error: 'Item not found' });
     if (item.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
 
-    // ✅ Soft delete - just set isActive to false
+    // Soft delete — keeps the record so free tier count is preserved
     await item.update({ isActive: false, status: 'cancelled' });
     res.json({ message: 'Item deleted successfully' });
   } catch (error) {
@@ -313,13 +321,11 @@ router.post('/:id/bid', auth, async (req, res) => {
       return res.status(400).json({ error: `Bid must be higher than current bid of ₹${item.currentBid || item.startingBid}` });
     }
 
-    // ✅ Set previous winning bid to not winning
     await Bid.update(
       { isWinning: false, status: 'lost' },
       { where: { itemId: item.id, isWinning: true } }
     );
 
-    // Create new bid
     const bid = await Bid.create({
       amount: parseFloat(amount),
       userId: req.user.id,
@@ -329,7 +335,6 @@ router.post('/:id/bid', auth, async (req, res) => {
       message: message || null
     });
 
-    // Update item current bid
     await item.update({
       currentBid: parseFloat(amount),
       totalBids: item.totalBids + 1
