@@ -8,7 +8,7 @@ import apiService from "@/services/api";
 function PaymentContent() {
   const router = useRouter();
   const searchParams = useSearchParams();
-  
+
   const [plan, setPlan] = useState({
     name: searchParams.get('plan') || 'Basic Plan',
     amount: parseFloat(searchParams.get('amount') || '99'),
@@ -20,6 +20,29 @@ function PaymentContent() {
   const [dynamicQR, setDynamicQR] = useState('');
 
   const upiId = 'auduru.sarikarao11-2@okaxis';
+
+  // ── Guard: redirect to signup if not logged in ──
+  useEffect(() => {
+    try {
+      const token = localStorage.getItem("token");
+      if (!token) {
+        const redirectUrl = `/payment?plan=${encodeURIComponent(plan.name)}&amount=${plan.amount}&duration=${encodeURIComponent(plan.duration)}`;
+        localStorage.setItem("redirectAfterLogin", redirectUrl);
+        window.location.href = "/?auth=signup";
+        return;
+      }
+      // Check token not expired
+      const payload = JSON.parse(atob(token.split(".")[1]));
+      if (payload.exp * 1000 < Date.now()) {
+        localStorage.removeItem("token");
+        const redirectUrl = `/payment?plan=${encodeURIComponent(plan.name)}&amount=${plan.amount}&duration=${encodeURIComponent(plan.duration)}`;
+        localStorage.setItem("redirectAfterLogin", redirectUrl);
+        window.location.href = "/?auth=signup";
+      }
+    } catch {
+      window.location.href = "/?auth=signup";
+    }
+  }, []);
 
   useEffect(() => {
     generateDynamicQR();
@@ -44,6 +67,8 @@ function PaymentContent() {
   };
 
   const handleGoToDashboard = () => {
+    // Clear redirect after login since payment is done
+    localStorage.removeItem("redirectAfterLogin");
     router.push('/profile?tab=subscription');
   };
 
@@ -106,15 +131,9 @@ function PaymentContent() {
                       style={{ borderRadius: 8 }}
                     />
                   </div>
-                  {/* Blurred/hidden UPI ID below QR */}
                   <div style={{ marginTop: 10 }}>
-                    <div style={{ fontSize: 13, fontWeight: 600, color: '#924DAC' }}>
-                      Sayonara
-                    </div>
-                    <div style={{
-                      fontSize: 12, color: '#999', marginTop: 4,
-                      filter: 'blur(4px)', userSelect: 'none'
-                    }}>
+                    <div style={{ fontSize: 13, fontWeight: 600, color: '#924DAC' }}>Sayonara</div>
+                    <div style={{ fontSize: 12, color: '#999', marginTop: 4, filter: 'blur(4px)', userSelect: 'none' }}>
                       {upiId}
                     </div>
                   </div>
@@ -196,8 +215,6 @@ function PaymentContent() {
                   cursor: transactionId.trim() ? 'pointer' : 'not-allowed',
                   transition: 'background 0.2s'
                 }}
-                onMouseOver={(e) => { if (transactionId.trim()) e.currentTarget.style.background = '#1f5c1f'; }}
-                onMouseOut={(e) => { if (transactionId.trim()) e.currentTarget.style.background = '#2d7a2d'; }}
               >
                 ✓ I've Completed the Payment
               </button>
@@ -236,22 +253,13 @@ function PaymentContent() {
               </div>
             </div>
 
-            <div style={{
-              fontSize: 13, color: '#999', marginBottom: 24,
-              padding: 12, background: '#f9f9f9', borderRadius: 8
-            }}>
-              💡 You can check your subscription status in your profile dashboard
-            </div>
-
             <button
               onClick={handleGoToDashboard}
               style={{
                 width: '100%', background: '#924DAC', color: '#fff',
                 border: 'none', borderRadius: 8, padding: '14px 20px',
-                fontSize: 16, fontWeight: 600, cursor: 'pointer', transition: 'background 0.2s'
+                fontSize: 16, fontWeight: 600, cursor: 'pointer'
               }}
-              onMouseOver={(e) => e.currentTarget.style.background = '#7a3a8a'}
-              onMouseOut={(e) => e.currentTarget.style.background = '#924DAC'}
             >
               Go to Dashboard →
             </button>
