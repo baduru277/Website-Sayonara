@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import Image from 'next/image';
 import { useRouter, useSearchParams } from 'next/navigation';
 import apiService from '@/services/api';
 import { validateImageFile } from '@/utils/imageResize';
@@ -56,7 +57,6 @@ const subCategories = {
 };
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
-
 function fixImageUrl(url: string): string {
   if (!url) return '';
   if (url.startsWith('http')) return url;
@@ -69,14 +69,16 @@ export default function AddItemPage() {
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
   const [itemCount, setItemCount] = useState(0);
+
+  // ── Edit / Delete ──
   const [isEditMode, setIsEditMode] = useState(false);
   const [editItemId, setEditItemId] = useState<string | null>(null);
   const [existingImages, setExistingImages] = useState<string[]>([]);
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [deleting, setDeleting] = useState(false);
+
   const router = useRouter();
   const searchParams = useSearchParams();
-
   const FREE_LIMIT = 3;
 
   useEffect(() => {
@@ -86,25 +88,25 @@ export default function AddItemPage() {
       setEditItemId(editId);
       loadItemForEdit(editId);
     } else {
+      // Only check free limit when creating new item
+      const checkLimit = async () => {
+        try {
+          const data = await apiService.getDashboard();
+          const count = data?.stats?.totalItems ?? 0;
+          const sub = data?.user?.subscriptions?.[0];
+          const active = sub?.status === 'active' && sub?.expiryDate && new Date(sub.expiryDate) > new Date();
+          setItemCount(count);
+          setIsSubscribed(!!active);
+          if (!active && count >= FREE_LIMIT) {
+            setShowUpgradeModal(true);
+          }
+        } catch (err) {
+          console.error('Failed to check item limit:', err);
+        }
+      };
       checkLimit();
     }
   }, []);
-
-  const checkLimit = async () => {
-    try {
-      const data = await apiService.getDashboard();
-      const count = data?.stats?.totalItems ?? 0;
-      const sub = data?.user?.subscriptions?.[0];
-      const active = sub?.status === 'active' && sub?.expiryDate && new Date(sub.expiryDate) > new Date();
-      setItemCount(count);
-      setIsSubscribed(!!active);
-      if (!active && count >= FREE_LIMIT) {
-        setShowUpgradeModal(true);
-      }
-    } catch (err) {
-      console.error('Failed to check item limit:', err);
-    }
-  };
 
   const loadItemForEdit = async (itemId: string) => {
     try {
@@ -125,87 +127,16 @@ export default function AddItemPage() {
         originalBox: item.originalBox || '',
         price: item.price || '',
       });
-
       setSelectedCategories(item.tags || (item.category ? [item.category] : []));
       setCondition(item.condition || 'New');
       setActionType(item.type || '');
       setExistingImages((item.images || []).map(fixImageUrl));
-
       if (item.type === 'bidding') setBidAmount(String(item.startingBid || ''));
       if (item.type === 'exchange') setExchangeFor(item.lookingFor || '');
       if (item.type === 'resell') setResellAmount(String(item.price || ''));
-
     } catch (err) {
-      console.error('Failed to load item for edit:', err);
       alert('Failed to load item. Please try again.');
     }
-  };
-
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    warrantyStatus: '',
-    itemCondition: '',
-    damageInfo: '',
-    usageHistory: '',
-    originalBox: '',
-    price: '',
-  });
-
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [images, setImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [condition, setCondition] = useState('New');
-  const [actionType, setActionType] = useState('');
-  const [bidAmount, setBidAmount] = useState('');
-  const [exchangeFor, setExchangeFor] = useState('');
-  const [resellAmount, setResellAmount] = useState('');
-
-  const maxTitle = 60;
-  const maxDesc = 1200;
-
-  const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
-    const { name, value } = e.target;
-    setFormData(prev => ({ ...prev, [name]: value }));
-  };
-
-  const handleCategorySelect = (cat: string) => {
-    if (selectedCategories.includes(cat)) {
-      setSelectedCategories(selectedCategories.filter(c => c !== cat));
-    } else if (selectedCategories.length < 3) {
-      setSelectedCategories([...selectedCategories, cat]);
-    }
-  };
-
-  const handleRemoveCategory = (cat: string) => {
-    setSelectedCategories(selectedCategories.filter(c => c !== cat));
-  };
-
-  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files) {
-      const files = Array.from(e.target.files).slice(0, 10 - images.length - existingImages.length);
-      const validFiles = files.filter(file => {
-        if (!validateImageFile(file)) {
-          alert(`Invalid file: ${file.name}.`);
-          return false;
-        }
-        return true;
-      });
-      if (validFiles.length === 0) return;
-      const previews = validFiles.map(file => URL.createObjectURL(file));
-      setImages(prev => [...prev, ...validFiles]);
-      setImagePreviews(prev => [...prev, ...previews]);
-    }
-  };
-
-  const handleRemoveImage = (idx: number) => {
-    URL.revokeObjectURL(imagePreviews[idx]);
-    setImages(prev => prev.filter((_, i) => i !== idx));
-    setImagePreviews(prev => prev.filter((_, i) => i !== idx));
-  };
-
-  const handleRemoveExistingImage = (idx: number) => {
-    setExistingImages(prev => prev.filter((_, i) => i !== idx));
   };
 
   const handleDelete = async () => {
@@ -221,41 +152,124 @@ export default function AddItemPage() {
         alert('✅ Item deleted successfully!');
         router.push(`/${actionType || 'bidding'}`);
       } else {
-        const data = await res.json();
-        alert(`Failed to delete: ${data.error || 'Unknown error'}`);
+        const d = await res.json();
+        alert(`Failed to delete: ${d.error || 'Unknown error'}`);
       }
-    } catch (err) {
-      alert('Failed to delete item. Please try again.');
+    } catch {
+      alert('Failed to delete item.');
     } finally {
       setDeleting(false);
       setShowDeleteConfirm(false);
     }
   };
 
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    warrantyStatus: '',
+    itemCondition: '',
+    damageInfo: '',
+    usageHistory: '',
+    originalBox: '',
+    price: '',
+  });
+  
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [condition, setCondition] = useState('New');
+  
+  const [actionType, setActionType] = useState('');
+  const [bidAmount, setBidAmount] = useState('');
+  const [exchangeFor, setExchangeFor] = useState('');
+  const [resellAmount, setResellAmount] = useState('');
+
+  const maxTitle = 60;
+  const maxDesc = 1200;
+  
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>
+  ) => {
+    const { name, value } = e.target;
+    setFormData((prev) => ({ ...prev, [name]: value }));
+  };
+
+  const handleCategorySelect = (cat: string) => {
+    if (selectedCategories.includes(cat)) {
+      setSelectedCategories(selectedCategories.filter(c => c !== cat));
+    } else if (selectedCategories.length < 3) {
+      setSelectedCategories([...selectedCategories, cat]);
+    }
+  };
+  
+  const handleRemoveCategory = (cat: string) => {
+    setSelectedCategories(selectedCategories.filter(c => c !== cat));
+  };
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files) {
+      const files = Array.from(e.target.files).slice(0, 10 - images.length - existingImages.length);
+      const validFiles = files.filter(file => {
+        if (!validateImageFile(file)) {
+          alert(`Invalid file: ${file.name}. Please upload a valid image file (JPEG, PNG, WebP, GIF) under 5MB.`);
+          return false;
+        }
+        return true;
+      });
+      if (validFiles.length === 0) return;
+      try {
+        const previews = validFiles.map(file => URL.createObjectURL(file));
+        setImages(prev => [...prev, ...validFiles]);
+        setImagePreviews(prev => [...prev, ...previews]);
+      } catch (error) {
+        console.error('Error processing images:', error);
+        alert('Error processing images. Please try again.');
+      }
+    }
+  };
+  
+  const handleRemoveImage = (idx: number) => {
+    URL.revokeObjectURL(imagePreviews[idx]);
+    setImages(prev => prev.filter((_, i) => i !== idx));
+    setImagePreviews(prev => prev.filter((_, i) => i !== idx));
+  };
+
+  const handleRemoveExistingImage = (idx: number) => {
+    setExistingImages(prev => prev.filter((_, i) => i !== idx));
+  };
+
   const handleSubmitItem = async () => {
     if (!actionType) return;
+    
+    console.log('🔍 DEBUG: Starting handleSubmitItem');
+    console.log('🔍 actionType:', actionType);
+    console.log('🔍 isEditMode:', isEditMode);
+    
     setLoading(true);
     try {
       const token = localStorage.getItem('token');
       if (!token) {
-        alert('You must be logged in');
+        alert('You must be logged in to create an item');
         router.push('/');
         return;
       }
 
       // Upload new images
-      let uploadedImageUrls: string[] = [...existingImages.map(url =>
-        url.startsWith(BASE_URL) ? url.replace(BASE_URL, '') : url
-      )];
+      let uploadedImageUrls: string[] = isEditMode
+        ? [...existingImages.map(url => url.startsWith(BASE_URL) ? url.replace(BASE_URL, '') : url)]
+        : [];
 
       if (images.length > 0) {
         try {
+          console.log('📸 Uploading', images.length, 'image(s)...');
           const uploadResult = await apiService.uploadMultipleImages(images);
+          const baseUrl = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
           const newUrls = (uploadResult?.imageUrls || uploadResult?.urls || uploadResult?.images || [])
-            .map((url: string) => url.startsWith('http') ? url : `${BASE_URL}${url}`);
+            .map((url: string) => url.startsWith('http') ? url : `${baseUrl}${url}`);
           uploadedImageUrls = [...uploadedImageUrls, ...newUrls];
+          console.log('✅ Images uploaded:', uploadedImageUrls);
         } catch (imgErr) {
-          console.warn('Image upload failed:', imgErr);
+          console.warn('⚠️ Image upload failed, continuing without images:', imgErr);
         }
       }
 
@@ -283,29 +297,57 @@ export default function AddItemPage() {
       };
 
       const apiUrl = process.env.NEXT_PUBLIC_API_URL;
-      const url = isEditMode ? `${apiUrl}/items/${editItemId}` : `${apiUrl}/items`;
+      const fullUrl = isEditMode ? `${apiUrl}/items/${editItemId}` : `${apiUrl}/items`;
       const method = isEditMode ? 'PUT' : 'POST';
 
-      const response = await fetch(url, {
+      console.log('📦 Request payload:', itemData);
+      console.log('🚀 Making fetch request to:', fullUrl);
+
+      const response = await fetch(fullUrl, {
         method,
-        headers: { 'Content-Type': 'application/json', 'Authorization': `Bearer ${token}` },
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${token}`
+        },
         body: JSON.stringify(itemData)
       });
 
-      const responseData = await response.json();
+      console.log('📥 Response status:', response.status);
 
-      if (!response.ok) {
-        throw new Error(responseData?.error || `HTTP ${response.status}`);
+      const responseText = await response.text();
+      console.log('📥 Raw response (first 500 chars):', responseText.substring(0, 500));
+
+      let responseData;
+      try {
+        responseData = JSON.parse(responseText);
+        console.log('✅ Response parsed as JSON:', responseData);
+      } catch (parseError) {
+        console.error('❌ Failed to parse as JSON');
+        throw new Error(`Server returned HTML/non-JSON. First 200 chars: ${responseText.substring(0, 200)}`);
       }
 
-      setStep(5);
-      setTimeout(() => {
-        router.push(`/${actionType}`);
-      }, 2000);
+      if (!response.ok) {
+        const errorMessage = responseData?.error || responseData?.message || `HTTP ${response.status}`;
+        throw new Error(errorMessage);
+      }
 
+      console.log('✅ Item saved successfully:', responseData);
+
+      if (responseData.item || responseData.message) {
+        setStep(5);
+        setTimeout(() => {
+          switch (actionType) {
+            case 'bidding': router.push('/bidding'); break;
+            case 'exchange': router.push('/exchange'); break;
+            case 'resell': router.push('/resell'); break;
+            default: router.push('/');
+          }
+        }, 2000);
+      }
     } catch (error) {
-      const errorMsg = error instanceof Error ? error.message : 'Failed to save item.';
-      alert(`Error: ${errorMsg}`);
+      console.error('❌ Error saving item:', error);
+      const errorMsg = error instanceof Error ? error.message : 'Failed to save item. Please try again.';
+      alert(`Error: ${errorMsg}\n\nCheck browser console (F12) for debugging details.`);
     } finally {
       setLoading(false);
     }
@@ -316,7 +358,7 @@ export default function AddItemPage() {
       {[1, 2, 3, 4].map((num) => (
         <div key={num} style={{ textAlign: 'center' }}>
           <div style={{ background: step === num ? '#924DAC' : '#eee', color: step === num ? '#fff' : '#924DAC', borderRadius: '50%', width: 40, height: 40, display: 'flex', alignItems: 'center', justifyContent: 'center', margin: '0 auto', fontSize: 22 }}>
-            <span>{num}</span>
+            <span>{String(num).padStart(1, '0')}</span>
           </div>
           <div style={{ fontWeight: 600, color: step === num ? '#924DAC' : '#888', marginTop: 6 }}>
             {num === 1 ? 'Description' : num === 2 ? 'Categories' : num === 3 ? 'Photos' : 'Action'}
@@ -418,7 +460,7 @@ export default function AddItemPage() {
         ))}
       </div>
       <div style={{ marginBottom: 18 }}>
-        <span style={{ fontWeight: 500 }}>Selected:</span>
+        <span style={{ fontWeight: 500 }}>Selected categories:</span>
         {selectedCategories.length === 0 && <span style={{ color: '#888', marginLeft: 8 }}>None</span>}
         {selectedCategories.map(cat => (
           <span key={cat} style={{ display: 'inline-block', background: '#f0e6fa', color: '#924DAC', borderRadius: 16, padding: '4px 12px', margin: '0 6px', fontWeight: 500 }}>
@@ -441,19 +483,18 @@ export default function AddItemPage() {
           Upload a photo
           <input type="file" accept="image/*" multiple style={{ display: 'none' }} onChange={handleImageUpload} disabled={images.length + existingImages.length >= 10} />
         </label>
-
         <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', marginTop: 12 }}>
-          {/* Existing images */}
+          {/* Existing saved images (edit mode) */}
           {existingImages.map((img, idx) => (
-            <div key={`existing-${idx}`} style={{ position: 'relative', width: 80, height: 80, borderRadius: 8, overflow: 'hidden', background: '#fff', border: '2px solid #924DAC' }}>
-              <img src={img} alt="existing" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+            <div key={`ex-${idx}`} style={{ position: 'relative', width: 80, height: 80, borderRadius: 8, overflow: 'hidden', background: '#fff', border: '2px solid #924DAC' }}>
+              <img src={img} alt="saved" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <span style={{ position: 'absolute', top: 2, right: 6, color: '#e74c3c', fontWeight: 700, cursor: 'pointer', fontSize: 18 }} onClick={() => handleRemoveExistingImage(idx)}>&times;</span>
-              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(146,77,172,0.7)', fontSize: 9, color: '#fff', textAlign: 'center', padding: '1px 0' }}>Saved</div>
+              <div style={{ position: 'absolute', bottom: 0, left: 0, right: 0, background: 'rgba(146,77,172,0.75)', fontSize: 9, color: '#fff', textAlign: 'center', padding: '1px 0' }}>Saved</div>
             </div>
           ))}
           {/* New images */}
           {imagePreviews.map((img, idx) => (
-            <div key={`new-${idx}`} style={{ position: 'relative', width: 80, height: 80, borderRadius: 8, overflow: 'hidden', background: '#fff', border: '1.5px solid #eee' }}>
+            <div key={idx} style={{ position: 'relative', width: 80, height: 80, borderRadius: 8, overflow: 'hidden', background: '#fff', border: '1.5px solid #eee', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
               <img src={img} alt="preview" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
               <span style={{ position: 'absolute', top: 2, right: 6, color: '#924DAC', fontWeight: 700, cursor: 'pointer', fontSize: 18 }} onClick={() => handleRemoveImage(idx)}>&times;</span>
             </div>
@@ -472,6 +513,7 @@ export default function AddItemPage() {
       <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginTop: 36 }}>
         <button className="sayonara-btn" style={{ minWidth: 120 }} onClick={() => setStep(2)}>Back</button>
         <button className="sayonara-btn" style={{ minWidth: 120 }} disabled={images.length === 0 && existingImages.length === 0} onClick={() => setStep(4)}>Next</button>
+        {!isEditMode && <button className="sayonara-btn" style={{ minWidth: 120, background: '#fff', color: '#924DAC', border: '2px solid #924DAC' }} onClick={() => setStep(1)}>Draft</button>}
       </div>
     </div>
   );
@@ -480,16 +522,22 @@ export default function AddItemPage() {
     <div>
       <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 18 }}>What do you want to do?</div>
       <div style={{ display: 'flex', gap: 32, marginBottom: 24 }}>
-        {['bidding', 'exchange', 'resell'].map(type => (
-          <label key={type} style={{ fontWeight: 500, cursor: 'pointer' }}>
-            <input type="radio" name="actionType" value={type} checked={actionType === type} onChange={() => { setActionType(type); setBidAmount(''); setExchangeFor(''); setResellAmount(''); }} style={{ marginRight: 8 }} />
-            {type.charAt(0).toUpperCase() + type.slice(1)}
-          </label>
-        ))}
+        <label style={{ fontWeight: 500, cursor: 'pointer' }}>
+          <input type="radio" name="actionType" value="bidding" checked={actionType === 'bidding'} onChange={() => { setActionType('bidding'); setBidAmount(''); setExchangeFor(''); setResellAmount(''); }} style={{ marginRight: 8 }} />
+          Bid
+        </label>
+        <label style={{ fontWeight: 500, cursor: 'pointer' }}>
+          <input type="radio" name="actionType" value="exchange" checked={actionType === 'exchange'} onChange={() => { setActionType('exchange'); setBidAmount(''); setExchangeFor(''); setResellAmount(''); }} style={{ marginRight: 8 }} />
+          Exchange
+        </label>
+        <label style={{ fontWeight: 500, cursor: 'pointer' }}>
+          <input type="radio" name="actionType" value="resell" checked={actionType === 'resell'} onChange={() => { setActionType('resell'); setBidAmount(''); setExchangeFor(''); setResellAmount(''); }} style={{ marginRight: 8 }} />
+          Resell
+        </label>
       </div>
       {actionType === 'bidding' && (
         <div style={{ marginBottom: 18 }}>
-          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>Starting bid amount</label>
+          <label style={{ fontWeight: 500, display: 'block', marginBottom: 6 }}>How much are you looking for?</label>
           <input type="number" value={bidAmount} onChange={e => setBidAmount(e.target.value)} style={{ width: 240, padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }} placeholder="Expected bid amount" />
         </div>
       )}
@@ -507,13 +555,14 @@ export default function AddItemPage() {
       )}
       <div style={{ display: 'flex', justifyContent: 'center', gap: 18, marginTop: 36, flexWrap: 'wrap' }}>
         <button className="sayonara-btn" style={{ minWidth: 120 }} onClick={() => setStep(3)}>Back</button>
-        <button
-          className="sayonara-btn" style={{ minWidth: 120 }}
+        <button className="sayonara-btn" style={{ minWidth: 120 }}
           disabled={(actionType === 'bidding' && !bidAmount) || (actionType === 'exchange' && !exchangeFor) || (actionType === 'resell' && !resellAmount) || !actionType || loading}
-          onClick={handleSubmitItem}
-        >
-          {loading ? 'Saving...' : isEditMode ? '✅ Save Changes' : 'Publish'}
+          onClick={handleSubmitItem}>
+          {loading ? (isEditMode ? 'Saving...' : 'Publishing...') : (isEditMode ? '✅ Save Changes' : 'Publish')}
         </button>
+        {!isEditMode && (
+          <button className="sayonara-btn" style={{ minWidth: 120, background: '#fff', color: '#924DAC', border: '2px solid #924DAC' }} onClick={() => setStep(1)}>Draft</button>
+        )}
         {isEditMode && (
           <button
             onClick={() => setShowDeleteConfirm(true)}
@@ -535,12 +584,12 @@ export default function AddItemPage() {
         {isEditMode ? 'Item updated successfully!' : 'Your Product is successfully Uploaded'}
       </div>
       <div style={{ color: '#666', fontSize: 16, marginBottom: 16 }}>
-        Redirecting to {actionType} page...
+        Redirecting to {actionType === 'bidding' ? 'Bidding' : actionType === 'exchange' ? 'Exchange' : 'Resell'} page...
       </div>
     </div>
   );
 
-  // Delete confirm modal
+  // Delete confirmation modal
   const deleteModal = showDeleteConfirm && (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ background: '#fff', borderRadius: 18, padding: 40, maxWidth: 400, width: '100%', textAlign: 'center', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
@@ -550,17 +599,10 @@ export default function AddItemPage() {
           This action cannot be undone. The item will be permanently removed.
         </p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
-          <button
-            onClick={() => setShowDeleteConfirm(false)}
-            style={{ background: '#f0f0f0', color: '#444', border: 'none', borderRadius: 10, padding: '12px 24px', fontWeight: 600, cursor: 'pointer', fontSize: 15 }}
-          >
+          <button onClick={() => setShowDeleteConfirm(false)} style={{ background: '#f0f0f0', color: '#444', border: 'none', borderRadius: 10, padding: '12px 24px', fontWeight: 600, cursor: 'pointer', fontSize: 15 }}>
             Cancel
           </button>
-          <button
-            onClick={handleDelete}
-            disabled={deleting}
-            style={{ background: '#e74c3c', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 24px', fontWeight: 700, cursor: 'pointer', fontSize: 15 }}
-          >
+          <button onClick={handleDelete} disabled={deleting} style={{ background: '#e74c3c', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 24px', fontWeight: 700, cursor: 'pointer', fontSize: 15 }}>
             {deleting ? 'Deleting...' : '🗑️ Yes, Delete'}
           </button>
         </div>
@@ -568,17 +610,32 @@ export default function AddItemPage() {
     </div>
   );
 
+  // Upgrade modal — shown when free user hits 3-item limit
   const upgradeModal = showUpgradeModal && (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ background: '#fff', borderRadius: 18, padding: 40, maxWidth: 440, width: '100%', textAlign: 'center', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
         <div style={{ fontSize: 52, marginBottom: 12 }}>🔒</div>
         <h2 style={{ fontWeight: 700, fontSize: 22, color: '#222', marginBottom: 10 }}>Free Plan Limit Reached</h2>
-        <p style={{ color: '#555', fontSize: 15, marginBottom: 6 }}>You've used all <strong>3 free listings</strong>.</p>
-        <p style={{ color: '#555', fontSize: 15, marginBottom: 24 }}>Upgrade to unlimited listings for just <strong style={{ color: '#924DAC' }}>₹99/year</strong>!</p>
-        <a href="https://sayonaraa.com/payment" target="_blank" rel="noopener noreferrer" style={{ display: 'block', background: 'linear-gradient(90deg, #924DAC, #b06fd4)', color: '#fff', fontWeight: 700, borderRadius: 10, padding: '14px 0', fontSize: 16, textDecoration: 'none', marginBottom: 12 }}>
+        <p style={{ color: '#555', fontSize: 15, marginBottom: 6 }}>
+          You've used all <strong>3 free listings</strong> on your current plan.
+        </p>
+        <p style={{ color: '#555', fontSize: 15, marginBottom: 24 }}>
+          Upgrade to unlimited listings for just <strong style={{ color: '#924DAC' }}>₹99/year</strong> — special promotion for this year only!
+        </p>
+        <a
+          href="https://sayonaraa.com/payment"
+          target="_blank"
+          rel="noopener noreferrer"
+          style={{ display: 'block', background: 'linear-gradient(90deg, #924DAC, #b06fd4)', color: '#fff', fontWeight: 700, borderRadius: 10, padding: '14px 0', fontSize: 16, textDecoration: 'none', marginBottom: 12 }}
+        >
           Subscribe Now — ₹99/year →
         </a>
-        <button onClick={() => router.back()} style={{ background: 'none', border: 'none', color: '#888', fontSize: 14, cursor: 'pointer', textDecoration: 'underline' }}>Go back</button>
+        <button
+          onClick={() => router.back()}
+          style={{ background: 'none', border: 'none', color: '#888', fontSize: 14, cursor: 'pointer', textDecoration: 'underline' }}
+        >
+          Go back
+        </button>
       </div>
     </div>
   );
@@ -588,21 +645,29 @@ export default function AddItemPage() {
       {upgradeModal}
       {deleteModal}
 
+      {/* Promotional notification banner — only for new listings */}
       {!isEditMode && (
         <div style={{ background: 'linear-gradient(90deg, #924DAC 0%, #b06fd4 100%)', color: '#fff', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24, borderRadius: 12, maxWidth: 900, margin: '0 auto 24px auto', boxShadow: '0 2px 12px rgba(146,77,172,0.18)' }}>
           <span style={{ fontSize: 20 }}>🎁</span>
-          <span style={{ fontWeight: 500, fontSize: 15 }}>Free plan is limited to <strong>3 items</strong>. Unlock unlimited for just <strong>₹99/year</strong>!</span>
-          <a href="https://sayonaraa.com/payment" target="_blank" rel="noopener noreferrer" style={{ background: '#fff', color: '#924DAC', fontWeight: 700, borderRadius: 20, padding: '7px 20px', fontSize: 14, textDecoration: 'none', whiteSpace: 'nowrap' }}>Subscribe Now →</a>
+          <span style={{ fontWeight: 500, fontSize: 15 }}>
+            Free plan is limited to <strong>3 items</strong>. Unlock unlimited listings for just <strong>₹99/year</strong> — special promotion for this year only!
+          </span>
+          <a href="https://sayonaraa.com/payment" target="_blank" rel="noopener noreferrer" style={{ background: '#fff', color: '#924DAC', fontWeight: 700, borderRadius: 20, padding: '7px 20px', fontSize: 14, textDecoration: 'none', whiteSpace: 'nowrap', boxShadow: '0 1px 4px rgba(0,0,0,0.10)' }}>
+            Subscribe Now →
+          </a>
         </div>
       )}
 
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
         <div style={{ background: '#fff', borderRadius: 18, boxShadow: '0 2px 16px rgba(0,0,0,0.08)', maxWidth: 900, width: '100%', padding: 36 }}>
+
+          {/* Edit mode banner */}
           {isEditMode && (
             <div style={{ background: '#f0e6fa', border: '1.5px solid #d4a8e8', borderRadius: 10, padding: '12px 20px', marginBottom: 24, color: '#924DAC', fontWeight: 600, fontSize: 15 }}>
-              ✏️ Edit Mode — Make your changes and click "Save Changes"
+              ✏️ Edit Mode — Modify your listing and click "Save Changes" on the last step. To delete the item, go to step 4.
             </div>
           )}
+
           {stepper}
           {step === 1 && step1}
           {step === 2 && step2}
