@@ -1,6 +1,6 @@
 "use client";
 
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import Link from 'next/link';
 import 'animate.css';
 
@@ -8,6 +8,8 @@ export default function Hero() {
   const [search, setSearch] = useState('');
   const [showAuthPrompt, setShowAuthPrompt] = useState(false);
   const [showRequestForm, setShowRequestForm] = useState(false);
+  const [loggedIn, setLoggedIn] = useState(false);
+  const [userData, setUserData] = useState<any>(null);
 
   // Request form state
   const [reqName, setReqName] = useState('');
@@ -18,29 +20,61 @@ export default function Hero() {
   const [reqSubmitted, setReqSubmitted] = useState(false);
   const [reqLoading, setReqLoading] = useState(false);
 
-  const isLoggedIn = () => {
+  // Restore pending item request after login
+  useEffect(() => {
+    const pending = localStorage.getItem('pendingItemRequest');
+    if (pending && loggedIn) {
+      localStorage.removeItem('pendingItemRequest');
+      setReqItem(pending);
+      setSearch(pending);
+      setShowRequestForm(true);
+    }
+  }, [loggedIn]);
+
+  // Check login and pre-fill user data
+  useEffect(() => {
     try {
       const token = localStorage.getItem('token');
-      if (!token) return false;
+      if (!token) return;
       const payload = JSON.parse(atob(token.split('.')[1]));
-      return payload.exp * 1000 > Date.now();
-    } catch { return false; }
-  };
+      if (payload.exp * 1000 > Date.now()) {
+        setLoggedIn(true);
+        // Fetch user details to pre-fill form
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/users/me`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(r => r.json())
+          .then(data => {
+            const user = data?.user || data;
+            setUserData(user);
+            if (user?.name) setReqName(user.name);
+            if (user?.phone || user?.contact) setReqPhone(user.phone || user.contact || '');
+          })
+          .catch(() => {});
+      }
+    } catch {}
+  }, []);
+
+  const isLoggedIn = () => loggedIn;
 
   const handleGetStarted = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (isLoggedIn()) {
+    if (loggedIn) {
       window.location.href = '/add-item';
     } else {
-      // Redirect to home with signup param to trigger auth modal
       window.location.href = '/?auth=signup';
     }
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
     e.preventDefault();
-    // Always open request form — pre-fill item if search has text
     setReqItem(search.trim());
+    if (!loggedIn) {
+      // Save item and redirect to signup, come back after login
+      localStorage.setItem('pendingItemRequest', search.trim());
+      window.location.href = '/?auth=signup';
+      return;
+    }
     setShowRequestForm(true);
   };
 
@@ -142,7 +176,15 @@ export default function Hero() {
             />
             <button
               type="button"
-              onClick={() => { setReqItem(search.trim()); setShowRequestForm(true); }}
+              onClick={() => {
+                setReqItem(search.trim());
+                if (!loggedIn) {
+                  localStorage.setItem('pendingItemRequest', search.trim());
+                  window.location.href = '/?auth=signup';
+                  return;
+                }
+                setShowRequestForm(true);
+              }}
               style={{
                 position: 'absolute',
                 right: 6,
@@ -200,6 +242,12 @@ export default function Hero() {
                   <p style={{ color: '#666', fontSize: 14 }}>
                     Can't find <strong>"{reqItem}"</strong> listed? Fill this form and we'll try to find it for you!
                   </p>
+                  {/* Show logged-in user badge */}
+                  {loggedIn && userData && (
+                    <div style={{ background: '#e7ffe7', borderRadius: 8, padding: '6px 14px', display: 'inline-block', fontSize: 13, color: '#2d7a2d', marginTop: 8 }}>
+                      ✅ Logged in as <strong>{userData.name || userData.email}</strong>
+                    </div>
+                  )}
                 </div>
 
                 <form onSubmit={handleRequestSubmit} style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
