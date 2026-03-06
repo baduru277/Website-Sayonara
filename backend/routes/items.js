@@ -174,33 +174,49 @@ router.post('/', auth, async (req, res) => {
     if (type === 'exchange' && !lookingFor) return res.status(400).json({ error: 'Exchange items require what you are looking for' });
 
     // -------------------- FREE TIER CHECK --------------------
-    // Count ALL items ever posted by this user (including deleted ones)
-    // This prevents the loophole of delete + repost to bypass the free limit
-    const user = await User.findByPk(req.user.id, {
-      include: [{
-        model: require('../models').Subscription || null,
-        as: 'subscriptions',
-        required: false
-      }]
-    });
+    // Step 1: Check if user has active subscription
+    const user = await User.findByPk(req.user.id);
+    let isSubscribed = false;
 
-    // Check if user has active subscription
-    const activeSub = user?.subscriptions?.find(sub =>
-      sub.status === 'active' &&
-      sub.expiryDate &&
-      new Date(sub.expiryDate) > new Date()
-    );
+    try {
+      // Check subscriptionStatus field directly on user (simplest approach)
+      if (user?.subscriptionStatus === 'active' && user?.subscriptionExpiry) {
+        isSubscribed = new Date(user.subscriptionExpiry) > new Date();
+      }
 
-    if (!activeSub) {
-      // Count ALL items ever posted — including soft-deleted ones
+      // Also check Subscription table if it exists
+      if (!isSubscribed) {
+        const { Subscription } = require('../models');
+        if (Subscription) {
+          const sub = await Subscription.findOne({
+            where: {
+              userId: req.user.id,
+              status: 'active'
+            }
+          });
+          if (sub && sub.expiryDate && new Date(sub.expiryDate) > new Date()) {
+            isSubscribed = true;
+          }
+        }
+      }
+    } catch (e) {
+      // Subscription model may not exist yet — continue with free tier check
+      isSubscribed = false;
+    }
+
+    // Step 2: If NOT subscribed, count ALL items EVER posted (including deleted)
+    if (!isSubscribed) {
       const totalEverPosted = await Item.count({
         where: { userId: req.user.id }
-        // NOTE: No isActive filter — counts deleted items too
+        // ⚠️ NO isActive filter — deleted items still count
+        // This prevents delete + repost loophole
       });
+
+      console.log(`🔒 Free tier check: user ${req.user.id} has posted ${totalEverPosted} items total (limit: ${FREE_LIMIT})`);
 
       if (totalEverPosted >= FREE_LIMIT) {
         return res.status(403).json({
-          error: `Free plan limit reached. You have posted ${totalEverPosted} items (limit: ${FREE_LIMIT}). Upgrade to ₹99/year for unlimited listings.`,
+          error: `Free plan limit reached. You have used all ${FREE_LIMIT} free listings (including deleted items). Upgrade to ₹99/year for unlimited listings.`,
           limitReached: true,
           totalPosted: totalEverPosted,
           limit: FREE_LIMIT
