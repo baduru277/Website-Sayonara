@@ -10,7 +10,8 @@ import apiService from '../services/api';
 export default function Header() {
   const [isLoggedIn, setIsLoggedIn] = useState(false);
   const [user, setUser] = useState<any>(null);
-  const [location, setLocation] = useState('Detecting...');
+  const [location, setLocation] = useState('Detecting...'); // exact city/area
+  const [stateLocation, setStateLocation] = useState('Andhra Pradesh'); // state for dropdown
   const [showAuth, setShowAuth] = useState(false);
   const [showDropdown, setShowDropdown] = useState(false);
   const [authDefaultTab, setAuthDefaultTab] = useState<'login' | 'signup'>('login');
@@ -56,8 +57,10 @@ export default function Header() {
 
     // ── Get location ──
     const savedCity = localStorage.getItem('userCity');
+    const savedState = localStorage.getItem('userState');
     if (savedCity) {
       setLocation(savedCity);
+      if (savedState) setStateLocation(savedState);
     } else {
       detectLocation();
     }
@@ -124,10 +127,14 @@ export default function Header() {
           setLocation(data.city);
           localStorage.setItem('userCity', data.city);
         } else {
-          setLocation('Andhra Pradesh');
+          setLocation('Unknown Area');
+        }
+        if (data?.regionName) {
+          setStateLocation(data.regionName);
+          localStorage.setItem('userState', data.regionName);
         }
       })
-      .catch(() => setLocation('Andhra Pradesh'));
+      .catch(() => { setLocation('Unknown Area'); setStateLocation('Andhra Pradesh'); });
   };
 
   const handleRefreshLocation = () => {
@@ -240,13 +247,13 @@ export default function Header() {
             {/* Manual state selector (fallback) */}
             <select
               style={{ fontSize: 14, padding: '4px 8px', borderRadius: 4, border: '1px solid #ccc', maxWidth: 140 }}
-              value={location}
+              value={stateLocation}
               onChange={e => {
-                setLocation(e.target.value);
-                localStorage.setItem('userCity', e.target.value);
+                setStateLocation(e.target.value);
+                localStorage.setItem('userState', e.target.value);
               }}
             >
-              <option value={location}>{location}</option>
+              <option value={stateLocation}>{stateLocation}</option>
               <option value="Andhra Pradesh">Andhra Pradesh</option>
               <option value="Arunachal Pradesh">Arunachal Pradesh</option>
               <option value="Assam">Assam</option>
