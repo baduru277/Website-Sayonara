@@ -223,7 +223,7 @@ export default function ProfilePage() {
               <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22 }}>My Post Items</h2>
               {(!isSubscribed && totalEverPosted >= FREE_LIMIT) ? (
                 <button
-                  onClick={() => router.push("/profile#subscription")}
+                  onClick={() => router.push("/payment?plan=Premium&amount=99&duration=1%20Year")}
                   style={{ background: "#e53e3e", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>
                   🔒 Upgrade to Post More
                 </button>
@@ -252,7 +252,7 @@ export default function ProfilePage() {
                       </p>
                     </div>
                     <button
-                      onClick={() => router.push("/profile#subscription")}
+                      onClick={() => router.push("/payment?plan=Premium&amount=99&duration=1%20Year")}
                       style={{ background: "#924DAC", color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontWeight: 600, cursor: "pointer" }}>
                       🚀 Upgrade for ₹99/year — Unlimited Posts
                     </button>
