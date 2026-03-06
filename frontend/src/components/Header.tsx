@@ -184,7 +184,7 @@ export default function Header() {
     if (!isLoggedIn) { setAuthDefaultTab('signup'); setShowAuth(true); return; }
     if (postLimitReached) {
       // Show upgrade modal instead of going to add-item
-      window.location.href = '/profile#subscription';
+      window.location.href = '/payment?plan=Premium&amount=99&duration=1%20Year';
       return;
     }
     window.location.href = '/add-item';
