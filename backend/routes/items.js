@@ -118,6 +118,42 @@ router.get('/my/items', auth, async (req, res) => {
   }
 });
 
+// -------------------- Get Post Count (for free tier check) --------------------
+router.get('/my/post-count', auth, async (req, res) => {
+  try {
+    const FREE_LIMIT = 3;
+
+    // Count ALL items ever posted including deleted ones
+    const totalEverPosted = await Item.count({
+      where: { userId: req.user.id }
+    });
+
+    // Check subscription
+    let isSubscribed = false;
+    try {
+      const { Subscription } = require('../models');
+      if (Subscription) {
+        const sub = await Subscription.findOne({
+          where: { userId: req.user.id, status: 'active' }
+        });
+        if (sub?.expiryDate && new Date(sub.expiryDate) > new Date()) {
+          isSubscribed = true;
+        }
+      }
+    } catch {}
+
+    res.json({
+      totalEverPosted,
+      limit: FREE_LIMIT,
+      remaining: isSubscribed ? 999 : Math.max(0, FREE_LIMIT - totalEverPosted),
+      isSubscribed,
+      limitReached: !isSubscribed && totalEverPosted >= FREE_LIMIT
+    });
+  } catch (error) {
+    res.status(500).json({ error: 'Server error' });
+  }
+});
+
 // -------------------- Get Single Item --------------------
 router.get('/:id', optionalAuth, async (req, res) => {
   try {
