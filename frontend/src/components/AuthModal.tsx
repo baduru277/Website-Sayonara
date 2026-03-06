@@ -176,6 +176,17 @@ export default function AuthModal({ open, onClose, defaultTab = "login" }: { ope
                     onClick={(e) => { e.preventDefault(); e.stopPropagation(); handleLogin(); }}>
                     {loading ? 'Signing In...' : 'SIGN IN'}
                   </button>
+
+                  {/* New user hint */}
+                  <div style={{ textAlign: 'center', marginTop: 18, fontSize: 14, color: '#888' }}>
+                    New to Sayonara?{' '}
+                    <span
+                      onClick={() => { setTab('signup'); setErrorMsg(null); }}
+                      style={{ color: '#924DAC', fontWeight: 700, cursor: 'pointer', textDecoration: 'underline' }}
+                    >
+                      Create a free account
+                    </span>
+                  </div>
                 </form>
               ) : (
                 <form onSubmit={handleSignup}>
