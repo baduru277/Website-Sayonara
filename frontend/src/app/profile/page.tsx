@@ -27,6 +27,9 @@ export default function ProfilePage() {
   const [itemsLoading, setItemsLoading] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState<string | null>(null);
   const [deleting, setDeleting] = useState(false);
+  const [totalEverPosted, setTotalEverPosted] = useState(0);
+  const [isSubscribed, setIsSubscribed] = useState(false);
+  const FREE_LIMIT = 3;
   const router = useRouter();
 
   useEffect(() => {
@@ -66,8 +69,21 @@ export default function ProfilePage() {
   const fetchMyItems = async () => {
     try {
       setItemsLoading(true);
+      const token = localStorage.getItem("token");
+
+      // Fetch active items
       const response = await apiService.getMyItems();
       setMyItems(response?.items || []);
+
+      // Fetch total ever posted (including deleted) for limit check
+      const countRes = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/items/my/post-count`, {
+        headers: { Authorization: `Bearer ${token}` }
+      });
+      if (countRes.ok) {
+        const countData = await countRes.json();
+        setTotalEverPosted(countData.totalEverPosted || 0);
+        setIsSubscribed(countData.isSubscribed || false);
+      }
     } catch (err) {
       console.error("Error fetching items:", err);
     } finally {
@@ -205,9 +221,17 @@ export default function ProfilePage() {
 
             <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 18 }}>
               <h2 style={{ color: "#924DAC", fontWeight: 700, fontSize: 22 }}>My Post Items</h2>
-              <button onClick={() => router.push("/add-item")} style={{ background: "#924DAC", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, cursor: "pointer", fontSize: 14 }}>
-                + Add New Item
-              </button>
+              {(!isSubscribed && totalEverPosted >= FREE_LIMIT) ? (
+                <button
+                  onClick={() => router.push("/profile#subscription")}
+                  style={{ background: "#e53e3e", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, cursor: "pointer", fontSize: 14, display: "flex", alignItems: "center", gap: 6 }}>
+                  🔒 Upgrade to Post More
+                </button>
+              ) : (
+                <button onClick={() => router.push("/add-item")} style={{ background: "#924DAC", color: "#fff", border: "none", borderRadius: 8, padding: "8px 18px", fontWeight: 600, cursor: "pointer", fontSize: 14 }}>
+                  + Add New Item
+                </button>
+              )}
             </div>
 
             {itemsLoading ? (
@@ -216,7 +240,26 @@ export default function ProfilePage() {
               <div style={{ textAlign: "center", padding: 60, background: "#fff", borderRadius: 12, color: "#aaa" }}>
                 <div style={{ fontSize: 48, marginBottom: 12 }}>📦</div>
                 <div style={{ fontSize: 16, fontWeight: 600 }}>No items posted yet</div>
-                <button onClick={() => router.push("/add-item")} style={{ marginTop: 16, background: "#924DAC", color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontWeight: 600, cursor: "pointer" }}>Post Your First Item</button>
+                {(!isSubscribed && totalEverPosted >= FREE_LIMIT) ? (
+                  <div style={{ marginTop: 16, textAlign: "center" }}>
+                    <div style={{ background: "#fff5f5", border: "1px solid #fed7d7", borderRadius: 10, padding: "16px 24px", marginBottom: 12 }}>
+                      <div style={{ fontSize: 20, marginBottom: 6 }}>🔒</div>
+                      <p style={{ color: "#c53030", fontWeight: 600, margin: 0, fontSize: 14 }}>
+                        You've used all {FREE_LIMIT} free listings
+                      </p>
+                      <p style={{ color: "#888", fontSize: 13, marginTop: 4 }}>
+                        Deleted items still count toward your free limit
+                      </p>
+                    </div>
+                    <button
+                      onClick={() => router.push("/profile#subscription")}
+                      style={{ background: "#924DAC", color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontWeight: 600, cursor: "pointer" }}>
+                      🚀 Upgrade for ₹99/year — Unlimited Posts
+                    </button>
+                  </div>
+                ) : (
+                  <button onClick={() => router.push("/add-item")} style={{ marginTop: 16, background: "#924DAC", color: "#fff", border: "none", borderRadius: 8, padding: "10px 24px", fontWeight: 600, cursor: "pointer" }}>Post Your First Item</button>
+                )}
               </div>
             ) : (
               <div style={{ background: "#fff", borderRadius: 12, boxShadow: "0 2px 12px rgba(146,77,172,0.06)", overflow: "hidden" }}>
