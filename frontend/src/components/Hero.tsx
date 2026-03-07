@@ -10,6 +10,7 @@ export default function Hero() {
   const [showRequestForm, setShowRequestForm] = useState(false);
   const [loggedIn, setLoggedIn] = useState(false);
   const [userData, setUserData] = useState<any>(null);
+  const [postLimitReached, setPostLimitReached] = useState(false);
 
   // Request form state
   const [reqName, setReqName] = useState('');
@@ -51,6 +52,16 @@ export default function Hero() {
             if (user?.phone || user?.contact) setReqPhone(user.phone || user.contact || '');
           })
           .catch(() => {});
+
+        // Check post limit
+        fetch(`${process.env.NEXT_PUBLIC_API_URL}/items/my/post-count`, {
+          headers: { Authorization: `Bearer ${token}` }
+        })
+          .then(r => r.json())
+          .then(data => {
+            setPostLimitReached(!data.isSubscribed && data.totalEverPosted >= 3);
+          })
+          .catch(() => {});
       }
     } catch {}
   }, []);
@@ -59,11 +70,15 @@ export default function Hero() {
 
   const handleGetStarted = (e: React.MouseEvent) => {
     e.preventDefault();
-    if (loggedIn) {
-      window.location.href = '/add-item';
-    } else {
+    if (!loggedIn) {
       window.location.href = '/?auth=signup';
+      return;
     }
+    if (postLimitReached) {
+      window.location.href = '/payment?plan=Premium&amount=99&duration=1%20Year';
+      return;
+    }
+    window.location.href = '/add-item';
   };
 
   const handleSearchSubmit = (e: React.FormEvent) => {
@@ -220,9 +235,13 @@ export default function Hero() {
           <button
             onClick={handleGetStarted}
             className="sayonara-btn"
-            style={{ fontSize: 20, marginTop: 12, padding: '12px 36px', border: 'none', cursor: 'pointer' }}
+            style={{
+              fontSize: 20, marginTop: 12, padding: '12px 36px',
+              border: 'none', cursor: 'pointer',
+              background: loggedIn && postLimitReached ? '#e53e3e' : undefined,
+            }}
           >
-            Get Started
+            {loggedIn && postLimitReached ? '🔒 Upgrade to Post More' : 'Get Started'}
           </button>
         </div>
       </section>
