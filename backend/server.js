@@ -21,7 +21,7 @@ app.use(cors({
 app.use(express.json({ limit: '50mb' }));
 app.use(express.urlencoded({ extended: true, limit: '50mb' }));
 
-// ✅ Serve uploaded images (product images, payment proofs etc.)
+// ✅ Serve uploaded images
 const uploadsPath = path.join(__dirname, 'uploads');
 if (!fs.existsSync(uploadsPath)) {
   fs.mkdirSync(uploadsPath, { recursive: true });
@@ -32,39 +32,49 @@ app.use('/uploads', express.static(uploadsPath));
 // -------------------- Load Routes --------------------
 console.log('🔧 Loading routes...');
 
-const indexRouter   = require('./routes/index');
-const authRouter    = require('./routes/auth');
-const itemsRouter   = require('./routes/items');
-const usersRouter   = require('./routes/users');
-const adminRouter   = require('./routes/admin');
-const uploadRouter  = require('./routes/upload');
-const messagesRouter = require('./routes/messages');
+const indexRouter        = require('./routes/index');
+const authRouter         = require('./routes/auth');
+const itemsRouter        = require('./routes/items');
+const usersRouter        = require('./routes/users');
+const adminRouter        = require('./routes/admin');
+const uploadRouter       = require('./routes/upload');
+const messagesRouter     = require('./routes/messages');
+const { router: notificationsRouter } = require('./routes/notifications'); // ✅ NEW
 
 console.log('✓ Routes imported successfully');
 
+// -------------------- Notification Model --------------------
+const NotificationModel = require('./models/Notification');
+const Notification = NotificationModel(sequelize);
+
+// Associations
+User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
+Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
+
 // -------------------- Register Routes --------------------
-app.use('/api',          indexRouter);
+app.use('/api',                indexRouter);
 console.log('✓ GET /api registered');
-app.use('/api/messages', messagesRouter);
-console.log('✓ GET /api messagesRouter');
 
+app.use('/api/messages',       messagesRouter);
+console.log('✓ /api/messages/* routes registered');
 
-
-app.use('/api/auth',     authRouter);
+app.use('/api/auth',           authRouter);
 console.log('✓ /api/auth/* routes registered');
 
-app.use('/api/items',    itemsRouter);
+app.use('/api/items',          itemsRouter);
 console.log('✓ /api/items/* routes registered');
 
-app.use('/api/users',    usersRouter);
+app.use('/api/users',          usersRouter);
 console.log('✓ /api/users/* routes registered');
 
-app.use('/api/admin',    adminRouter);
+app.use('/api/admin',          adminRouter);
 console.log('✓ /api/admin/* routes registered');
 
-app.use('/api/upload',   uploadRouter);
+app.use('/api/upload',         uploadRouter);
 console.log('✓ /api/upload/* routes registered');
 
+app.use('/api/notifications',  notificationsRouter); // ✅ NEW
+console.log('✓ /api/notifications/* routes registered');
 
 // -------------------- Health Check --------------------
 app.get('/health', (req, res) => {
@@ -79,7 +89,6 @@ app.get('/health', (req, res) => {
 console.log('✓ GET /health registered');
 
 // -------------------- Multer Error Handler --------------------
-// Must be before general error handler
 app.use((err, req, res, next) => {
   if (err.code === 'LIMIT_FILE_SIZE') {
     return res.status(400).json({ error: 'File too large. Maximum size is 10MB.' });
@@ -115,9 +124,6 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     console.log('🔄 Connecting to database...');
-
-    // ✅ FIXED: NEVER delete database - removed the dangerous delete code
-    // Only sync without force to preserve existing data
     await sequelize.sync({ alter: false });
     console.log('✅ Database synchronized');
 
@@ -148,6 +154,8 @@ const startServer = async () => {
       console.log('  POST   /api/upload/single');
       console.log('  POST   /api/upload/multiple');
       console.log('  DELETE /api/upload/delete/:filename');
+      console.log('  GET    /api/notifications');           // ✅ NEW
+      console.log('  PUT    /api/notifications/mark-all-read'); // ✅ NEW
       console.log('');
     });
 
