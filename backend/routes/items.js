@@ -1,4 +1,5 @@
 const express = require('express');
+const { createNotification } = require('./notifications');
 const { Op, fn, col } = require('sequelize');
 const { Item, User, Bid } = require('../models');
 const { auth, optionalAuth } = require('../middleware/auth');
@@ -393,6 +394,19 @@ router.post('/:id/bid', auth, async (req, res) => {
     });
 
     console.log(`✅ Bid placed: ₹${amount} on item ${item.id} by user ${req.user.id}`);
+
+    // Notify item owner about new bid
+    try {
+      const bidder = await User.findByPk(req.user.id, { attributes: ['name'] });
+      await createNotification({
+        userId: item.userId,
+        type: 'bid',
+        title: '🔨 New Bid on Your Item!',
+        message: `${bidder?.name || 'Someone'} placed a bid of ₹${amount} on "${item.title}"`,
+        link: `/bidding/${item.id}`,
+        fromUserName: bidder?.name || 'A bidder'
+      });
+    } catch (e) {}
 
     res.json({
       message: 'Bid placed successfully',
