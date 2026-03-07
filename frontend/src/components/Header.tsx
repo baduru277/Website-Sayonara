@@ -184,7 +184,6 @@ export default function Header() {
     e.preventDefault();
     if (!isLoggedIn) { setAuthDefaultTab('signup'); setShowAuth(true); return; }
     if (postLimitReached) {
-      // Show upgrade modal instead of going to add-item
       window.location.href = '/payment?plan=Premium&amount=99&duration=1%20Year';
       return;
     }
@@ -322,49 +321,51 @@ export default function Header() {
               <button className="sayonara-btn" onClick={() => { setAuthDefaultTab('login'); setShowAuth(true); }}>Login</button>
             ) : (
               user && (
-                <NotificationBell />
-                <div className="user-dropdown-container" style={{ position: 'relative' }}>
-                  <div onClick={toggleDropdown}
-                    style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: '#924DAC', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600, cursor: 'pointer', border: '2px solid #eee', transition: 'all 0.2s ease' }}
-                    onMouseEnter={(e) => (e.target as HTMLElement).style.transform = 'scale(1.05)'}
-                    onMouseLeave={(e) => (e.target as HTMLElement).style.transform = 'scale(1)'}>
-                    {getInitials()}
-                  </div>
+                <>
+                  <NotificationBell />
+                  <div className="user-dropdown-container" style={{ position: 'relative' }}>
+                    <div onClick={toggleDropdown}
+                      style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: '#924DAC', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600, cursor: 'pointer', border: '2px solid #eee', transition: 'all 0.2s ease' }}
+                      onMouseEnter={(e) => (e.target as HTMLElement).style.transform = 'scale(1.05)'}
+                      onMouseLeave={(e) => (e.target as HTMLElement).style.transform = 'scale(1)'}>
+                      {getInitials()}
+                    </div>
 
-                  {showDropdown && (
-                    <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, backgroundColor: 'white', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', border: '1px solid #e5e7eb', minWidth: 200, zIndex: 1000, overflow: 'hidden' }}>
-                      <div style={{ padding: 16, borderBottom: '1px solid #f3f4f6', backgroundColor: '#f9fafb' }}>
-                        <div style={{ fontWeight: 600, color: '#374151', fontSize: 14 }}>{getUserDisplayName()}</div>
-                        <div style={{ color: '#6b7280', fontSize: 12, marginTop: 2 }}>{user.email || 'No email'}</div>
-                        <div style={{ color: '#924DAC', fontSize: 12, marginTop: 2 }}>📍 {location}</div>
-                      </div>
-                      <div style={{ padding: '8px 0' }}>
-                        <Link href="/profile" style={{ textDecoration: 'none' }}>
-                          <div style={{ padding: '12px 16px', color: '#374151', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
+                    {showDropdown && (
+                      <div style={{ position: 'absolute', top: '100%', right: 0, marginTop: 8, backgroundColor: 'white', borderRadius: 8, boxShadow: '0 4px 12px rgba(0,0,0,0.15)', border: '1px solid #e5e7eb', minWidth: 200, zIndex: 1000, overflow: 'hidden' }}>
+                        <div style={{ padding: 16, borderBottom: '1px solid #f3f4f6', backgroundColor: '#f9fafb' }}>
+                          <div style={{ fontWeight: 600, color: '#374151', fontSize: 14 }}>{getUserDisplayName()}</div>
+                          <div style={{ color: '#6b7280', fontSize: 12, marginTop: 2 }}>{user.email || 'No email'}</div>
+                          <div style={{ color: '#924DAC', fontSize: 12, marginTop: 2 }}>📍 {location}</div>
+                        </div>
+                        <div style={{ padding: '8px 0' }}>
+                          <Link href="/profile" style={{ textDecoration: 'none' }}>
+                            <div style={{ padding: '12px 16px', color: '#374151', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
+                              onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6'}
+                              onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'}
+                              onClick={() => setShowDropdown(false)}>
+                              <span>📊</span> Dashboard
+                            </div>
+                          </Link>
+                          <Link href="/messages" style={{ textDecoration: 'none' }}>
+                            <div style={{ padding: '12px 16px', color: '#374151', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
+                              onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6'}
+                              onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'}
+                              onClick={() => setShowDropdown(false)}>
+                              <span>💬</span> Messages
+                            </div>
+                          </Link>
+                          <div style={{ height: 1, backgroundColor: '#e5e7eb', margin: '8px 0' }} />
+                          <div onClick={handleLogout} style={{ padding: '12px 16px', color: '#dc2626', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
                             onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6'}
-                            onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'}
-                            onClick={() => setShowDropdown(false)}>
-                            <span>📊</span> Dashboard
+                            onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'}>
+                            <span>🚪</span> Logout
                           </div>
-                        </Link>
-                        <Link href="/messages" style={{ textDecoration: 'none' }}>
-                          <div style={{ padding: '12px 16px', color: '#374151', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
-                            onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6'}
-                            onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'}
-                            onClick={() => setShowDropdown(false)}>
-                            <span>💬</span> Messages
-                          </div>
-                        </Link>
-                        <div style={{ height: 1, backgroundColor: '#e5e7eb', margin: '8px 0' }} />
-                        <div onClick={handleLogout} style={{ padding: '12px 16px', color: '#dc2626', fontSize: 14, cursor: 'pointer', display: 'flex', alignItems: 'center', gap: 12 }}
-                          onMouseEnter={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = '#f3f4f6'}
-                          onMouseLeave={(e) => (e.currentTarget as HTMLElement).style.backgroundColor = 'transparent'}>
-                          <span>🚪</span> Logout
                         </div>
                       </div>
-                    </div>
-                  )}
-                </div>
+                    )}
+                  </div>
+                </>
               )
             )}
           </div>
