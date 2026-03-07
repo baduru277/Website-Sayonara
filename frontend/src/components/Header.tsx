@@ -5,6 +5,7 @@ import { useEffect, useState } from 'react';
 import './Header.css';
 import SayonaraLogo from './SayonaraLogo';
 import AuthModal from './AuthModal';
+import NotificationBell from './NotificationBell';
 import apiService from '../services/api';
 
 export default function Header() {
@@ -321,6 +322,7 @@ export default function Header() {
               <button className="sayonara-btn" onClick={() => { setAuthDefaultTab('login'); setShowAuth(true); }}>Login</button>
             ) : (
               user && (
+                <NotificationBell />
                 <div className="user-dropdown-container" style={{ position: 'relative' }}>
                   <div onClick={toggleDropdown}
                     style={{ width: 40, height: 40, borderRadius: '50%', backgroundColor: '#924DAC', color: 'white', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 16, fontWeight: 600, cursor: 'pointer', border: '2px solid #eee', transition: 'all 0.2s ease' }}
