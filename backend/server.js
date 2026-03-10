@@ -32,62 +32,30 @@ app.use('/uploads', express.static(uploadsPath));
 // -------------------- Load Routes --------------------
 console.log('🔧 Loading routes...');
 
-const indexRouter        = require('./routes/index');
-const authRouter         = require('./routes/auth');
-const itemsRouter        = require('./routes/items');
-const usersRouter        = require('./routes/users');
-const adminRouter        = require('./routes/admin');
-const uploadRouter       = require('./routes/upload');
-const messagesRouter     = require('./routes/messages');
+const indexRouter           = require('./routes/index');
+const authRouter            = require('./routes/auth');
+const itemsRouter           = require('./routes/items');
+const usersRouter           = require('./routes/users');
+const adminRouter           = require('./routes/admin');
+const uploadRouter          = require('./routes/upload');
+const messagesRouter        = require('./routes/messages');
 const { router: notificationsRouter } = require('./routes/notifications');
-const referralRouter     = require('./routes/referral');        // ✅ NEW
-const aadhaarRouter      = require('./routes/aadhaar');         // ✅ NEW
+const referralRouter        = require('./routes/referral');
+const aadhaarRouter         = require('./routes/aadhaar');
 
 console.log('✓ Routes imported successfully');
 
-// -------------------- Notification Model --------------------
-const NotificationModel  = require('./models/Notification');
-const ReferralModel      = require('./models/Referral');        // ✅ NEW
-
-const Notification = NotificationModel(sequelize);
-const Referral     = ReferralModel(sequelize);                  // ✅ NEW
-
-// Associations
-User.hasMany(Notification, { foreignKey: 'userId', as: 'notifications' });
-Notification.belongsTo(User, { foreignKey: 'userId', as: 'user' });
-
-User.hasMany(Referral, { foreignKey: 'referrerId', as: 'referrals' }); // ✅ NEW
-
 // -------------------- Register Routes --------------------
-app.use('/api',                indexRouter);
-console.log('✓ GET /api registered');
-
-app.use('/api/messages',       messagesRouter);
-console.log('✓ /api/messages/* routes registered');
-
-app.use('/api/auth',           authRouter);
-console.log('✓ /api/auth/* routes registered');
-
-app.use('/api/items',          itemsRouter);
-console.log('✓ /api/items/* routes registered');
-
-app.use('/api/users',          usersRouter);
-console.log('✓ /api/users/* routes registered');
-
-app.use('/api/admin',          adminRouter);
-console.log('✓ /api/admin/* routes registered');
-
-app.use('/api/upload',         uploadRouter);
-console.log('✓ /api/upload/* routes registered');
-
-app.use('/api/notifications',  notificationsRouter);
-console.log('✓ /api/notifications/* routes registered');
-
-// app.use('/api/referral',       referralRouter);                 // ✅ NEW
-// console.log('✓ /api/referral/* routes registered');
-
-// app.use('/api/aadhaar',        aadhaarRouter);                  // ✅ NEW
-// console.log('✓ /api/aadhaar/* routes registered');
+app.use('/api',               indexRouter);
+app.use('/api/messages',      messagesRouter);
+app.use('/api/auth',          authRouter);
+app.use('/api/items',         itemsRouter);
+app.use('/api/users',         usersRouter);
+app.use('/api/admin',         adminRouter);
+app.use('/api/upload',        uploadRouter);
+app.use('/api/notifications', notificationsRouter);
+app.use('/api/referral',      referralRouter);
+app.use('/api/aadhaar',       aadhaarRouter);
 
 // -------------------- Health Check --------------------
 app.get('/health', (req, res) => {
@@ -124,7 +92,7 @@ app.use((err, req, res, next) => {
 const startServer = async () => {
   try {
     console.log('🔄 Connecting to database...');
-    await sequelize.sync({ alter: true });   // ✅ alter:true picks up new columns
+    await sequelize.sync({ alter: true });
     console.log('✅ Database synchronized');
 
     app.listen(port, '0.0.0.0', () => {
@@ -139,10 +107,10 @@ const startServer = async () => {
       console.log('  GET    /api/users/dashboard');
       console.log('  GET    /api/notifications');
       console.log('  PUT    /api/notifications/mark-all-read');
-      console.log('  GET    /api/referral/my');              // ✅ NEW
-      console.log('  POST   /api/referral/apply');           // ✅ NEW
-      // console.log('  POST   /api/aadhaar/send-otp');         // ✅ NEW
-      // console.log('  POST   /api/aadhaar/verify-otp');       // ✅ NEW
+      console.log('  GET    /api/referral/my');
+      console.log('  POST   /api/referral/apply');
+      console.log('  POST   /api/aadhaar/send-otp');
+      console.log('  POST   /api/aadhaar/verify-otp');
     });
 
   } catch (error) {
