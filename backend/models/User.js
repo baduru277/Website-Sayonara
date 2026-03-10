@@ -41,7 +41,6 @@ const User = sequelize.define('User', {
     allowNull: false,
     defaultValue: false,
   },
-  // ✅ NEW: Admin flag
   isAdmin: {
     type: DataTypes.BOOLEAN,
     allowNull: false,
@@ -74,9 +73,44 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true,
   },
-}, {
-  timestamps: true,
-});
+
+  // ✅ REFERRAL FIELDS
+  referralCode: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+    unique: true,
+  },
+  referredBy: {
+    type: DataTypes.TEXT,
+    allowNull: true,
+  },
+  premiumUntil: {
+    type: DataTypes.DATE,
+    allowNull: true,
+  },
+
+//   // ✅ AADHAAR VERIFICATION FIELDS
+//   aadhaarVerified: {
+//     type: DataTypes.BOOLEAN,
+//     allowNull: false,
+//     defaultValue: false,
+//   },
+//   aadhaarName: {
+//     type: DataTypes.TEXT,
+//     allowNull: true,   // name as per Aadhaar
+//   },
+//   aadhaarRef: {
+//     type: DataTypes.TEXT,
+//     allowNull: true,   // Surepass reference ID (never store actual Aadhaar number)
+//   },
+//   aadhaarVerifiedAt: {
+//     type: DataTypes.DATE,
+//     allowNull: true,
+//   },
+
+// }, {
+//   timestamps: true,
+// });
 
 User.associate = (models) => {
   User.hasMany(models.Item, {
@@ -84,23 +118,25 @@ User.associate = (models) => {
     foreignKey: 'userId',
     onDelete: 'CASCADE'
   });
-
   User.hasMany(models.Bid, {
     as: 'bids',
     foreignKey: 'userId',
     onDelete: 'CASCADE'
   });
-
   User.hasMany(models.Subscription, {
     as: 'subscriptions',
     foreignKey: 'userId',
     onDelete: 'CASCADE'
   });
-
-  // ✅ NEW: PaymentProof association
   User.hasMany(models.PaymentProof, {
     as: 'paymentProofs',
     foreignKey: 'userId',
+    onDelete: 'CASCADE'
+  });
+  // ✅ Referral association
+  User.hasMany(models.Referral, {
+    as: 'referrals',
+    foreignKey: 'referrerId',
     onDelete: 'CASCADE'
   });
 };
