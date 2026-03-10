@@ -73,8 +73,6 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true,
   },
-
-  // ✅ REFERRAL FIELDS
   referralCode: {
     type: DataTypes.TEXT,
     allowNull: true,
@@ -88,29 +86,14 @@ const User = sequelize.define('User', {
     type: DataTypes.DATE,
     allowNull: true,
   },
-
-//   // ✅ AADHAAR VERIFICATION FIELDS
-//   aadhaarVerified: {
-//     type: DataTypes.BOOLEAN,
-//     allowNull: false,
-//     defaultValue: false,
-//   },
-//   aadhaarName: {
-//     type: DataTypes.TEXT,
-//     allowNull: true,   // name as per Aadhaar
-//   },
-//   aadhaarRef: {
-//     type: DataTypes.TEXT,
-//     allowNull: true,   // Surepass reference ID (never store actual Aadhaar number)
-//   },
-//   aadhaarVerifiedAt: {
-//     type: DataTypes.DATE,
-//     allowNull: true,
-//   },
-
-// }, {
-//   timestamps: true,
-// });
+  // ✅ AADHAAR — uncomment when Surepass API key is ready
+  // aadhaarVerified: { type: DataTypes.BOOLEAN, allowNull: false, defaultValue: false },
+  // aadhaarName: { type: DataTypes.TEXT, allowNull: true },
+  // aadhaarRef: { type: DataTypes.TEXT, allowNull: true },
+  // aadhaarVerifiedAt: { type: DataTypes.DATE, allowNull: true },
+}, {
+  timestamps: true,
+});
 
 User.associate = (models) => {
   User.hasMany(models.Item, {
@@ -133,7 +116,6 @@ User.associate = (models) => {
     foreignKey: 'userId',
     onDelete: 'CASCADE'
   });
-  // ✅ Referral association
   User.hasMany(models.Referral, {
     as: 'referrals',
     foreignKey: 'referrerId',
