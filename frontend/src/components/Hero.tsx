@@ -129,7 +129,6 @@ export default function Hero() {
             Your ultimate destination for trading, exchanging, and bidding on items!
           </p>
 
-          {/* Search bar */}
           <form onSubmit={handleSearchSubmit} style={{ width: '100%', maxWidth: 480, position: 'relative' }}>
             <input
               type="text" value={search} onChange={e => setSearch(e.target.value)}
@@ -162,7 +161,7 @@ export default function Hero() {
             {loggedIn && postLimitReached ? '🔒 Upgrade to Post More' : 'Get Started'}
           </button>
 
-          {/* ── Referral Banner ── */}
+          {/* Referral Banner */}
           <a href="/referral" style={{
             display: 'flex', alignItems: 'center', gap: 14,
             background: 'linear-gradient(135deg, #7F53AC, #647DEE)',
@@ -170,7 +169,6 @@ export default function Hero() {
             textDecoration: 'none', width: '100%', maxWidth: 460,
             boxShadow: '0 4px 20px rgba(127,83,172,0.3)',
             transition: 'transform 0.2s, box-shadow 0.2s',
-            animation: 'pulse 2.5s ease-in-out infinite',
           }}
             onMouseEnter={e => {
               (e.currentTarget as HTMLAnchorElement).style.transform = 'translateY(-3px)';
@@ -181,7 +179,6 @@ export default function Hero() {
               (e.currentTarget as HTMLAnchorElement).style.boxShadow = '0 4px 20px rgba(127,83,172,0.3)';
             }}
           >
-            <style>{`@keyframes pulse { 0%,100% { box-shadow: 0 4px 20px rgba(127,83,172,0.3); } 50% { box-shadow: 0 6px 28px rgba(127,83,172,0.55); } }`}</style>
             <span style={{ fontSize: 36, flexShrink: 0 }}>🎁</span>
             <div style={{ flex: 1, textAlign: 'left' }}>
               <div style={{ color: '#fff', fontWeight: 800, fontSize: 15, marginBottom: 3 }}>
@@ -199,7 +196,6 @@ export default function Hero() {
         </div>
       </section>
 
-      {/* ── Item Request Modal ── */}
       {showRequestForm && (
         <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.5)', zIndex: 2000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 16 }}>
           <div style={{ background: '#fff', borderRadius: 18, padding: 36, maxWidth: 460, width: '100%', boxShadow: '0 8px 40px rgba(0,0,0,0.18)', position: 'relative' }}>
@@ -259,5 +255,3 @@ export default function Hero() {
     </>
   );
 }
-
-cd /root/Website-Sayonara/frontend && npm run build && pm2 restart sayonara-frontend
