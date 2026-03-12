@@ -131,7 +131,7 @@ export default function Hero() {
 
           {/* India badge */}
           <div style={{ background: 'linear-gradient(135deg,#7F53AC,#647DEE)', color: '#fff', fontSize: 12, fontWeight: 700, padding: '5px 16px', borderRadius: 50, letterSpacing: 0.5 }}>
-            🇮🇳 India's Barter and Resell Platform
+            <span>&#x1F1EE;&#x1F1F3;</span> India&apos;s Barter and Resell Platform
           </div>
 
           <h1 style={{ fontSize: '2.5rem', fontWeight: 700, color: '#924DAC', marginBottom: 0 }}>
@@ -151,7 +151,7 @@ export default function Hero() {
               { icon: '💸', text: 'Free to Join' },
             ].map((b, i) => (
               <div key={i} style={{ display: 'flex', alignItems: 'center', gap: 5, background: '#faf5ff', border: '1.5px solid #e0d0f0', borderRadius: 50, padding: '5px 12px', fontSize: 12, fontWeight: 700, color: '#666' }}>
-                <span>{b.icon}</span>{b.text}
+                <span>{b.icon}</span><span>{b.text}</span>
               </div>
             ))}
           </div>
@@ -193,7 +193,7 @@ export default function Hero() {
           </form>
 
           <p style={{ fontSize: 13, color: '#888', margin: '-16px 0 0 0' }}>
-            Can't find what you need? Click <strong style={{ color: '#924DAC' }}>Request</strong> and we'll help you find it!
+            Can&apos;t find what you need? Click <strong style={{ color: '#924DAC' }}>Request</strong> and we&apos;ll help you find it!
           </p>
 
           <div style={{ display: 'flex', gap: 20, justifyContent: 'center', marginTop: 8 }}>
@@ -259,13 +259,13 @@ export default function Hero() {
           background: '#25D366', borderRadius: '50%', width: 56, height: 56,
           display: 'flex', alignItems: 'center', justifyContent: 'center',
           boxShadow: '0 4px 20px rgba(37,211,102,0.5)', textDecoration: 'none',
-          transition: 'transform 0.2s', fontSize: 28,
+          transition: 'transform 0.2s',
         }}
-        onMouseEnter={e => (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1.12)'}
-        onMouseLeave={e => (e.currentTarget as HTMLAnchorElement).style.transform = ''}
+        onMouseEnter={e => { (e.currentTarget as HTMLAnchorElement).style.transform = 'scale(1.12)'; }}
+        onMouseLeave={e => { (e.currentTarget as HTMLAnchorElement).style.transform = ''; }}
         title="Chat with us on WhatsApp"
       >
-        💬
+        <span style={{ fontSize: 28, lineHeight: '1' }}>&#x1F4AC;</span>
       </a>
 
       {/* Item Request Modal */}
@@ -279,7 +279,7 @@ export default function Hero() {
                 <div style={{ textAlign: 'center', marginBottom: 24 }}>
                   <div style={{ fontSize: 40, marginBottom: 8 }}>🔍</div>
                   <h2 style={{ fontWeight: 700, fontSize: 22, color: '#924DAC', marginBottom: 6 }}>Request an Item</h2>
-                  <p style={{ color: '#666', fontSize: 14 }}>Can't find <strong>"{reqItem}"</strong> listed? Fill this form and we'll try to find it for you!</p>
+                  <p style={{ color: '#666', fontSize: 14 }}>Can&apos;t find <strong>&quot;{reqItem}&quot;</strong> listed? Fill this form and we&apos;ll try to find it for you!</p>
                   {loggedIn && userData && (
                     <div style={{ background: '#e7ffe7', borderRadius: 8, padding: '6px 14px', display: 'inline-block', fontSize: 13, color: '#2d7a2d', marginTop: 8 }}>
                       Logged in as <strong>{userData.name || userData.email}</strong>
@@ -296,7 +296,7 @@ export default function Hero() {
                     <input type="tel" value={reqPhone} onChange={e => setReqPhone(e.target.value.replace(/\D/g, '').slice(0, 10))} placeholder="10-digit mobile number" required style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #e0d0f0', borderRadius: 8, fontSize: 15, outline: 'none', boxSizing: 'border-box' }} />
                   </div>
                   <div>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Item You're Looking For *</label>
+                    <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Item You&apos;re Looking For *</label>
                     <input type="text" value={reqItem} onChange={e => setReqItem(e.target.value)} placeholder="e.g. iPhone 13, Gaming Chair" required style={{ width: '100%', padding: '10px 14px', border: '1.5px solid #924DAC', borderRadius: 8, fontSize: 15, outline: 'none', boxSizing: 'border-box', background: '#faf5ff' }} />
                   </div>
                   <div>
@@ -310,14 +310,14 @@ export default function Hero() {
                   <button type="submit" disabled={reqLoading || !reqName || !reqPhone || !reqItem} style={{ background: '#924DAC', color: '#fff', border: 'none', borderRadius: 10, padding: '13px 0', fontSize: 16, fontWeight: 700, cursor: 'pointer', marginTop: 4, opacity: (!reqName || !reqPhone || !reqItem) ? 0.6 : 1 }}>
                     {reqLoading ? 'Submitting...' : 'Submit Request'}
                   </button>
-                  <p style={{ fontSize: 12, color: '#aaa', textAlign: 'center', margin: 0 }}>We'll contact you on WhatsApp/call within 24 hours</p>
+                  <p style={{ fontSize: 12, color: '#aaa', textAlign: 'center', margin: 0 }}>We&apos;ll contact you on WhatsApp/call within 24 hours</p>
                 </form>
               </>
             ) : (
               <div style={{ textAlign: 'center', padding: '20px 0' }}>
                 <div style={{ fontSize: 64, marginBottom: 16 }}>✅</div>
                 <h2 style={{ fontWeight: 700, fontSize: 22, color: '#2d7a2d', marginBottom: 10 }}>Request Submitted!</h2>
-                <p style={{ color: '#555', fontSize: 15, marginBottom: 8 }}>We received your request for <strong style={{ color: '#924DAC' }}>"{reqItem}"</strong></p>
+                <p style={{ color: '#555', fontSize: 15, marginBottom: 8 }}>We received your request for <strong style={{ color: '#924DAC' }}>&quot;{reqItem}&quot;</strong></p>
                 <p style={{ color: '#666', fontSize: 14, marginBottom: 24 }}>Our team will contact <strong>{reqPhone}</strong> within 24 hours on WhatsApp or call.</p>
                 <button onClick={closeRequestForm} style={{ background: '#924DAC', color: '#fff', border: 'none', borderRadius: 10, padding: '12px 32px', fontSize: 15, fontWeight: 700, cursor: 'pointer' }}>Done</button>
               </div>
