@@ -1,4 +1,3 @@
-cat > /root/Website-Sayonara/backend/routes/users.js << 'ENDOFFILE'
 const express = require('express');
 const { User, Subscription, Item } = require('../models');
 const { auth } = require('../middleware/auth');
@@ -138,6 +137,3 @@ router.get('/:id', async (req, res) => {
 });
 
 module.exports = router;
-ENDOFFILE
-
-pm2 restart sayonara-backend && pm2 logs sayonara-backend --lines 15
