@@ -747,4 +747,3 @@ export default function AddItemPage() {
   );
 }
 
-cd /root/Website-Sayonara/frontend && npm run build && pm2 restart sayonara-frontend
