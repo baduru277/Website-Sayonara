@@ -1,4 +1,3 @@
-cat > /root/Website-Sayonara/backend/models/Item.js << 'ENDOFFILE'
 const { DataTypes } = require('sequelize');
 const sequelize = require('../config/database');
 
@@ -55,4 +54,3 @@ Item.associate = (models) => {
 };
 
 module.exports = Item;
-ENDOFFILE
