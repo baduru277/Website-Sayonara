@@ -214,5 +214,3 @@ export default function FeaturedItemsSection() {
     </section>
   );
 }
-
-cd /root/Website-Sayonara/frontend && npm run build && pm2 restart sayonara-frontend
