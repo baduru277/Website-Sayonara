@@ -55,7 +55,6 @@ const subCategories: Record<string, string[]> = {
   'Others': ['Miscellaneous', 'Uncategorized items', 'Gadgets', 'Tech gifts', 'Used/refurbished items']
 };
 
-// ── Auto-category detection ──
 const categoryKeywords: Record<string, string[]> = {
   'Smartphones': ['phone', 'iphone', 'samsung', 'oneplus', 'redmi', 'realme', 'oppo', 'vivo', 'nokia', 'motorola', 'pixel', 'android', 'mobile'],
   'Laptops': ['laptop', 'notebook', 'macbook', 'lenovo', 'dell', 'hp', 'asus', 'acer', 'thinkpad'],
@@ -66,7 +65,6 @@ const categoryKeywords: Record<string, string[]> = {
   'Tablets': ['tablet', 'ipad', 'tab', 'samsung tab'],
   'Smartwatches': ['smartwatch', 'watch', 'fitbit', 'apple watch', 'galaxy watch', 'mi band'],
   'Gaming chairs': ['gaming chair', 'chair'],
-  'Gaming laptops': ['gaming laptop', 'gaming notebook'],
   'Gamepads': ['gamepad', 'controller', 'joystick', 'ps5', 'xbox', 'playstation'],
   'Printers and scanners': ['printer', 'scanner', 'canon printer', 'hp printer', 'epson'],
   'Wi-Fi Routers': ['router', 'wifi', 'wi-fi', 'modem', 'netgear', 'tp-link'],
@@ -75,44 +73,27 @@ const categoryKeywords: Record<string, string[]> = {
   'Monitors': ['monitor', 'display', 'screen', 'lcd monitor'],
   'Storage devices': ['ssd', 'hard disk', 'hdd', 'pendrive', 'usb drive', 'memory card', 'sd card'],
   'Sports shoes': ['nike', 'adidas', 'shoes', 'sneakers', 'sports shoes', 'running shoes'],
-  'Casual shoes': ['casual shoes', 'loafers', 'slip on'],
-  'Formal shoes': ['formal shoes', 'leather shoes', 'oxford'],
-  'Sandals': ['sandals', 'slippers', 'chappal', 'flip flops'],
   'Sarees': ['saree', 'sari'],
   'Kurtis': ['kurti', 'kurta'],
   'Jeans': ['jeans', 'denim'],
   'Jackets': ['jacket', 'hoodie', 'sweatshirt'],
   'T-Shirts': ['tshirt', 't-shirt', 'polo'],
-  'Suits': ['suit', 'blazer', 'formal wear'],
   'Gold jewelry': ['gold', 'gold chain', 'gold ring'],
-  'Silver jewelry': ['silver', 'silver ring'],
   'Necklaces': ['necklace', 'chain', 'pendant'],
   'Earrings': ['earring', 'stud', 'hoop'],
-  'Rings': ['ring', 'band'],
-  'Backpacks': ['backpack', 'bag', 'school bag', 'rucksack'],
-  'Handbags': ['handbag', 'purse', 'tote'],
+  'Backpacks': ['backpack', 'bag', 'school bag'],
   'Wallets': ['wallet', 'purse', 'card holder'],
   'Sunglasses': ['sunglasses', 'shades', 'goggles'],
-  'Sofas': ['sofa', 'couch', 'settee'],
+  'Sofas': ['sofa', 'couch'],
   'Beds': ['bed', 'mattress', 'cot'],
   'Tables': ['table', 'desk', 'dining table'],
-  'Chairs': ['chair', 'stool'],
   'Wardrobes': ['wardrobe', 'almirah', 'closet'],
-  'Microwaves': ['microwave', 'oven', 'microwave oven'],
+  'Microwaves': ['microwave', 'oven'],
   'Mixers': ['mixer', 'grinder', 'blender', 'juicer'],
-  'Refrigerators': ['fridge', 'refrigerator', 'freezer'],
-  'Washing machines': ['washing machine', 'washer', 'dryer'],
-  'Air conditioners': ['ac', 'air conditioner', 'split ac', 'window ac'],
   'Pressure cookers': ['pressure cooker', 'cooker'],
-  'Rice': ['rice', 'basmati'],
-  'Pulses': ['dal', 'pulses', 'lentils'],
-  'Cooking oil': ['oil', 'sunflower oil', 'mustard oil'],
   'Protein powders': ['protein', 'whey', 'supplement'],
-  'Vitamins': ['vitamins', 'multivitamin', 'capsules'],
-  'Face wash': ['face wash', 'cleanser', 'facewash'],
-  'Moisturizers': ['moisturizer', 'cream', 'lotion', 'sunscreen'],
+  'Face wash': ['face wash', 'cleanser'],
   'Shampoos': ['shampoo', 'conditioner', 'hair oil'],
-  'Cycles': ['cycle', 'bicycle', 'bike'],
   'Miscellaneous': ['other', 'misc', 'random'],
 };
 
@@ -143,7 +124,6 @@ function AddItemPageInner() {
   const [loading, setLoading] = useState(false);
   const [showUpgradeModal, setShowUpgradeModal] = useState(false);
   const [isSubscribed, setIsSubscribed] = useState(false);
-  const [itemCount, setItemCount] = useState(0);
   const [isEditMode, setIsEditMode] = useState(false);
   const [editItemId, setEditItemId] = useState<string | null>(null);
   const [existingImages, setExistingImages] = useState<string[]>([]);
@@ -151,7 +131,22 @@ function AddItemPageInner() {
   const [deleting, setDeleting] = useState(false);
   const [autoCategories, setAutoCategories] = useState<string[]>([]);
   const [categoryOverridden, setCategoryOverridden] = useState(false);
-  const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+
+  // ── formData must be declared BEFORE any useEffect that uses it ──
+  const [formData, setFormData] = useState({
+    title: '', description: '', warrantyStatus: '', itemCondition: '',
+    damageInfo: '', usageHistory: '', originalBox: '', price: '',
+  });
+
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [condition, setCondition] = useState('New');
+  const [actionType, setActionType] = useState('');
+  const [bidAmount, setBidAmount] = useState('');
+  const [minNotifyBid, setMinNotifyBid] = useState('');
+  const [exchangeFor, setExchangeFor] = useState('');
+  const [resellAmount, setResellAmount] = useState('');
 
   const router = useRouter();
   const searchParams = useSearchParams();
@@ -170,7 +165,6 @@ function AddItemPageInner() {
           const count = data?.stats?.totalItems ?? 0;
           const sub = data?.user?.subscriptions?.[0];
           const active = sub?.status === 'active' && sub?.expiryDate && new Date(sub.expiryDate) > new Date();
-          setItemCount(count);
           setIsSubscribed(!!active);
           if (!active && count >= FREE_LIMIT) setShowUpgradeModal(true);
         } catch {}
@@ -246,20 +240,6 @@ function AddItemPageInner() {
     }
   };
 
-  const [formData, setFormData] = useState({
-    title: '', description: '', warrantyStatus: '', itemCondition: '',
-    damageInfo: '', usageHistory: '', originalBox: '', price: '',
-  });
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [images, setImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [condition, setCondition] = useState('New');
-  const [actionType, setActionType] = useState('');
-  const [bidAmount, setBidAmount] = useState('');
-  const [minNotifyBid, setMinNotifyBid] = useState('');
-  const [exchangeFor, setExchangeFor] = useState('');
-  const [resellAmount, setResellAmount] = useState('');
-
   const maxTitle = 60;
   const maxDesc = 1200;
 
@@ -286,10 +266,7 @@ function AddItemPageInner() {
     if (e.target.files) {
       const files = Array.from(e.target.files).slice(0, 10 - images.length - existingImages.length);
       const validFiles = files.filter(file => {
-        if (!validateImageFile(file)) {
-          alert(`Invalid file: ${file.name}`);
-          return false;
-        }
+        if (!validateImageFile(file)) { alert(`Invalid file: ${file.name}`); return false; }
         return true;
       });
       if (validFiles.length === 0) return;
@@ -427,7 +404,7 @@ function AddItemPageInner() {
         {selectedCategories.length > 0 && (
           <div style={{ background: '#f0f9f0', border: '1.5px solid #86efac', borderRadius: 10, padding: '12px 16px', marginBottom: 18 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#166534', marginBottom: 6 }}>
-              {categoryOverridden ? '📂 Selected Categories:' : '✅ Auto-detected Categories:'}
+              {categoryOverridden ? 'Selected Categories:' : 'Auto-detected Categories:'}
             </div>
             <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', alignItems: 'center' }}>
               {selectedCategories.map(cat => (
@@ -516,19 +493,13 @@ function AddItemPageInner() {
       <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 8 }}>Confirm or change your categories (max 3)</div>
       {!categoryOverridden && autoCategories.length > 0 && (
         <div style={{ background: '#f0f9f0', border: '1.5px solid #86efac', borderRadius: 10, padding: '12px 16px', marginBottom: 18 }}>
-          <div style={{ fontSize: 13, fontWeight: 700, color: '#166534', marginBottom: 4 }}>
-            Auto-detected from your description:
-          </div>
+          <div style={{ fontSize: 13, fontWeight: 700, color: '#166534', marginBottom: 4 }}>Auto-detected from your description:</div>
           <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
             {autoCategories.map(cat => (
-              <span key={cat} style={{ background: '#dcfce7', color: '#166534', borderRadius: 50, padding: '3px 12px', fontSize: 13, fontWeight: 600 }}>
-                {cat}
-              </span>
+              <span key={cat} style={{ background: '#dcfce7', color: '#166534', borderRadius: 50, padding: '3px 12px', fontSize: 13, fontWeight: 600 }}>{cat}</span>
             ))}
           </div>
-          <div style={{ fontSize: 12, color: '#555', marginTop: 6 }}>
-            Looks correct? Click Next! Or select different categories below.
-          </div>
+          <div style={{ fontSize: 12, color: '#555', marginTop: 6 }}>Looks correct? Click Next! Or select different categories below.</div>
         </div>
       )}
       <div style={{ display: 'flex', flexWrap: 'wrap', gap: 24, marginBottom: 18, maxHeight: 400, overflowY: 'auto' }}>
@@ -607,7 +578,7 @@ function AddItemPageInner() {
       <div style={{ fontWeight: 600, fontSize: 18, marginBottom: 18 }}>What do you want to do?</div>
       <div style={{ display: 'flex', gap: 32, marginBottom: 24 }}>
         {['bidding', 'exchange', 'resell'].map(type => (
-          <label key={type} style={{ fontWeight: 500, cursor: 'pointer', textTransform: 'capitalize' }}>
+          <label key={type} style={{ fontWeight: 500, cursor: 'pointer' }}>
             <input type="radio" name="actionType" value={type} checked={actionType === type}
               onChange={() => { setActionType(type); setBidAmount(''); setMinNotifyBid(''); setExchangeFor(''); setResellAmount(''); }}
               style={{ marginRight: 8 }} />
@@ -624,32 +595,22 @@ function AddItemPageInner() {
               style={{ width: 240, padding: '10px 12px', border: '1.5px solid #000', borderRadius: 6, fontSize: 16, background: '#f7f7fa' }}
               placeholder="e.g. 5000" />
           </div>
-
-          {/* Minimum Notify Bid — hidden from buyers */}
           <div style={{ background: '#fefce8', border: '1.5px solid #fde047', borderRadius: 12, padding: '16px 20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
-              <span style={{ fontSize: 18 }}>🔔</span>
-              <label style={{ fontWeight: 700, color: '#854d0e', fontSize: 15 }}>
-                Minimum Notify Bid (Rs.) — Optional
-              </label>
+              <span style={{ fontSize: 18 }}>&#x1F514;</span>
+              <label style={{ fontWeight: 700, color: '#854d0e', fontSize: 15 }}>Minimum Notify Bid (Rs.) — Optional</label>
               <span style={{ background: '#fde047', color: '#854d0e', fontSize: 11, fontWeight: 700, padding: '2px 8px', borderRadius: 50 }}>PRIVATE</span>
             </div>
             <p style={{ fontSize: 13, color: '#713f12', marginBottom: 10, lineHeight: 1.5 }}>
-              Set a private minimum bid amount. You will only receive a notification when a bid reaches or exceeds this amount. Bidders cannot see this value.
+              You will only receive a notification when a bid reaches or exceeds this amount. Bidders cannot see this value.
             </p>
             <input type="number" value={minNotifyBid} onChange={e => setMinNotifyBid(e.target.value)}
               style={{ width: 240, padding: '10px 12px', border: '1.5px solid #fde047', borderRadius: 6, fontSize: 16, background: '#fff' }}
               placeholder={`e.g. ${bidAmount ? Math.round(parseFloat(bidAmount) * 1.5) : 7500}`} />
             {minNotifyBid && bidAmount && parseFloat(minNotifyBid) <= parseFloat(bidAmount) && (
-              <div style={{ color: '#e53e3e', fontSize: 12, marginTop: 6, fontWeight: 600 }}>
-                Minimum notify bid must be higher than starting bid
-              </div>
+              <div style={{ color: '#e53e3e', fontSize: 12, marginTop: 6, fontWeight: 600 }}>Must be higher than starting bid</div>
             )}
-            {!minNotifyBid && (
-              <div style={{ fontSize: 12, color: '#999', marginTop: 6 }}>
-                Leave empty to receive notifications for all bids
-              </div>
-            )}
+            {!minNotifyBid && <div style={{ fontSize: 12, color: '#999', marginTop: 6 }}>Leave empty to receive notifications for all bids</div>}
           </div>
         </div>
       )}
@@ -785,3 +746,5 @@ export default function AddItemPage() {
     </Suspense>
   );
 }
+
+cd /root/Website-Sayonara/frontend && npm run build && pm2 restart sayonara-frontend
