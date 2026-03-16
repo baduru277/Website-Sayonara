@@ -22,47 +22,33 @@ function haversine(lat1, lng1, lat2, lng2) {
 router.get('/nearby', optionalAuth, async (req, res) => {
   try {
     const { lat, lng, radius = 50, type, limit = 20 } = req.query;
-
-    if (!lat || !lng) {
-      return res.status(400).json({ error: 'lat and lng are required' });
-    }
+    if (!lat || !lng) return res.status(400).json({ error: 'lat and lng are required' });
 
     const userLat = parseFloat(lat);
     const userLng = parseFloat(lng);
     const radiusKm = parseFloat(radius);
-
-    // Bounding box for fast pre-filter
     const latDelta = radiusKm / 111;
     const lngDelta = radiusKm / (111 * Math.cos(userLat * Math.PI / 180));
 
     const where = {
-      isActive: true,
-      status: 'available',
+      isActive: true, status: 'available',
       lat: { [Op.between]: [userLat - latDelta, userLat + latDelta] },
       lng: { [Op.between]: [userLng - lngDelta, userLng + lngDelta] },
     };
-
     if (type) where.type = type;
 
     const items = await Item.findAll({
       where,
       attributes: { exclude: ['minimumNotifyBid'] },
-      include: [{
-        model: User,
-        as: 'seller',
-        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar']
-      }],
+      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar'] }],
       order: [['createdAt', 'DESC']],
-      limit: parseInt(limit) * 3 // fetch more for haversine filtering
+      limit: parseInt(limit) * 3
     });
 
-    // Precise haversine filter + add distance
     const nearby = items
       .map(item => {
         const itemData = item.toJSON();
-        const dist = (item.lat && item.lng)
-          ? haversine(userLat, userLng, item.lat, item.lng)
-          : null;
+        const dist = (item.lat && item.lng) ? haversine(userLat, userLng, item.lat, item.lng) : null;
         return { ...itemData, distanceKm: dist ? Math.round(dist * 10) / 10 : null };
       })
       .filter(item => item.distanceKm !== null && item.distanceKm <= radiusKm)
@@ -105,7 +91,6 @@ router.get('/', optionalAuth, async (req, res) => {
 
     if (tags) where.tags = { [Op.like]: `%${tags}%` };
 
-    // Optional bounding box filter
     if (lat && lng && radius) {
       const userLat = parseFloat(lat);
       const userLng = parseFloat(lng);
@@ -123,17 +108,12 @@ router.get('/', optionalAuth, async (req, res) => {
     const items = await Item.findAndCountAll({
       where,
       attributes: { exclude: ['minimumNotifyBid'] },
-      include: [{
-        model: User,
-        as: 'seller',
-        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar']
-      }],
+      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar'] }],
       order: [[sortField, sortOrder]],
       limit: parseInt(limit) || 20,
       offset: parseInt(offset) || 0
     });
 
-    // Add distance if user coords provided
     let rows = items.rows;
     if (lat && lng) {
       const userLat = parseFloat(lat);
@@ -293,11 +273,10 @@ router.post('/', auth, async (req, res) => {
     if (!isSubscribed) {
       const totalEverPosted = await Item.count({ where: { userId: req.user.id } });
       if (totalEverPosted >= FREE_LIMIT) {
-        return res.status(403).json({ error: `Free plan limit reached. Upgrade to Rs.99/year.`, limitReached: true });
+        return res.status(403).json({ error: 'Free plan limit reached. Upgrade to Rs.99/year.', limitReached: true });
       }
     }
 
-    // Use seller's lat/lng if item lat/lng not provided
     const itemLat = lat || user?.lat || null;
     const itemLng = lng || user?.lng || null;
 
@@ -414,6 +393,66 @@ router.post('/:id/like', auth, async (req, res) => {
     res.json({ message: 'Item liked', likes: item.likes + 1 });
   } catch (error) {
     res.status(500).json({ error: 'Server error' });
+  }
+});
+
+// -------------------- Handle Expired Auction --------------------
+router.post('/:id/auction-end', auth, async (req, res) => {
+  try {
+    const { action, newPrice, extendDays } = req.body;
+    const item = await Item.findByPk(req.params.id);
+
+    if (!item) return res.status(404).json({ error: 'Item not found' });
+    if (item.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
+    if (item.type !== 'bidding') return res.status(400).json({ error: 'Not a bidding item' });
+
+    const auctionEnded = item.auctionEndDate && new Date() > new Date(item.auctionEndDate);
+    if (!auctionEnded) return res.status(400).json({ error: 'Auction has not ended yet' });
+
+    if (action === 'relist') {
+      const days = parseInt(extendDays) || 7;
+      const newEndDate = new Date(Date.now() + days * 24 * 60 * 60 * 1000);
+      await item.update({
+        auctionEndDate: newEndDate,
+        currentBid: item.startingBid,
+        totalBids: 0,
+        status: 'available'
+      });
+      await Bid.update({ status: 'cancelled' }, { where: { itemId: item.id } });
+      try {
+        await createNotification({
+          userId: item.userId, type: 'system',
+          title: 'Auction Relisted!',
+          message: `Your item "${item.title}" has been relisted for ${days} more days.`,
+          link: `/bidding/${item.id}`
+        });
+      } catch {}
+      return res.json({ message: `Auction extended by ${days} days`, item: await Item.findByPk(item.id) });
+    }
+
+    if (action === 'convert_resell') {
+      const price = parseFloat(newPrice);
+      if (!price || price <= 0) return res.status(400).json({ error: 'Valid price required' });
+      await item.update({
+        type: 'resell', price,
+        status: 'available',
+        auctionEndDate: null,
+        startingBid: null,
+        currentBid: null,
+        totalBids: 0
+      });
+      return res.json({ message: 'Converted to resell listing', item: await Item.findByPk(item.id) });
+    }
+
+    if (action === 'cancel') {
+      await item.update({ isActive: false, status: 'cancelled' });
+      return res.json({ message: 'Listing cancelled' });
+    }
+
+    return res.status(400).json({ error: 'Invalid action. Use: relist, convert_resell, or cancel' });
+  } catch (error) {
+    console.error('Auction end error:', error);
+    res.status(500).json({ error: error.message || 'Server error' });
   }
 });
 
