@@ -1,3 +1,4 @@
+
 'use client';
 
 import { useState, useEffect, Suspense } from 'react';
@@ -55,7 +56,6 @@ const subCategories: Record<string, string[]> = {
   'Others': ['Miscellaneous', 'Uncategorized items', 'Gadgets', 'Tech gifts', 'Used/refurbished items']
 };
 
-// ── Auto-category detection ──
 const categoryKeywords: Record<string, string[]> = {
   'Smartphones': ['phone', 'iphone', 'samsung', 'oneplus', 'redmi', 'realme', 'oppo', 'vivo', 'nokia', 'motorola', 'pixel', 'android', 'mobile'],
   'Laptops': ['laptop', 'notebook', 'macbook', 'lenovo', 'dell', 'hp', 'asus', 'acer', 'thinkpad'],
@@ -152,10 +152,25 @@ function AddItemPageInner() {
   const [autoCategories, setAutoCategories] = useState<string[]>([]);
   const [categoryOverridden, setCategoryOverridden] = useState(false);
   const [showCategoryPicker, setShowCategoryPicker] = useState(false);
+  const [formData, setFormData] = useState({
+    title: '', description: '', warrantyStatus: '', itemCondition: '',
+    damageInfo: '', usageHistory: '', originalBox: '', price: '',
+  });
+  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
+  const [images, setImages] = useState<File[]>([]);
+  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
+  const [condition, setCondition] = useState('New');
+  const [actionType, setActionType] = useState('');
+  const [bidAmount, setBidAmount] = useState('');
+  const [minNotifyBid, setMinNotifyBid] = useState('');
+  const [exchangeFor, setExchangeFor] = useState('');
+  const [resellAmount, setResellAmount] = useState('');
 
   const router = useRouter();
   const searchParams = useSearchParams();
   const FREE_LIMIT = 3;
+  const maxTitle = 60;
+  const maxDesc = 1200;
 
   useEffect(() => {
     const editId = searchParams.get('edit');
@@ -177,9 +192,8 @@ function AddItemPageInner() {
       };
       checkLimit();
     }
-  }, []);
+  }, [searchParams]);
 
-  // Auto-detect category when title/description changes
   useEffect(() => {
     if (!categoryOverridden && (formData.title.length > 3 || formData.description.length > 10)) {
       const detected = autoDetectCategory(formData.title, formData.description);
@@ -245,23 +259,6 @@ function AddItemPageInner() {
       setShowDeleteConfirm(false);
     }
   };
-
-  const [formData, setFormData] = useState({
-    title: '', description: '', warrantyStatus: '', itemCondition: '',
-    damageInfo: '', usageHistory: '', originalBox: '', price: '',
-  });
-  const [selectedCategories, setSelectedCategories] = useState<string[]>([]);
-  const [images, setImages] = useState<File[]>([]);
-  const [imagePreviews, setImagePreviews] = useState<string[]>([]);
-  const [condition, setCondition] = useState('New');
-  const [actionType, setActionType] = useState('');
-  const [bidAmount, setBidAmount] = useState('');
-  const [minNotifyBid, setMinNotifyBid] = useState('');
-  const [exchangeFor, setExchangeFor] = useState('');
-  const [resellAmount, setResellAmount] = useState('');
-
-  const maxTitle = 60;
-  const maxDesc = 1200;
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -423,7 +420,6 @@ function AddItemPageInner() {
           <div style={{ fontSize: 13, color: '#888', marginTop: 2 }}>{formData.description.length}/{maxDesc}</div>
         </div>
 
-        {/* Auto-detected categories preview */}
         {selectedCategories.length > 0 && (
           <div style={{ background: '#f0f9f0', border: '1.5px solid #86efac', borderRadius: 10, padding: '12px 16px', marginBottom: 18 }}>
             <div style={{ fontSize: 13, fontWeight: 700, color: '#166534', marginBottom: 6 }}>
@@ -625,7 +621,6 @@ function AddItemPageInner() {
               placeholder="e.g. 5000" />
           </div>
 
-          {/* Minimum Notify Bid — hidden from buyers */}
           <div style={{ background: '#fefce8', border: '1.5px solid #fde047', borderRadius: 12, padding: '16px 20px' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 6 }}>
               <span style={{ fontSize: 18 }}>🔔</span>
@@ -700,7 +695,7 @@ function AddItemPageInner() {
   const step5 = (
     <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', minHeight: 300 }}>
       <div style={{ background: '#eafbe7', borderRadius: '50%', width: 80, height: 80, display: 'flex', alignItems: 'center', justifyContent: 'center', marginBottom: 24 }}>
-        <span style={{ color: '#2ecc40', fontSize: 48 }}>&#x2714;</span>
+        <span style={{ color: '#2ecc40', fontSize: 48 }}>✔</span>
       </div>
       <div style={{ fontWeight: 700, fontSize: 22, color: '#222', marginBottom: 8 }}>
         {isEditMode ? 'Item updated successfully!' : 'Your item is live!'}
@@ -714,7 +709,7 @@ function AddItemPageInner() {
   const deleteModal = showDeleteConfirm && (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ background: '#fff', borderRadius: 18, padding: 40, maxWidth: 400, width: '100%', textAlign: 'center', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
-        <div style={{ fontSize: 52, marginBottom: 12 }}>&#x1F5D1;</div>
+        <div style={{ fontSize: 52, marginBottom: 12 }}>🗑️</div>
         <h2 style={{ fontWeight: 700, fontSize: 22, color: '#222', marginBottom: 10 }}>Delete this item?</h2>
         <p style={{ color: '#555', fontSize: 15, marginBottom: 24 }}>This action cannot be undone.</p>
         <div style={{ display: 'flex', gap: 12, justifyContent: 'center' }}>
@@ -730,7 +725,7 @@ function AddItemPageInner() {
   const upgradeModal = showUpgradeModal && (
     <div style={{ position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.55)', zIndex: 1000, display: 'flex', alignItems: 'center', justifyContent: 'center', padding: 24 }}>
       <div style={{ background: '#fff', borderRadius: 18, padding: 40, maxWidth: 440, width: '100%', textAlign: 'center', boxShadow: '0 8px 40px rgba(0,0,0,0.18)' }}>
-        <div style={{ fontSize: 52, marginBottom: 12 }}>&#x1F512;</div>
+        <div style={{ fontSize: 52, marginBottom: 12 }}>🔒</div>
         <h2 style={{ fontWeight: 700, fontSize: 22, color: '#222', marginBottom: 10 }}>Free Plan Limit Reached</h2>
         <p style={{ color: '#555', fontSize: 15, marginBottom: 6 }}>You have used all <strong>3 free listings</strong>.</p>
         <p style={{ color: '#555', fontSize: 15, marginBottom: 24 }}>Upgrade for just <strong style={{ color: '#924DAC' }}>Rs.99/year</strong> for unlimited listings!</p>
@@ -749,7 +744,7 @@ function AddItemPageInner() {
       {deleteModal}
       {!isEditMode && (
         <div style={{ background: 'linear-gradient(90deg,#924DAC 0%,#b06fd4 100%)', color: '#fff', padding: '14px 24px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 16, flexWrap: 'wrap', marginBottom: 24, borderRadius: 12, maxWidth: 900, margin: '0 auto 24px auto', boxShadow: '0 2px 12px rgba(146,77,172,0.18)' }}>
-          <span style={{ fontSize: 20 }}>&#x1F381;</span>
+          <span style={{ fontSize: 20 }}>🎁</span>
           <span style={{ fontWeight: 500, fontSize: 15 }}>
             Free plan is limited to <strong>3 items</strong>. Unlock unlimited for just <strong>Rs.99/year</strong>!
           </span>
@@ -785,3 +780,4 @@ export default function AddItemPage() {
     </Suspense>
   );
 }
+
