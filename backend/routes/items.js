@@ -5,7 +5,6 @@ const { Item, User, Bid } = require('../models');
 const { auth, optionalAuth } = require('../middleware/auth');
 
 const router = express.Router();
-
 const FREE_LIMIT = 3;
 
 // -------------------- Get All Items --------------------
@@ -34,9 +33,7 @@ router.get('/', optionalAuth, async (req, res) => {
       ];
     }
 
-    if (tags) {
-      where.tags = { [Op.like]: `%${tags}%` };
-    }
+    if (tags) where.tags = { [Op.like]: `%${tags}%` };
 
     const validSortFields = ['createdAt', 'price', 'views', 'likes', 'currentBid', 'startingBid'];
     const sortField = validSortFields.includes(sortBy) ? sortBy : 'createdAt';
@@ -44,6 +41,7 @@ router.get('/', optionalAuth, async (req, res) => {
 
     const items = await Item.findAndCountAll({
       where,
+      attributes: { exclude: ['minimumNotifyBid'] },
       include: [{
         model: User,
         as: 'seller',
@@ -71,6 +69,7 @@ router.get('/featured/items', async (req, res) => {
   try {
     const items = await Item.findAll({
       where: { isFeatured: true, isActive: true },
+      attributes: { exclude: ['minimumNotifyBid'] },
       include: [{
         model: User,
         as: 'seller',
@@ -81,7 +80,6 @@ router.get('/featured/items', async (req, res) => {
     });
     res.json({ items });
   } catch (error) {
-    console.error('Get featured items error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -90,17 +88,13 @@ router.get('/featured/items', async (req, res) => {
 router.get('/categories/list', async (req, res) => {
   try {
     const categories = await Item.findAll({
-      attributes: [
-        'category',
-        [fn('COUNT', col('id')), 'count']
-      ],
+      attributes: ['category', [fn('COUNT', col('id')), 'count']],
       where: { isActive: true },
       group: ['category'],
       order: [[fn('COUNT', col('id')), 'DESC']]
     });
     res.json({ categories });
   } catch (error) {
-    console.error('Get categories error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -114,32 +108,21 @@ router.get('/my/items', auth, async (req, res) => {
     });
     res.json({ items, total: items.length });
   } catch (error) {
-    console.error('Get my items error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
 
-// -------------------- Get Post Count (for free tier check) --------------------
+// -------------------- Get Post Count --------------------
 router.get('/my/post-count', auth, async (req, res) => {
   try {
-    const FREE_LIMIT = 3;
+    const totalEverPosted = await Item.count({ where: { userId: req.user.id } });
 
-    // Count ALL items ever posted including deleted ones
-    const totalEverPosted = await Item.count({
-      where: { userId: req.user.id }
-    });
-
-    // Check subscription
     let isSubscribed = false;
     try {
       const { Subscription } = require('../models');
       if (Subscription) {
-        const sub = await Subscription.findOne({
-          where: { userId: req.user.id, status: 'active' }
-        });
-        if (sub?.expiryDate && new Date(sub.expiryDate) > new Date()) {
-          isSubscribed = true;
-        }
+        const sub = await Subscription.findOne({ where: { userId: req.user.id, status: 'active' } });
+        if (sub?.expiryDate && new Date(sub.expiryDate) > new Date()) isSubscribed = true;
       }
     } catch {}
 
@@ -170,6 +153,12 @@ router.get('/:id', optionalAuth, async (req, res) => {
 
     await item.increment('views');
 
+    // Strip minimumNotifyBid — only owner can see it
+    const itemData = item.toJSON();
+    if (!req.user || req.user.id !== item.userId) {
+      delete itemData.minimumNotifyBid;
+    }
+
     let bids = [];
     if (item.type === 'bidding') {
       bids = await Bid.findAll({
@@ -180,7 +169,7 @@ router.get('/:id', optionalAuth, async (req, res) => {
       });
     }
 
-    res.json({ item, bids });
+    res.json({ item: itemData, bids });
   } catch (error) {
     console.error('Get item error:', error);
     res.status(500).json({ error: 'Server error' });
@@ -193,16 +182,15 @@ router.post('/', auth, async (req, res) => {
     const {
       title, description, category, condition, type,
       price, originalPrice, discount, stock,
-      startingBid, buyNowPrice, auctionEndDate,
+      startingBid, buyNowPrice, auctionEndDate, minimumNotifyBid,
       lookingFor, images = [], tags = [],
       location, shipping, priority,
       warrantyStatus, damageInfo, usageHistory, originalBox,
       fastShipping
     } = req.body;
 
-    // -------------------- Validation --------------------
     if (!title || !description) return res.status(400).json({ error: 'Title and description are required' });
-    if (!type) return res.status(400).json({ error: 'Type is required (bidding, exchange, or resell)' });
+    if (!type) return res.status(400).json({ error: 'Type is required' });
     if (!category) return res.status(400).json({ error: 'Category is required' });
     if (!condition) return res.status(400).json({ error: 'Condition is required' });
     if (!location) return res.status(400).json({ error: 'Location is required' });
@@ -210,50 +198,33 @@ router.post('/', auth, async (req, res) => {
     if (type === 'bidding' && !startingBid) return res.status(400).json({ error: 'Bidding items require a starting bid' });
     if (type === 'exchange' && !lookingFor) return res.status(400).json({ error: 'Exchange items require what you are looking for' });
 
-    // -------------------- FREE TIER CHECK --------------------
-    // Step 1: Check if user has active subscription
+    // Validate minimumNotifyBid for bidding items
+    if (type === 'bidding' && minimumNotifyBid) {
+      if (parseFloat(minimumNotifyBid) <= parseFloat(startingBid)) {
+        return res.status(400).json({ error: 'Minimum notify bid must be higher than starting bid' });
+      }
+    }
+
     const user = await User.findByPk(req.user.id);
     let isSubscribed = false;
-
     try {
-      // Check subscriptionStatus field directly on user (simplest approach)
       if (user?.subscriptionStatus === 'active' && user?.subscriptionExpiry) {
         isSubscribed = new Date(user.subscriptionExpiry) > new Date();
       }
-
-      // Also check Subscription table if it exists
       if (!isSubscribed) {
         const { Subscription } = require('../models');
         if (Subscription) {
-          const sub = await Subscription.findOne({
-            where: {
-              userId: req.user.id,
-              status: 'active'
-            }
-          });
-          if (sub && sub.expiryDate && new Date(sub.expiryDate) > new Date()) {
-            isSubscribed = true;
-          }
+          const sub = await Subscription.findOne({ where: { userId: req.user.id, status: 'active' } });
+          if (sub?.expiryDate && new Date(sub.expiryDate) > new Date()) isSubscribed = true;
         }
       }
-    } catch (e) {
-      // Subscription model may not exist yet — continue with free tier check
-      isSubscribed = false;
-    }
+    } catch {}
 
-    // Step 2: If NOT subscribed, count ALL items EVER posted (including deleted)
     if (!isSubscribed) {
-      const totalEverPosted = await Item.count({
-        where: { userId: req.user.id }
-        // ⚠️ NO isActive filter — deleted items still count
-        // This prevents delete + repost loophole
-      });
-
-      console.log(`🔒 Free tier check: user ${req.user.id} has posted ${totalEverPosted} items total (limit: ${FREE_LIMIT})`);
-
+      const totalEverPosted = await Item.count({ where: { userId: req.user.id } });
       if (totalEverPosted >= FREE_LIMIT) {
         return res.status(403).json({
-          error: `Free plan limit reached. You have used all ${FREE_LIMIT} free listings (including deleted items). Upgrade to ₹99/year for unlimited listings.`,
+          error: `Free plan limit reached. Upgrade to Rs.99/year for unlimited listings.`,
           limitReached: true,
           totalPosted: totalEverPosted,
           limit: FREE_LIMIT
@@ -261,13 +232,8 @@ router.post('/', auth, async (req, res) => {
       }
     }
 
-    // -------------------- Create Item --------------------
     const item = await Item.create({
-      title,
-      description,
-      category,
-      condition,
-      type,
+      title, description, category, condition, type,
       priority: priority || 'medium',
       images: Array.isArray(images) ? images : [],
       tags: Array.isArray(tags) ? tags : [],
@@ -275,24 +241,20 @@ router.post('/', auth, async (req, res) => {
       userId: req.user.id,
       isActive: true,
       status: 'available',
-      views: 0,
-      likes: 0,
-
+      views: 0, likes: 0,
       price: price || null,
       originalPrice: originalPrice || null,
       discount: discount || null,
       stock: stock || 1,
       shipping: shipping || null,
       fastShipping: fastShipping || false,
-
       startingBid: startingBid || null,
       currentBid: startingBid || null,
       buyNowPrice: buyNowPrice || null,
       auctionEndDate: auctionEndDate || null,
       totalBids: 0,
-
+      minimumNotifyBid: minimumNotifyBid || null,
       lookingFor: lookingFor || null,
-
       warrantyStatus: warrantyStatus || null,
       damageInfo: damageInfo || null,
       usageHistory: usageHistory || null,
@@ -300,16 +262,11 @@ router.post('/', auth, async (req, res) => {
     });
 
     const createdItem = await Item.findByPk(item.id, {
-      include: [{
-        model: User,
-        as: 'seller',
-        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar']
-      }]
+      attributes: { exclude: [] },
+      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar'] }]
     });
 
-    console.log(`✅ Item created: ${item.id} by user ${req.user.id}`);
     res.status(201).json({ message: 'Item created successfully', item: createdItem });
-
   } catch (error) {
     console.error('Create item error:', error);
     res.status(500).json({ error: error.message || 'Failed to create item' });
@@ -324,19 +281,22 @@ router.put('/:id', auth, async (req, res) => {
     if (item.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
 
     const { userId, views, totalBids, currentBid, likes, ...updateData } = req.body;
+
+    // Validate minimumNotifyBid on update
+    if (updateData.minimumNotifyBid && updateData.startingBid) {
+      if (parseFloat(updateData.minimumNotifyBid) <= parseFloat(updateData.startingBid)) {
+        return res.status(400).json({ error: 'Minimum notify bid must be higher than starting bid' });
+      }
+    }
+
     await item.update(updateData);
 
     const updatedItem = await Item.findByPk(item.id, {
-      include: [{
-        model: User,
-        as: 'seller',
-        attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar']
-      }]
+      include: [{ model: User, as: 'seller', attributes: ['id', 'name', 'rating', 'totalReviews', 'isVerified', 'isPrime', 'avatar'] }]
     });
 
     res.json({ message: 'Item updated successfully', item: updatedItem });
   } catch (error) {
-    console.error('Update item error:', error);
     res.status(500).json({ error: error.message || 'Server error' });
   }
 });
@@ -348,11 +308,9 @@ router.delete('/:id', auth, async (req, res) => {
     if (!item) return res.status(404).json({ error: 'Item not found' });
     if (item.userId !== req.user.id) return res.status(403).json({ error: 'Not authorized' });
 
-    // Soft delete — keeps the record so free tier count is preserved
     await item.update({ isActive: false, status: 'cancelled' });
     res.json({ message: 'Item deleted successfully' });
   } catch (error) {
-    console.error('Delete item error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
@@ -371,7 +329,7 @@ router.post('/:id/bid', auth, async (req, res) => {
       return res.status(400).json({ error: 'Auction has ended' });
     }
     if (parseFloat(amount) <= parseFloat(item.currentBid || item.startingBid)) {
-      return res.status(400).json({ error: `Bid must be higher than current bid of ₹${item.currentBid || item.startingBid}` });
+      return res.status(400).json({ error: `Bid must be higher than current bid of Rs.${item.currentBid || item.startingBid}` });
     }
 
     await Bid.update(
@@ -393,19 +351,25 @@ router.post('/:id/bid', auth, async (req, res) => {
       totalBids: item.totalBids + 1
     });
 
-    console.log(`✅ Bid placed: ₹${amount} on item ${item.id} by user ${req.user.id}`);
-
-    // Notify item owner about new bid
+    // ✅ Only notify seller if bid meets or exceeds minimumNotifyBid threshold
     try {
       const bidder = await User.findByPk(req.user.id, { attributes: ['name'] });
-      await createNotification({
-        userId: item.userId,
-        type: 'bid',
-        title: '🔨 New Bid on Your Item!',
-        message: `${bidder?.name || 'Someone'} placed a bid of ₹${amount} on "${item.title}"`,
-        link: `/bidding/${item.id}`,
-        fromUserName: bidder?.name || 'A bidder'
-      });
+      const minNotify = parseFloat(item.minimumNotifyBid || 0);
+      const bidAmount = parseFloat(amount);
+
+      if (!minNotify || bidAmount >= minNotify) {
+        await createNotification({
+          userId: item.userId,
+          type: 'bid',
+          title: 'New Bid on Your Item!',
+          message: `${bidder?.name || 'Someone'} placed a bid of Rs.${amount} on "${item.title}"`,
+          link: `/bidding/${item.id}`,
+          fromUserName: bidder?.name || 'A bidder'
+        });
+        console.log(`✅ Bid notification sent: Rs.${amount} >= threshold Rs.${minNotify}`);
+      } else {
+        console.log(`🔕 Bid notification suppressed: Rs.${amount} < threshold Rs.${minNotify}`);
+      }
     } catch (e) {}
 
     res.json({
@@ -425,11 +389,9 @@ router.post('/:id/like', auth, async (req, res) => {
   try {
     const item = await Item.findByPk(req.params.id);
     if (!item) return res.status(404).json({ error: 'Item not found' });
-
     await item.increment('likes');
     res.json({ message: 'Item liked', likes: item.likes + 1 });
   } catch (error) {
-    console.error('Like item error:', error);
     res.status(500).json({ error: 'Server error' });
   }
 });
