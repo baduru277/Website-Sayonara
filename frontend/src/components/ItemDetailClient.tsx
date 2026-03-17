@@ -48,6 +48,7 @@ interface Item {
 interface Props { item: Item; }
 
 const BASE_URL = process.env.NEXT_PUBLIC_API_URL?.replace('/api', '') || '';
+
 function fixImageUrl(url: string): string {
   if (!url) return '';
   if (url.startsWith('http')) return url;
@@ -65,8 +66,6 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
   const [bidError, setBidError] = useState('');
   const [currentUserId, setCurrentUserId] = useState<string | null>(null);
   const [ownerError, setOwnerError] = useState('');
-
-  // Auction end state
   const [auctionExpired, setAuctionExpired] = useState(false);
   const [showAuctionOptions, setShowAuctionOptions] = useState(false);
   const [resellPrice, setResellPrice] = useState('');
@@ -85,20 +84,16 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
     } catch {}
   }, []);
 
-  // Check if auction expired
   useEffect(() => {
     if (item.type === 'bidding' && item.auctionEndDate) {
-      const checkExpiry = () => {
-        const expired = new Date() > new Date(item.auctionEndDate!);
-        setAuctionExpired(expired);
-      };
-      checkExpiry();
-      const interval = setInterval(checkExpiry, 10000);
+      const check = () => setAuctionExpired(new Date() > new Date(item.auctionEndDate!));
+      check();
+      const interval = setInterval(check, 10000);
       return () => clearInterval(interval);
     }
   }, [item.type, item.auctionEndDate]);
 
-  const isOwner = currentUserId && item.seller?.id && currentUserId === item.seller.id;
+  const isOwner = !!(currentUserId && item.seller?.id && currentUserId === item.seller.id);
   const hasNoBids = (item.totalBids || 0) === 0;
 
   const checkOwner = (action: string): boolean => {
@@ -127,41 +122,6 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
     return `${minutes}m left`;
   };
 
-  const handleAuctionAction = async (action: string) => {
-    setAuctionActionLoading(true);
-    setAuctionActionMsg('');
-    try {
-      const token = localStorage.getItem('token');
-      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/items/${item.id}/auction-end`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
-        body: JSON.stringify({
-          action,
-          newPrice: action === 'convert_resell' ? parseFloat(resellPrice) : undefined,
-          extendDays: action === 'relist' ? parseInt(extendDays) : undefined
-        })
-      });
-      const data = await res.json();
-      if (res.ok) {
-        setAuctionActionMsg('✅ ' + data.message);
-        if (data.item) setItem(data.item);
-        setShowAuctionOptions(false);
-        setAuctionExpired(false);
-        setTimeout(() => {
-          if (action === 'cancel') router.push('/bidding');
-          else if (action === 'convert_resell') router.push(`/resell/${item.id}`);
-          else window.location.reload();
-        }, 1500);
-      } else {
-        setAuctionActionMsg('❌ ' + (data.error || 'Failed'));
-      }
-    } catch {
-      setAuctionActionMsg('❌ Something went wrong');
-    } finally {
-      setAuctionActionLoading(false);
-    }
-  };
-
   const handlePlaceBid = async () => {
     if (checkOwner('bid on')) return;
     if (!showBidInput) { setShowBidInput(true); return; }
@@ -188,24 +148,52 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
     } catch { setBidError('Failed to place bid. Please login first.'); }
   };
 
+  const handleAuctionAction = async (action: string) => {
+    setAuctionActionLoading(true);
+    setAuctionActionMsg('');
+    try {
+      const token = localStorage.getItem('token');
+      const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/items/${item.id}/auction-end`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json', Authorization: `Bearer ${token}` },
+        body: JSON.stringify({
+          action,
+          newPrice: action === 'convert_resell' ? parseFloat(resellPrice) : undefined,
+          extendDays: action === 'relist' ? parseInt(extendDays) : undefined
+        })
+      });
+      const data = await res.json();
+      if (res.ok) {
+        setAuctionActionMsg('✅ ' + data.message);
+        if (data.item) setItem(data.item);
+        setShowAuctionOptions(false);
+        setTimeout(() => {
+          if (action === 'cancel') router.push('/bidding');
+          else window.location.reload();
+        }, 1500);
+      } else {
+        setAuctionActionMsg('❌ ' + (data.error || 'Failed'));
+      }
+    } catch { setAuctionActionMsg('❌ Something went wrong'); }
+    finally { setAuctionActionLoading(false); }
+  };
+
   const typeColor = item.type === 'bidding' ? '#f39c12' : item.type === 'exchange' ? '#3498db' : '#2ecc40';
   const typeLabel = item.type === 'bidding' ? 'Auction' : item.type === 'exchange' ? 'Exchange' : 'Resell';
 
   return (
     <div style={{ background: '#f7f7fa', minHeight: '100vh', padding: '32px 16px' }}>
       <style>{`
+        .img-thumb { transition: border 0.2s, transform 0.2s; }
         .img-thumb:hover { transform: scale(1.05); }
         .action-btn { transition: opacity 0.2s, transform 0.1s; }
         .action-btn:hover { opacity: 0.88; transform: scale(1.02); }
-        @keyframes slideDown { from { opacity:0; transform:translateY(-8px); } to { opacity:1; transform:translateY(0); } }
-        .owner-error { animation: slideDown 0.3s ease; }
-        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.6} }
       `}</style>
 
       <div style={{ maxWidth: 1200, margin: '0 auto' }}>
 
         {ownerError && (
-          <div className="owner-error" style={{ background: '#fff0f0', border: '1.5px solid #ffcccc', color: '#e74c3c', borderRadius: 10, padding: '12px 20px', marginBottom: 20, fontWeight: 600 }}>
+          <div style={{ background: '#fff0f0', border: '1.5px solid #ffcccc', color: '#e74c3c', borderRadius: 10, padding: '12px 20px', marginBottom: 20, fontWeight: 600 }}>
             {ownerError}
           </div>
         )}
@@ -216,7 +204,7 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
           </div>
         )}
 
-        {/* ── AUCTION EXPIRED BANNER ── */}
+        {/* Auction Expired Banner */}
         {item.type === 'bidding' && auctionExpired && (
           <div style={{ background: hasNoBids ? '#fff3cd' : '#e8f8f0', border: `1.5px solid ${hasNoBids ? '#ffc107' : '#2ecc71'}`, borderRadius: 14, padding: '20px 24px', marginBottom: 24 }}>
             {hasNoBids ? (
@@ -229,12 +217,10 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
                   </div>
                 </div>
                 {isOwner && (
-                  <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap' }}>
-                    <button onClick={() => setShowAuctionOptions(o => !o)}
-                      style={{ background: '#924DAC', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
-                      {showAuctionOptions ? 'Hide Options' : 'Manage Listing'}
-                    </button>
-                  </div>
+                  <button onClick={() => setShowAuctionOptions(o => !o)}
+                    style={{ background: '#924DAC', color: '#fff', border: 'none', borderRadius: 10, padding: '10px 20px', fontWeight: 700, cursor: 'pointer', fontSize: 14 }}>
+                    {showAuctionOptions ? 'Hide Options' : 'Manage Listing'}
+                  </button>
                 )}
               </>
             ) : (
@@ -242,57 +228,41 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
                 <span style={{ fontSize: 28 }}>🎉</span>
                 <div>
                   <div style={{ fontWeight: 800, fontSize: 17, color: '#166534' }}>Auction Ended — Highest Bidder Won!</div>
-                  <div style={{ fontSize: 13, color: '#15803d', marginTop: 2 }}>
-                    Final bid: <strong>{formatPrice(item.currentBid)}</strong> with {item.totalBids} total bids
-                  </div>
+                  <div style={{ fontSize: 13, color: '#15803d', marginTop: 2 }}>Final bid: <strong>{formatPrice(item.currentBid)}</strong> with {item.totalBids} total bids</div>
                 </div>
               </div>
             )}
 
-            {/* Options panel */}
             {showAuctionOptions && isOwner && hasNoBids && (
               <div style={{ marginTop: 20, display: 'flex', gap: 16, flexWrap: 'wrap' }}>
-
-                {/* Relist */}
                 <div style={{ flex: '1 1 200px', background: '#fff', borderRadius: 12, padding: 18, border: '1.5px solid #e0d0f0' }}>
-                  <div style={{ fontWeight: 700, color: '#924DAC', marginBottom: 8, fontSize: 15 }}>Relist Auction</div>
-                  <p style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>Start the auction again with the same starting bid.</p>
-                  <div style={{ marginBottom: 10 }}>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Extend by (days)</label>
-                    <select value={extendDays} onChange={e => setExtendDays(e.target.value)}
-                      style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e0d0f0', borderRadius: 8, fontSize: 14 }}>
-                      {[3, 5, 7, 10, 14, 30].map(d => <option key={d} value={d}>{d} days</option>)}
-                    </select>
-                  </div>
+                  <div style={{ fontWeight: 700, color: '#924DAC', marginBottom: 8 }}>Relist Auction</div>
+                  <p style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>Restart auction with same starting bid.</p>
+                  <select value={extendDays} onChange={e => setExtendDays(e.target.value)}
+                    style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e0d0f0', borderRadius: 8, fontSize: 14, marginBottom: 10 }}>
+                    {[3, 5, 7, 10, 14, 30].map(d => <option key={d} value={d}>{d} days</option>)}
+                  </select>
                   <button onClick={() => handleAuctionAction('relist')} disabled={auctionActionLoading}
                     style={{ width: '100%', background: '#924DAC', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontWeight: 700, cursor: 'pointer' }}>
                     {auctionActionLoading ? 'Processing...' : 'Relist Now'}
                   </button>
                 </div>
 
-                {/* Convert to Resell */}
                 <div style={{ flex: '1 1 200px', background: '#fff', borderRadius: 12, padding: 18, border: '1.5px solid #e0d0f0' }}>
-                  <div style={{ fontWeight: 700, color: '#2ecc40', marginBottom: 8, fontSize: 15 }}>Convert to Resell</div>
-                  <p style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>Set a fixed price and sell directly to buyers.</p>
-                  <div style={{ marginBottom: 10 }}>
-                    <label style={{ fontSize: 13, fontWeight: 600, color: '#555', display: 'block', marginBottom: 4 }}>Set Price (Rs.)</label>
-                    <input type="number" value={resellPrice} onChange={e => setResellPrice(e.target.value)}
-                      placeholder={`e.g. ${item.startingBid || 1000}`}
-                      style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e0d0f0', borderRadius: 8, fontSize: 14, boxSizing: 'border-box' }} />
-                  </div>
+                  <div style={{ fontWeight: 700, color: '#2ecc40', marginBottom: 8 }}>Convert to Resell</div>
+                  <p style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>Set a fixed price and sell directly.</p>
+                  <input type="number" value={resellPrice} onChange={e => setResellPrice(e.target.value)}
+                    placeholder={`e.g. ${item.startingBid || 1000}`}
+                    style={{ width: '100%', padding: '8px 10px', border: '1.5px solid #e0d0f0', borderRadius: 8, fontSize: 14, marginBottom: 10, boxSizing: 'border-box' }} />
                   <button onClick={() => handleAuctionAction('convert_resell')} disabled={auctionActionLoading || !resellPrice}
                     style={{ width: '100%', background: '#2ecc40', color: '#fff', border: 'none', borderRadius: 8, padding: '10px 0', fontWeight: 700, cursor: 'pointer', opacity: !resellPrice ? 0.6 : 1 }}>
                     {auctionActionLoading ? 'Processing...' : 'Convert to Resell'}
                   </button>
                 </div>
 
-                {/* Cancel */}
                 <div style={{ flex: '1 1 200px', background: '#fff', borderRadius: 12, padding: 18, border: '1.5px solid #ffe0e0' }}>
-                  <div style={{ fontWeight: 700, color: '#e74c3c', marginBottom: 8, fontSize: 15 }}>Cancel Listing</div>
-                  <p style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>Remove this item from the platform entirely.</p>
-                  <div style={{ background: '#fff5f5', borderRadius: 8, padding: '8px 12px', marginBottom: 12, fontSize: 12, color: '#e74c3c' }}>
-                    Note: This will count toward your free listing limit.
-                  </div>
+                  <div style={{ fontWeight: 700, color: '#e74c3c', marginBottom: 8 }}>Cancel Listing</div>
+                  <p style={{ fontSize: 13, color: '#666', marginBottom: 12 }}>Remove this item from the platform.</p>
                   <button onClick={() => handleAuctionAction('cancel')} disabled={auctionActionLoading}
                     style={{ width: '100%', background: '#fff', color: '#e74c3c', border: '2px solid #e74c3c', borderRadius: 8, padding: '10px 0', fontWeight: 700, cursor: 'pointer' }}>
                     {auctionActionLoading ? 'Processing...' : 'Cancel Listing'}
@@ -334,17 +304,15 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
               <div style={{ position: 'absolute', top: 14, left: 14, background: typeColor, color: '#fff', fontSize: 12, fontWeight: 700, padding: '4px 12px', borderRadius: 20 }}>
                 {typeLabel}
               </div>
-              {item.type === 'bidding' && auctionExpired && (
-                <div style={{ position: 'absolute', top: 14, right: 14, background: '#e74c3c', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>
-                  ENDED
-                </div>
+              {auctionExpired && item.type === 'bidding' && (
+                <div style={{ position: 'absolute', top: 14, right: 14, background: '#e74c3c', color: '#fff', fontSize: 11, fontWeight: 700, padding: '4px 10px', borderRadius: 20 }}>ENDED</div>
               )}
             </div>
             {images.length > 1 && (
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {images.map((img, idx) => (
                   <div key={idx} className="img-thumb" onClick={() => { setMainImg(idx); setImgError(false); }}
-                    style={{ width: 60, height: 60, borderRadius: 8, overflow: 'hidden', cursor: 'pointer', border: mainImg === idx ? '2.5px solid #924DAC' : '1.5px solid #e0d0f0', transition: 'transform 0.2s' }}>
+                    style={{ width: 60, height: 60, borderRadius: 8, overflow: 'hidden', cursor: 'pointer', border: mainImg === idx ? '2.5px solid #924DAC' : '1.5px solid #e0d0f0' }}>
                     <img src={img} alt={`thumb-${idx}`} style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   </div>
                 ))}
@@ -385,16 +353,14 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
               )}
               {item.type === 'bidding' && (
                 <div>
-                  <div style={{ fontSize: 13, color: '#888', marginBottom: 2 }}>
-                    {auctionExpired ? 'Final Bid' : 'Current Bid'}
-                  </div>
+                  <div style={{ fontSize: 13, color: '#888', marginBottom: 2 }}>{auctionExpired ? 'Final Bid' : 'Current Bid'}</div>
                   <div style={{ fontSize: 28, fontWeight: 800, color: auctionExpired ? '#e74c3c' : '#924DAC', marginBottom: 8 }}>
                     {formatPrice(item.currentBid || item.startingBid)}
                   </div>
                   <div style={{ display: 'flex', gap: 20, fontSize: 14, color: '#666', flexWrap: 'wrap' }}>
                     <span>Starting: <b>{formatPrice(item.startingBid)}</b></span>
                     <span>Bids: <b>{item.totalBids || 0}</b></span>
-                    <span style={{ color: auctionExpired ? '#e74c3c' : '#e74c3c', fontWeight: 600 }}>
+                    <span style={{ color: '#e74c3c', fontWeight: 600 }}>
                       {auctionExpired ? 'Auction Ended' : `⏱ ${getTimeLeft(item.auctionEndDate)}`}
                     </span>
                   </div>
@@ -412,7 +378,7 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
             {showBidInput && item.type === 'bidding' && !auctionExpired && (
               <div style={{ background: '#fff', borderRadius: 12, padding: 16, marginBottom: 18, border: '1.5px solid #f0e6fa' }}>
                 <div style={{ fontSize: 14, color: '#666', marginBottom: 8 }}>
-                  Enter your bid (minimum: {formatPrice((item.currentBid || item.startingBid || 0) + 1)})
+                  Minimum: {formatPrice((item.currentBid || item.startingBid || 0) + 1)}
                 </div>
                 <div style={{ display: 'flex', gap: 10 }}>
                   <input type="number" value={bidAmount} onChange={e => setBidAmount(e.target.value)} placeholder="Enter amount in Rs."
@@ -475,7 +441,7 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
               )}
 
               {item.type === 'exchange' && (
-                <button className="action-btn" onClick={() => { if (checkOwner('exchange with yourself')) return; router.push(`/messages?sellerId=${item.seller?.id}&itemId=${item.id}`); }} disabled={!!isOwner}
+                <button className="action-btn" onClick={() => { if (checkOwner('exchange')) return; router.push(`/messages?sellerId=${item.seller?.id}&itemId=${item.id}`); }} disabled={!!isOwner}
                   style={{ flex: 1, minWidth: 140, padding: '12px 16px', background: isOwner ? '#ddd' : '#3498db', color: isOwner ? '#999' : '#fff', border: 'none', borderRadius: 8, cursor: isOwner ? 'not-allowed' : 'pointer', fontWeight: 700, fontSize: 15 }}>
                   Propose Exchange
                 </button>
@@ -558,7 +524,7 @@ export default function ItemDetailClient({ item: initialItem }: Props) {
                   { label: 'Type', value: item.type },
                   { label: 'Location', value: item.location },
                   { label: 'Warranty', value: item.warrantyStatus },
-                  { label: 'Usage', value: item.usageHistory },
+                  { label: 'Usage History', value: item.usageHistory },
                   { label: 'Box/Accessories', value: item.originalBox },
                 ].filter(s => s.value).map(s => (
                   <div key={s.label} style={{ background: '#faf8fd', borderRadius: 8, padding: '10px 14px' }}>
